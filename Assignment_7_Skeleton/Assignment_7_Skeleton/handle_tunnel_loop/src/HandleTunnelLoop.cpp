@@ -187,7 +187,9 @@ void CHandleTunnelLoop::_pair(std::set<M::CVertex*>& vertices)
     for (auto viter = vertices.begin(); viter != vertices.end(); viter++)
     {
         M::CVertex* pV = *viter;
-        //label the generators
+        //label the generators (all vertices are generators)
+		pV->generator() = true;
+
     }
 };
 
@@ -204,7 +206,39 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
 
         //insert your code here
         Cycle<M::CVertex, Compare<M::CVertex>> vcycle;
+		//start from youngest positive vertex (all vertices are positive)
+		M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
+		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+		vcycle.add(pV);
+		vcycle.add(pW);
+		//vcycle.print();
+		pV = vcycle.head();
+		while (!vcycle.empty() && pV->pair())
+		{
+			M::CEdge* pE2 = pV->pair();
+			//std::cout << pE2->idx() << " this was the index of the edge\n";
+			M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
+			//std::cout << pV2->idx() << " this was the index of vertex 1\n";
+			vcycle.add(pV2);
+			//vcycle.print();
+			M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
+			//std::cout << pW2->idx() << " this was the index of vertex 2\n";
+			vcycle.add(pW2);
+			//vcycle.print();
+			pV = vcycle.head();
+		}
+		if (!vcycle.empty())
+		{
+			pV->pair() = pE;
+		}
+		else
+		{
+			pE->generator() = true;
+		}
+		
+
     }
+
 };
 
 /*!
@@ -218,7 +252,32 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
         std::cout << "-";
 
         //insert your code here
-        Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
+		Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
+		for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
+		{
+			M::CEdge* pEd = *feiter;
+			ecycle.add(pEd);
+		}
+		M::CEdge* pE = ecycle.head();
+
+		while (!ecycle.empty() && pE->pair())
+		{
+			M::CFace* pF2 = pE->pair();
+			for (M::FaceEdgeIterator feiter(pF2); !feiter.end(); ++feiter)
+			{
+				M::CEdge* pE2 = *feiter;
+				ecycle.add(pE2);
+			}
+			pE = ecycle.head();
+		}
+		if (!ecycle.empty())
+		{
+			pE->pair() = pF;
+		}
+		else
+		{
+			pF->generator() = true;
+		}
     }
 };
 
@@ -238,6 +297,7 @@ void CHandleTunnelLoop::_mark_loop(M::CFace* face)
     {
         M::CEdge* pE = *feiter;
         ecycle.add(pE);
+		pE->sharp() = true;
     }
 
 };
