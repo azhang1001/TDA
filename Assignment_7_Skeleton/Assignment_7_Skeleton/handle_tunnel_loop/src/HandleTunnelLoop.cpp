@@ -279,6 +279,7 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 			pF->generator() = true;
 		}
     }
+	std::cout << "finished";
 };
 
 /*!
