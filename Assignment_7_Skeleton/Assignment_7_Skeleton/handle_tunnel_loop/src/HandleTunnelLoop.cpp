@@ -146,6 +146,7 @@ void CHandleTunnelLoop::interior_volume_pair()
         }
         else
         {
+			std::cout << "Handle Loop Edge " << pE->idx() << std::endl;
             handle_loops.push_back(pE);
         }
     }
@@ -290,6 +291,7 @@ void CHandleTunnelLoop::_mark_loop(M::CFace* face)
     std::set<M::CFace*> section;
     //insert your code here
 
+	//these are the faces that killed the generator edge
     if (m_inner_faces.find(face) != m_inner_faces.end())
         section.insert(face);
 
@@ -298,8 +300,17 @@ void CHandleTunnelLoop::_mark_loop(M::CFace* face)
     {
         M::CEdge* pE = *feiter;
         ecycle.add(pE);
-		pE->sharp() = true;
+		
     }
+	while (!ecycle.empty())
+	{
+		M::CEdge* pE = ecycle.head();
+		ecycle.add(pE);
+		if (pE->generator())
+		{
+			pE->sharp() = true;
+		}
+	}
 
 };
 
