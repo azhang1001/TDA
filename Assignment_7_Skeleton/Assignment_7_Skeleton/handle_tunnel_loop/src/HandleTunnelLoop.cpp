@@ -1,4 +1,5 @@
 #include "HandleTunnelLoop.h"
+#include <map>
 
 namespace DartLib
 {
@@ -199,7 +200,8 @@ void CHandleTunnelLoop::_pair(std::set<M::CVertex*>& vertices)
  */
 void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
 {
-
+	int s = edges.size();
+	bool in[1000000] = { false };
     for (auto eiter = edges.begin(); eiter != edges.end(); eiter++)
     {
         M::CEdge* pE = *eiter;
@@ -210,21 +212,25 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
 		//start from youngest positive vertex (all vertices are positive)
 		M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
 		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
-		vcycle.add(pV);
-		vcycle.add(pW);
+		vcycle.add(pV); //vcycle.add(pV, in);
+		vcycle.add(pW); //vcycle.add(pW, in);
 		//vcycle.print();
 		pV = vcycle.head();
 		while (!vcycle.empty() && pV->pair())
 		{
+			/*std::cout << "--------\n";
+			for (auto const& pair : in) {
+				std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+			}*/
 			M::CEdge* pE2 = pV->pair();
 			//std::cout << pE2->idx() << " this was the index of the edge\n";
 			M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
 			//std::cout << pV2->idx() << " this was the index of vertex 1\n";
-			vcycle.add(pV2);
+			vcycle.add(pV2); //vcycle.add(pV2, in);
 			//vcycle.print();
 			M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
 			//std::cout << pW2->idx() << " this was the index of vertex 2\n";
-			vcycle.add(pW2);
+			vcycle.add(pW2); // vcycle.add(pW2, in);
 			//vcycle.print();
 			pV = vcycle.head();
 		}
@@ -247,6 +253,7 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
  */
 void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 {
+	bool in[31623] = { false };
     for (auto fiter = faces.begin(); fiter != faces.end(); fiter++)
     {
         M::CFace* pF = *fiter;
@@ -286,31 +293,46 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 /*!
  *	mark the handle and tunnel loops as sharp edges
  */
-void CHandleTunnelLoop::_mark_loop(M::CFace* face)
+void CHandleTunnelLoop::_mark_loop(M::CFace* face1)
 {
     std::set<M::CFace*> section;
     //insert your code here
 
 	//these are the faces that killed the generator edge
-    if (m_inner_faces.find(face) != m_inner_faces.end())
-        section.insert(face);
-
-    Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
-    for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
-    {
-        M::CEdge* pE = *feiter;
-        ecycle.add(pE);
-		
-    }
-	while (!ecycle.empty())
+    if (m_inner_faces.find(face1) != m_inner_faces.end())
+        section.insert(face1);
+	std::cout << "starting face: " << face1->idx() << "\n";
+    // Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
+	int count = 0;
+	std::set<M::CFace*>::iterator face = section.begin();
+	while (face != section.end())
 	{
-		M::CEdge* pE = ecycle.head();
-		ecycle.add(pE);
-		if (pE->generator())
+		std::cout << "face: " << (*face)->idx() << "\n";
+		if (face1->idx() == (*face)->idx())
 		{
+			count += 1;
+			if (count >= 2)
+			{
+				break;
+			}
+		}
+		for (M::FaceEdgeIterator feiter(*face); !feiter.end(); ++feiter)
+		{
+			M::CEdge* pE = *feiter;
 			pE->sharp() = true;
+			//ecycle.add(pE);
+			section.insert(pE->pair());
+
 		}
 	}
+
+	//while (!ecycle.empty())
+	//{
+	//	M::CEdge* pE = ecycle.head();
+	//	ecycle.add(pE);
+	//	pE->sharp() = true;
+
+	//}
 
 };
 

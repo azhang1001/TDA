@@ -7,6 +7,7 @@
 #include <queue>
 #include <fstream>
 #include <iostream>
+#include <map>
 
 #include "MyTMesh.h"
 #include "MyMesh.h"
@@ -126,6 +127,22 @@ class Cycle
         else
             m_cycle.push_back(pw);
     };
+
+	/*void add(T* pw, bool in[])
+	{
+		if (in[pw->idx()] == true)
+		{
+			//std::cout << "removed " << pw->idx() << "\n";
+			m_cycle.remove(pw);
+			in[pw->idx()] = false;
+		}
+		else
+		{
+			m_cycle.push_back(pw);
+			//std::cout << "created " << pw->idx() << "\n";
+			in[pw->idx()] = true;
+		}
+	};*/
 
     bool empty() { return m_cycle.empty(); };
 
