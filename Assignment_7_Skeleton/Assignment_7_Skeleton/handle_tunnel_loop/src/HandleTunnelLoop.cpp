@@ -304,24 +304,29 @@ void CHandleTunnelLoop::_mark_loop(M::CFace* face1)
 	std::cout << "starting face: " << face1->idx() << "\n";
     // Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
 	int count = 0;
-	std::set<M::CFace*>::iterator face = section.begin();
-	while (face != section.end())
+	std::set<M::CFace*>::iterator face;
+	for (face = section.begin();; ++face) 
 	{
 		std::cout << "face: " << (*face)->idx() << "\n";
-		if (face1->idx() == (*face)->idx())
+		/*if (face1->idx() == (*face)->idx())
 		{
 			count += 1;
 			if (count >= 2)
 			{
 				break;
 			}
-		}
+		}*/
 		for (M::FaceEdgeIterator feiter(*face); !feiter.end(); ++feiter)
 		{
 			M::CEdge* pE = *feiter;
 			pE->sharp() = true;
 			//ecycle.add(pE);
-			section.insert(pE->pair());
+			//sometimes it is unpaired!
+			if (pE->pair() != NULL)
+			{
+				std::cout << "inserted face: " << (pE->pair())->idx() << "\n";
+				section.insert(pE->pair());
+			}
 
 		}
 	}
