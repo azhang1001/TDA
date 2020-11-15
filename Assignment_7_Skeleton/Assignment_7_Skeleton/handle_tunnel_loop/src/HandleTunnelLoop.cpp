@@ -145,11 +145,17 @@ void CHandleTunnelLoop::interior_volume_pair()
         {
             std::cout << "Generator Edge " << pE->idx() << std::endl;
         }
-        else
+        else if (pE->generator() && pE->pair() != NULL)
         {
+			// generator that has been killed
 			std::cout << "Handle Loop Edge " << pE->idx() << std::endl;
             handle_loops.push_back(pE);
+			pE->sharp() = true;
         }
+		else
+		{
+			std::cout << "this is a bug";
+		}
     }
     
     for (size_t i = 0; i < handle_loops.size(); i++)
@@ -253,7 +259,6 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
  */
 void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 {
-	bool in[31623] = { false };
     for (auto fiter = faces.begin(); fiter != faces.end(); fiter++)
     {
         M::CFace* pF = *fiter;
@@ -271,9 +276,9 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 		while (!ecycle.empty() && pE->pair())
 		{
 			M::CFace* pF2 = pE->pair();
-			for (M::FaceEdgeIterator feiter(pF2); !feiter.end(); ++feiter)
+			for (M::FaceEdgeIterator feiter2(pF2); !feiter2.end(); ++feiter2)
 			{
-				M::CEdge* pE2 = *feiter;
+				M::CEdge* pE2 = *feiter2;
 				ecycle.add(pE2);
 			}
 			pE = ecycle.head();
