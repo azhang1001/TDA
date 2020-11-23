@@ -373,9 +373,10 @@ void keyBoard(unsigned char key, int x, int y)
             begin = clock();
 
             handler.set_mesh(&mesh);
-            handler.boundary_surface_pair();
+            handler.boundary_surface_pair();	
             handler.interior_volume_pair();
-            handler.prune();
+            //handler.prune();
+			//handler.shorten();
             boundary_edges = &handler.boundary_edges();
 
             handler.exact_boundary(boundary_mesh);
@@ -386,6 +387,12 @@ void keyBoard(unsigned char key, int x, int y)
             end = clock();
             printf("Computing handle/tunnel loops time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
             break;
+		case 'P':
+			handler.prune();
+			break;
+		case 'S':
+			handler.shorten();
+			break;
         case '?':
             help();
             break;

@@ -1,5 +1,6 @@
 #include "HandleTunnelLoop.h"
-#include <map>
+
+
 
 namespace DartLib
 {
@@ -85,6 +86,13 @@ void CHandleTunnelLoop::_extract_interior_volume()
         pV->idx() = vid++;
     }
 
+	for (auto pE : m_boundary_edges)
+	{
+		M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
+		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+		graph[pV->idx()][pW->idx()] = (pW->point() - pV->point()).norm();
+	}
+
     for (M::VertexIterator viter(m_pMesh); !viter.end(); viter++)
     {
         M::CVertex* pV = *viter;
@@ -144,13 +152,15 @@ void CHandleTunnelLoop::interior_volume_pair()
         if (pE->generator() && pE->pair() == NULL)
         {
             std::cout << "Generator Edge " << pE->idx() << std::endl;
+			//_mark_loop(pE);
         }
         else if (pE->generator() && pE->pair() != NULL)
         {
 			// generator that has been killed
 			std::cout << "Handle Loop Edge " << pE->idx() << std::endl;
             handle_loops.push_back(pE);
-			pE->sharp() = true;
+			_mark_loop(pE);
+			//pE->sharp() = true;
         }
 		else
 		{
@@ -161,7 +171,7 @@ void CHandleTunnelLoop::interior_volume_pair()
     for (size_t i = 0; i < handle_loops.size(); i++)
     {
         M::CFace* pF = handle_loops[i]->pair();
-        _mark_loop(pF);
+        //_mark_loop(pF);
     }
 }
 
@@ -173,17 +183,38 @@ void CHandleTunnelLoop::boundary_surface_pair()
     _pair(m_boundary_vertices);
     _pair(m_boundary_edges);
     _pair(m_boundary_faces);
-
+		
     std::cout << "After Pairing the boundary surface: " << std::endl;
     for (auto eiter = m_boundary_edges.begin(); eiter != m_boundary_edges.end(); eiter++)
     {
         M::CEdge* pE = *eiter;
         if (pE->generator() && pE->pair() == NULL)
         {
-            std::cout << "Generator Edge " << pE->idx() << std::endl;
+            std::cout << "Generator Edge that has not been killed " << pE->idx() << std::endl;
             m_generators.insert(pE);
         }
     }
+	/*for (auto eiter = m_boundary_edges.begin(); eiter != m_boundary_edges.end(); eiter++)
+	{
+		M::CEdge* pE = *eiter;
+		if (pE->generator() && pE->pair() == NULL)
+		{
+			std::cout << "Generator Edge " << pE->idx() << std::endl;
+			//_mark_loop(pE);
+		}
+		else if (pE->generator() && pE->pair() != NULL)
+		{
+			// generator that has been killed
+			std::cout << "Handle Loop Edge " << pE->idx() << std::endl;
+			//_mark_loop(pE);
+			//pE->sharp() = true;
+		}
+		else
+		{
+			std::cout << "this is not a generator\n";
+		}
+	}*/
+
 }
 
 /*!
@@ -206,8 +237,8 @@ void CHandleTunnelLoop::_pair(std::set<M::CVertex*>& vertices)
  */
 void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
 {
-	int s = edges.size();
-	bool in[1000000] = { false };
+	int generator_edges = 0;
+	int killer_edges = 0;
     for (auto eiter = edges.begin(); eiter != edges.end(); eiter++)
     {
         M::CEdge* pE = *eiter;
@@ -232,25 +263,29 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
 			//std::cout << pE2->idx() << " this was the index of the edge\n";
 			M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
 			//std::cout << pV2->idx() << " this was the index of vertex 1\n";
-			vcycle.add(pV2); //vcycle.add(pV2, in);
+			
 			//vcycle.print();
 			M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
 			//std::cout << pW2->idx() << " this was the index of vertex 2\n";
+			vcycle.add(pV2); //vcycle.add(pV2, in);
 			vcycle.add(pW2); // vcycle.add(pW2, in);
 			//vcycle.print();
 			pV = vcycle.head();
 		}
 		if (!vcycle.empty())
 		{
+			killer_edges += 1;
 			pV->pair() = pE;
 		}
 		else
 		{
+			generator_edges += 1;
 			pE->generator() = true;
 		}
 		
 
     }
+	std::cout << "\nfinished with edges, there are " << killer_edges << " killers and " << generator_edges << " generator edges.\n";
 
 };
 
@@ -259,6 +294,8 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
  */
 void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 {
+	int killer_faces = 0;
+	int generator_faces = 0;
     for (auto fiter = faces.begin(); fiter != faces.end(); fiter++)
     {
         M::CFace* pF = *fiter;
@@ -285,14 +322,16 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 		}
 		if (!ecycle.empty())
 		{
+			killer_faces += 1;
 			pE->pair() = pF;
 		}
 		else
 		{
+			generator_faces += 1;
 			pF->generator() = true;
 		}
     }
-	std::cout << "finished";
+	std::cout << "finished, there are " << killer_faces << " killers and " << generator_faces << " generator faces.\n";
 };
 
 /*!
@@ -328,7 +367,7 @@ void CHandleTunnelLoop::_mark_loop(M::CFace* face1)
 			//ecycle.add(pE);
 			//sometimes it is unpaired!
 			if (pE->pair() != NULL)
-			{
+			{	
 				std::cout << "inserted face: " << (pE->pair())->idx() << "\n";
 				section.insert(pE->pair());
 			}
@@ -344,6 +383,47 @@ void CHandleTunnelLoop::_mark_loop(M::CFace* face1)
 
 	//}
 
+};
+
+void CHandleTunnelLoop::_mark_loop(M::CEdge* pE)
+{
+	pE->sharp() = true;
+	loop_edges.clear();
+	loop_vertices.clear();
+	loop_edges.push_back(pE);
+	Cycle<M::CVertex, Compare<M::CVertex>> vcycle;
+	//start from youngest positive vertex (all vertices are positive)
+	M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
+	M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+	vcycle.add(pV); //vcycle.add(pV, in);
+	vcycle.add(pW); //vcycle.add(pW, in);
+	pV = vcycle.head();
+	while (!vcycle.empty() && pV->pair())
+	{
+		M::CEdge* pE2 = pV->pair();
+		pE2->sharp() = true;
+		loop_edges.push_back(pE2);
+		M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
+		vcycle.add(pV2);
+		M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
+		vcycle.add(pW2);
+		pV = vcycle.head();
+		
+	}
+	if (!vcycle.empty())
+	{
+		std::cout << "this shouldn't be happening\n";
+		vcycle.print();
+		pV->pair() = pE;
+	}
+	else
+	{
+		std::cout << "this is right";
+		pE->generator() = true;
+	}
+	prune();
+	
+	// find shortest path between v0 and vn/3
 };
 
 
@@ -447,8 +527,114 @@ void CHandleTunnelLoop::prune()
         _prune();
         isContinue = _shrink_triangles();
     } while (isContinue);
+
 }
 
+void CHandleTunnelLoop::shorten()
+{
+	/*bool isContinue = false;
+	do
+	{
+		_prune();
+		isContinue = _shrink_triangles();
+	} while (isContinue);*/
+	// display the new list of sharp ones lol
+	for (auto pE : m_boundary_edges)
+	{
+		pE->sharp() = false;
+	}
+	/*for (auto pE : loop_edges)
+	{
+		pE->sharp() = true;
+	}*/
+	// sort the loop edges first
+	M::CEdge* pE = loop_edges[0];
+	M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
+	M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+	std::cout << "started with " << loop_edges.size() << " edges left\n";
+	loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE), loop_edges.end());
+	while (pV != pW)
+	{
+		loop_vertices.push_back(pV);
+		std::cout << "sizes are  " << loop_edges.size() << " and " << loop_vertices.size() <<"\n";
+		for (M::VertexEdgeIterator veiter(m_pMesh, pV); !veiter.end(); ++veiter)
+		{
+			M::CEdge* pE2 = *veiter;
+			if (std::find(loop_edges.begin(), loop_edges.end(), pE2) != loop_edges.end())
+			{
+				loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE2), loop_edges.end());
+				if (pV == m_pMesh->edge_vertex(pE2, 0))
+				{
+					pV = m_pMesh->edge_vertex(pE2, 1);
+				}
+				else if (pV == m_pMesh->edge_vertex(pE2, 1))
+				{
+					pV = m_pMesh->edge_vertex(pE2, 0);
+				}
+				else
+				{
+					std::cout << "something wrong happened with finding the vertices of the loop";
+				}
+				break;
+			}
+		}
+	}
+
+
+	std::cout << "there are now " << loop_edges.size() <<" edges left\n";
+	std::cout << "there are  " << loop_vertices.size() << " vertices\n";
+	bool isContinue = false;
+	do
+	{
+		isContinue = _shorten();
+	} while (isContinue);
+
+}
+
+bool CHandleTunnelLoop::_shorten()
+{
+	int pV1 = loop_vertices[0]->idx();
+	int pV2 = loop_vertices[loop_vertices.size() / 3]->idx();
+	int pV3 = loop_vertices[2 * loop_vertices.size() / 3]->idx();
+	// get shortest path between pV1, pV2, and pV3
+	std::vector<int> path1 = dijkstra(graph, pV1, pV2);
+	std::vector<int> path2 = dijkstra(graph, pV2, pV3);
+	std::vector<int> path3 = dijkstra(graph, pV3, pV1);
+
+	int old = loop_vertices.size();
+	std::vector<int> new_loop;
+	new_loop.insert(new_loop.end(), path1.begin(), path1.end());
+	new_loop.insert(new_loop.end(), path2.begin(), path2.end());
+	new_loop.insert(new_loop.end(), path3.begin(), path3.end());
+	while (old - new_loop.size() >= 1)
+	{
+		std::cout << "did it again\n";
+		pV1 = loop_vertices[0]->idx();
+		pV2 = loop_vertices[loop_vertices.size() / 3]->idx();
+		pV3 = loop_vertices[2 * loop_vertices.size() / 3]->idx();
+		std::vector<int> path1 = dijkstra(graph, pV1, pV2);
+		std::vector<int> path2 = dijkstra(graph, pV2, pV3);
+		std::vector<int> path3 = dijkstra(graph, pV3, pV1);
+		old = new_loop.size();
+		new_loop.clear();
+		new_loop.insert(new_loop.end(), path1.begin(), path1.end());
+		new_loop.insert(new_loop.end(), path2.begin(), path2.end());
+		new_loop.insert(new_loop.end(), path3.begin(), path3.end());
+	}
+	int n = 0;
+	for (auto pE : m_boundary_edges)
+	{
+		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+		int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+		if (std::find(new_loop.begin(), new_loop.end(), pV) != new_loop.end() && std::find(new_loop.begin(), new_loop.end(), pW) != new_loop.end())
+		{
+			n += 1;
+			std::cout << "edge " << n << "\n";
+			pE->sharp() = true;
+		}
+	}
+	return false;
+}
 bool CHandleTunnelLoop::_shrink_triangles()
 {
     int count = 0;
@@ -473,7 +659,19 @@ bool CHandleTunnelLoop::_shrink_triangles()
          */
         if (nSharp == 3)
         {
+
             edges[0]->sharp() = false;
+			loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), edges[0]), loop_edges.end());
+			/*std::vector<M::CEdge*>::iterator position = std::find(loop_edges.begin(), loop_edges.end(), edges[0]);
+			if (position != loop_edges.end())
+			{
+				std::cout << "we erased a 3-edge called " << *position << "\n";
+				loop_edges.erase(position);
+			}
+			else
+			{
+				std::cout << "we can't find the edge which is part of a 3edge " << edges[0] << "\n";
+			}*/
             count++;
         }
 
@@ -507,10 +705,32 @@ bool CHandleTunnelLoop::_shrink_triangles()
                     break;
             }
 
-            if (pCommonVertex && pCommonVertex->valence() == 2)
-            {
-                for (int i = 0; i < 3; ++i)
-                    edges[i]->sharp() = !edges[i]->sharp();
+			if (pCommonVertex && pCommonVertex->valence() == 2)
+			{
+				for (int i = 0; i < 3; ++i)
+				{
+					if (edges[i]->sharp())
+					{
+						/*std::vector<M::CEdge*>::iterator position = std::find(loop_edges.begin(), loop_edges.end(), edges[i]);
+						if (position != loop_edges.end())
+						{
+							std::cout << "we erased a 2-edge called " << *position << "\n";
+							loop_edges.erase(position);
+						}
+						else
+						{
+							std::cout << "we can't find " << edges[i] << "\n";
+						}*/
+						loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), edges[i]), loop_edges.end());
+					}
+					else if (!edges[i]->sharp())
+					{
+						std::cout << "we added an edge here\n";
+						loop_edges.push_back(edges[i]);
+					}
+					edges[i]->sharp() = !edges[i]->sharp();
+					
+				}
                 count++;
             }
         }
@@ -560,15 +780,27 @@ void CHandleTunnelLoop::_prune()
         M::CVertex* pV = vQueue.front();
         vQueue.pop();
 
+
         for (M::VertexEdgeIterator veiter(m_pMesh, pV); !veiter.end(); ++veiter)
         {
             M::CEdge* pE = *veiter;
-            if (m_pMesh->boundary(pE) && pE->sharp())
-            {
-                M::CVertex* pW = pV == m_pMesh->edge_vertex(pE, 0) ? m_pMesh->edge_vertex(pE, 1) : m_pMesh->edge_vertex(pE, 0);
-                pW->valence() -= 1;
+			if (m_pMesh->boundary(pE) && pE->sharp())
+			{
+				M::CVertex* pW = pV == m_pMesh->edge_vertex(pE, 0) ? m_pMesh->edge_vertex(pE, 1) : m_pMesh->edge_vertex(pE, 0);
+				pW->valence() -= 1;
 
-                pE->sharp() = false;
+				pE->sharp() = false;
+				/*std::vector<M::CEdge*>::iterator position = std::find(loop_edges.begin(), loop_edges.end(), pE);
+				if (position != loop_edges.end())
+				{
+					std::cout << "we erased an edge during the pruning called " << *position << "\n";
+					loop_edges.erase(position);
+				}
+				else
+				{
+					std::cout << "we couldn't find " << pE << " in the list of loop_edges\n";
+				}*/
+				loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE), loop_edges.end());
 
                 if (pW->valence() == 1)
                     vQueue.push(pW);
@@ -579,4 +811,93 @@ void CHandleTunnelLoop::_prune()
     }
 }
 
+int CHandleTunnelLoop::minDistance(int dist[], bool sptSet[])
+{
+	// Initialize min value 
+	int min = INT_MAX, min_index;
+
+	for (int v = 0; v < V; v++)
+		if (sptSet[v] == false && dist[v] <= min)
+			min = dist[v], min_index = v;
+
+	return min_index;
+}
+
+std::vector<int> CHandleTunnelLoop::dijkstra(double graph[V][V], int src, int dest)
+{
+
+	// The output array. dist[i] 
+	// will hold the shortest 
+	// distance from src to i 
+	int dist[V];
+
+	// sptSet[i] will true if vertex 
+	// i is included / in shortest 
+	// path tree or shortest distance  
+	// from src to i is finalized 
+	bool sptSet[V];
+
+	// Parent array to store 
+	// shortest path tree 
+	int parent[V];
+
+	// Initialize all distances as  
+	// INFINITE and stpSet[] as false 
+	for (int i = 0; i < V; i++)
+	{
+		parent[0] = -1;
+		dist[i] = INT_MAX;
+		sptSet[i] = false;
+	}
+
+	// Distance of source vertex  
+	// from itself is always 0 
+	dist[src] = 0;
+
+	// Find shortest path 
+	// for all vertices 
+	for (int count = 0; count < V - 1; count++)
+	{
+		// Pick the minimum distance 
+		// vertex from the set of 
+		// vertices not yet processed.  
+		// u is always equal to src 
+		// in first iteration. 
+		int u = minDistance(dist, sptSet);
+
+		// Mark the picked vertex  
+		// as processed 
+		sptSet[u] = true;
+
+		// Update dist value of the  
+		// adjacent vertices of the 
+		// picked vertex. 
+		for (int v = 0; v < V; v++)
+
+			// Update dist[v] only if is 
+			// not in sptSet, there is 
+			// an edge from u to v, and  
+			// total weight of path from 
+			// src to v through u is smaller 
+			// than current value of 
+			// dist[v] 
+			if (!sptSet[v] && graph[u][v] &&
+				dist[u] + graph[u][v] < dist[v])
+			{
+				parent[v] = u;
+				dist[v] = dist[u] + graph[u][v];
+			}
+	}
+
+	// print the constructed 
+	// distance array 
+	int loc = dest;
+	std::vector<int> new_verts;
+	while (loc != src)
+	{
+		loc = parent[loc];
+		new_verts.insert(new_verts.begin(), loc);
+	}
+	return new_verts;
+}
 }

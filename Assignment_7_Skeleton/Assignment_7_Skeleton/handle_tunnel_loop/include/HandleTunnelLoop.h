@@ -8,10 +8,12 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <algorithm>
 
 #include "MyTMesh.h"
 #include "MyMesh.h"
 
+#define V 9999
 namespace DartLib
 {
 
@@ -38,7 +40,11 @@ class CHandleTunnelLoop
     void exact_boundary(S& surface);
 
     void prune();
+
+	void shorten();
+
   protected:
+	
     void _extract_boundary_surface();
 
     void _extract_interior_volume();
@@ -51,7 +57,13 @@ class CHandleTunnelLoop
     void _mark_loop(M::CEdge* edge);
 
     bool _shrink_triangles();
+
+	bool _shorten();
+
     void _prune();
+
+	int CHandleTunnelLoop::minDistance(int dist[], bool sptSet[]);
+	std::vector<int> CHandleTunnelLoop::dijkstra(double graph[V][V], int src, int dest);
     
   protected:
     M* m_pMesh;
@@ -69,6 +81,11 @@ class CHandleTunnelLoop
     std::set<M::CFace*>   m_inner_faces;
 
     std::set<M::CEdge*>   m_generators;
+
+	std::vector<M::CVertex*> loop_vertices;
+	std::vector<M::CEdge*> loop_edges;
+
+	double graph[V][V];
 };
 
 template <typename T>
