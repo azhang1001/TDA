@@ -173,6 +173,10 @@ void CHandleTunnelLoop::interior_volume_pair()
         M::CFace* pF = handle_loops[i]->pair();
         //_mark_loop(pF);
     }
+	for (auto pE : final_edges)
+	{
+		pE->sharp() = true;
+	}
 }
 
 /*!
@@ -422,8 +426,11 @@ void CHandleTunnelLoop::_mark_loop(M::CEdge* pE)
 		pE->generator() = true;
 	}
 	prune();
-	
-	// find shortest path between v0 and vn/3
+	for (auto pE : loop_edges)
+	{
+		pE->sharp() = false;
+	}
+	shorten();
 };
 
 
@@ -539,10 +546,10 @@ void CHandleTunnelLoop::shorten()
 		isContinue = _shrink_triangles();
 	} while (isContinue);*/
 	// display the new list of sharp ones lol
-	for (auto pE : m_boundary_edges)
+	/*for (auto pE : m_boundary_edges)
 	{
 		pE->sharp() = false;
-	}
+	}*/
 	/*for (auto pE : loop_edges)
 	{
 		pE->sharp() = true;
@@ -583,19 +590,26 @@ void CHandleTunnelLoop::shorten()
 
 	std::cout << "there are now " << loop_edges.size() <<" edges left\n";
 	std::cout << "there are  " << loop_vertices.size() << " vertices\n";
-	bool isContinue = false;
-	do
-	{
-		isContinue = _shorten();
-	} while (isContinue);
+	_shorten();
 
 }
 
-bool CHandleTunnelLoop::_shorten()
+void CHandleTunnelLoop::_shorten()
 {
 	int pV1 = loop_vertices[0]->idx();
 	int pV2 = loop_vertices[loop_vertices.size() / 3]->idx();
 	int pV3 = loop_vertices[2 * loop_vertices.size() / 3]->idx();
+
+	/*for (auto pE : m_boundary_edges)
+	{
+		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+		int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+		if (pV == pV1 || pV == pV2 || pV == pV3 || pW == pV1 || pW == pV2 || pW == pV3)
+		{
+			pE->sharp() = true;
+		}
+	}*/
+
 	// get shortest path between pV1, pV2, and pV3
 	std::vector<int> path1 = dijkstra(graph, pV1, pV2);
 	std::vector<int> path2 = dijkstra(graph, pV2, pV3);
@@ -606,12 +620,37 @@ bool CHandleTunnelLoop::_shorten()
 	new_loop.insert(new_loop.end(), path1.begin(), path1.end());
 	new_loop.insert(new_loop.end(), path2.begin(), path2.end());
 	new_loop.insert(new_loop.end(), path3.begin(), path3.end());
+	/*for (auto pE : m_boundary_edges)
+	{
+		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+		int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+		std::vector<int>::iterator i1 = std::find(new_loop.begin(), new_loop.end(), pV);
+		std::vector<int>::iterator i2 = std::find(new_loop.begin(), new_loop.end(), pW);
+		if (i1 != new_loop.end() && i2 != new_loop.end())
+		{
+			if (std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1 || std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == 1)
+			{
+				//n += 1;
+				//std::cout << "edge " << n << "\n";
+				pE->sharp() = true;
+			}
+		}
+	}*/
 	while (old - new_loop.size() >= 1)
 	{
 		std::cout << "did it again\n";
-		pV1 = loop_vertices[0]->idx();
-		pV2 = loop_vertices[loop_vertices.size() / 3]->idx();
-		pV3 = loop_vertices[2 * loop_vertices.size() / 3]->idx();
+		pV1 = new_loop[0 + new_loop.size() / 6];
+		pV2 = new_loop[new_loop.size() / 3 + new_loop.size() / 6];
+		pV3 = new_loop[2 * new_loop.size() / 3 + new_loop.size() / 6];
+		/*for (auto pE : m_boundary_edges)
+		{
+			int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+			int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+			if (pV == pV1 || pV == pV2 || pV == pV3 || pW == pV1 || pW == pV2 || pW == pV3)
+			{
+				pE->sharp() = true;
+			}
+		}*/
 		std::vector<int> path1 = dijkstra(graph, pV1, pV2);
 		std::vector<int> path2 = dijkstra(graph, pV2, pV3);
 		std::vector<int> path3 = dijkstra(graph, pV3, pV1);
@@ -622,18 +661,26 @@ bool CHandleTunnelLoop::_shorten()
 		new_loop.insert(new_loop.end(), path3.begin(), path3.end());
 	}
 	int n = 0;
+	
 	for (auto pE : m_boundary_edges)
 	{
 		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
 		int pW = m_pMesh->edge_vertex(pE, 1)->idx();
-		if (std::find(new_loop.begin(), new_loop.end(), pV) != new_loop.end() && std::find(new_loop.begin(), new_loop.end(), pW) != new_loop.end())
+		std::vector<int>::iterator i1 = std::find(new_loop.begin(), new_loop.end(), pV);
+		std::vector<int>::iterator i2 = std::find(new_loop.begin(), new_loop.end(), pW);
+		if ( i1 != new_loop.end() && i2 != new_loop.end())
 		{
-			n += 1;
-			std::cout << "edge " << n << "\n";
-			pE->sharp() = true;
+			if (std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1
+				|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == 1
+				|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == new_loop.size() - 1
+				|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1 * new_loop.size() + 1)
+			{
+				n += 1;
+				std::cout << "edge " << n << "\n";
+				final_edges.push_back(pE);
+			}
 		}
 	}
-	return false;
 }
 bool CHandleTunnelLoop::_shrink_triangles()
 {
@@ -811,10 +858,11 @@ void CHandleTunnelLoop::_prune()
     }
 }
 
-int CHandleTunnelLoop::minDistance(int dist[], bool sptSet[])
+int CHandleTunnelLoop::minDistance(double dist[], bool sptSet[])
 {
 	// Initialize min value 
-	int min = INT_MAX, min_index;
+	double min = DBL_MAX;
+	int min_index;
 
 	for (int v = 0; v < V; v++)
 		if (sptSet[v] == false && dist[v] <= min)
@@ -829,7 +877,7 @@ std::vector<int> CHandleTunnelLoop::dijkstra(double graph[V][V], int src, int de
 	// The output array. dist[i] 
 	// will hold the shortest 
 	// distance from src to i 
-	int dist[V];
+	double dist[V];
 
 	// sptSet[i] will true if vertex 
 	// i is included / in shortest 
@@ -846,13 +894,13 @@ std::vector<int> CHandleTunnelLoop::dijkstra(double graph[V][V], int src, int de
 	for (int i = 0; i < V; i++)
 	{
 		parent[0] = -1;
-		dist[i] = INT_MAX;
+		dist[i] = DBL_MAX;
 		sptSet[i] = false;
 	}
 
 	// Distance of source vertex  
 	// from itself is always 0 
-	dist[src] = 0;
+	dist[src] = 0.0;
 
 	// Find shortest path 
 	// for all vertices 

@@ -13,7 +13,7 @@
 #include "MyTMesh.h"
 #include "MyMesh.h"
 
-#define V 9999
+#define V 15000
 namespace DartLib
 {
 
@@ -58,11 +58,11 @@ class CHandleTunnelLoop
 
     bool _shrink_triangles();
 
-	bool _shorten();
+	void _shorten();
 
     void _prune();
 
-	int CHandleTunnelLoop::minDistance(int dist[], bool sptSet[]);
+	int CHandleTunnelLoop::minDistance(double dist[], bool sptSet[]);
 	std::vector<int> CHandleTunnelLoop::dijkstra(double graph[V][V], int src, int dest);
     
   protected:
@@ -84,6 +84,8 @@ class CHandleTunnelLoop
 
 	std::vector<M::CVertex*> loop_vertices;
 	std::vector<M::CEdge*> loop_edges;
+
+	std::vector<M::CEdge*> final_edges;
 
 	double graph[V][V];
 };
