@@ -13,7 +13,8 @@
 #include "MyTMesh.h"
 #include "MyMesh.h"
 
-#define V 15000
+#define V 200000
+
 namespace DartLib
 {
 
@@ -43,6 +44,8 @@ class CHandleTunnelLoop
 
 	void shorten();
 
+	void display();
+
   protected:
 	
     void _extract_boundary_surface();
@@ -62,8 +65,8 @@ class CHandleTunnelLoop
 
     void _prune();
 
-	int CHandleTunnelLoop::minDistance(double dist[], bool sptSet[]);
-	std::vector<int> CHandleTunnelLoop::dijkstra(double graph[V][V], int src, int dest);
+	int CHandleTunnelLoop::minDistance(std::vector<double> dist, std::vector<bool> sptSet);
+	std::vector<int> CHandleTunnelLoop::dijkstra(int src, int dest);
     
   protected:
     M* m_pMesh;
@@ -87,7 +90,12 @@ class CHandleTunnelLoop
 
 	std::vector<M::CEdge*> final_edges;
 
-	double graph[V][V];
+	//double graph[V][V];
+	std::vector<std::map<int, double>> graph;
+
+	double old_dist = DBL_MAX;
+	double new_dist = 0.0;
+	
 };
 
 template <typename T>

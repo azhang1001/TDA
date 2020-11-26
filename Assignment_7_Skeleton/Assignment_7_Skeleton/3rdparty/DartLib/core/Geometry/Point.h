@@ -38,6 +38,11 @@ namespace DartLib{
 		*/
 		~CPoint(){};
 
+		std::string print()
+		{
+			return "(" + std::to_string(v[0]) + ", " + std::to_string(v[1]) + ", " + std::to_string(v[2]) + ")";
+		}
+
 		/*!
 		*	reference to  \f$(x,y,z)\f$ value
 		*   \param i index

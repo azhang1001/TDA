@@ -393,6 +393,9 @@ void keyBoard(unsigned char key, int x, int y)
 		case 'S':
 			handler.shorten();
 			break;
+		case 'D':
+			handler.display();
+			break;
         case '?':
             help();
             break;
