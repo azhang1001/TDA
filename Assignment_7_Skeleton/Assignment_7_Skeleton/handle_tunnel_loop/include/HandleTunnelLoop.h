@@ -86,6 +86,7 @@ class CHandleTunnelLoop
     std::set<M::CEdge*>   m_generators;
 
 	std::vector<M::CVertex*> loop_vertices;
+	std::vector<int> new_loop;
 	std::vector<M::CEdge*> loop_edges;
 
 	std::vector<M::CEdge*> final_edges;
@@ -95,6 +96,8 @@ class CHandleTunnelLoop
 
 	double old_dist = DBL_MAX;
 	double new_dist = 0.0;
+
+	int time = 0;
 	
 };
 

@@ -69,7 +69,7 @@ void CHandleTunnelLoop::_extract_boundary_surface()
         m_boundary_vertices.insert(pV);
         m_boundary_vertices.insert(pW);
     }
-	std::cout << "there are  " << m_boundary_vertices.size() << " vertices\n";
+	std::cout << "there are  " << m_boundary_vertices.size() << " vertices and " << m_boundary_edges.size() << " edges\n";
     int euler_number = m_boundary_vertices.size() + m_boundary_faces.size() - m_boundary_edges.size();
     m_genus = (2 - euler_number) / 2;
     std::cout << "Genus of the Boundary Mesh is " << m_genus << std::endl;
@@ -180,7 +180,7 @@ void CHandleTunnelLoop::interior_volume_pair()
 }
 
 /*!
-*   pair simplices on the boundaray surface
+*   pair simplices on the boundary surface
 */
 void CHandleTunnelLoop::boundary_surface_pair()
 {
@@ -235,7 +235,7 @@ void CHandleTunnelLoop::_pair(std::set<M::CVertex*>& vertices)
 
     }
 };
-
+// =========================================== SMALL IMPROVEMENT: MOVE PAIR VERTEX TO BEGINNING ===============================================
 /*!
  *	pair edges;
  */
@@ -243,10 +243,11 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
 {
 	int generator_edges = 0;
 	int killer_edges = 0;
+	std::cout << "starting edge pairing";
     for (auto eiter = edges.begin(); eiter != edges.end(); eiter++)
     {
         M::CEdge* pE = *eiter;
-        std::cout << ".";
+        //std::cout << ".";
 
         //insert your code here
         Cycle<M::CVertex, Compare<M::CVertex>> vcycle;
@@ -427,10 +428,10 @@ void CHandleTunnelLoop::_mark_loop(M::CEdge* pE)
 	}
 	std::cout << "====================== started with " << loop_edges.size() << " edges =================\n";
 	prune();
-	/*for (auto pE : loop_edges)
+	for (auto pE : loop_edges)
 	{
 		pE->sharp() = false;
-	}*/
+	}
 	shorten();
 };
 
@@ -540,6 +541,8 @@ void CHandleTunnelLoop::prune()
 
 void CHandleTunnelLoop::shorten()
 {
+	bool cont = true;
+
 	/*bool isContinue = false;
 	do
 	{
@@ -559,14 +562,29 @@ void CHandleTunnelLoop::shorten()
 	M::CEdge* pE = loop_edges[loop_edges.size() / 2];
 	M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
 	M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+	if (time == 1)
+	{
+		for (auto E : loop_edges)
+		{
+			//final_edges.push_back(E);
+		}
+	}
+	time += 1;
 	std::cout << "started with " << loop_edges.size() << " edges left\n";
 	loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE), loop_edges.end());
+
 	while (pV != pW)
 	{
+		//if (!cont)
+		//{
+		//	break;
+		//}
 		loop_vertices.push_back(pV);
 		std::cout << "sizes are  " << loop_edges.size() << " and " << loop_vertices.size() <<"\n";
+		cont = false;
 		for (M::VertexEdgeIterator veiter(m_pMesh, pV); !veiter.end(); ++veiter)
 		{
+			
 			M::CEdge* pE2 = *veiter;
 			if (std::find(loop_edges.begin(), loop_edges.end(), pE2) != loop_edges.end())
 			{
@@ -574,10 +592,12 @@ void CHandleTunnelLoop::shorten()
 				if (pV == m_pMesh->edge_vertex(pE2, 0))
 				{
 					pV = m_pMesh->edge_vertex(pE2, 1);
+					cont = true;
 				}
 				else if (pV == m_pMesh->edge_vertex(pE2, 1))
 				{
 					pV = m_pMesh->edge_vertex(pE2, 0);
+					cont = true;
 				}
 				else
 				{
@@ -585,6 +605,7 @@ void CHandleTunnelLoop::shorten()
 				}
 				break;
 			}
+			
 		}
 	}
 
@@ -597,30 +618,50 @@ void CHandleTunnelLoop::shorten()
 
 void CHandleTunnelLoop::_shorten()
 {
-	int pV1 = loop_vertices[0]->idx();
-	int pV2 = loop_vertices[loop_vertices.size() / 3]->idx();
-	int pV3 = loop_vertices[2 * loop_vertices.size() / 3]->idx();
-
-	/*for (auto pE : m_boundary_edges)
+	std::vector<M::CVertex*> old_loop_vertices = loop_vertices;
+	int num_vertices = 3;
+	std::vector<int> search_verts;
+	old_dist = DBL_MAX;
+	new_dist = 0;
+	while (new_dist == 0 || new_loop.size() <= 4)
 	{
-		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
-		int pW = m_pMesh->edge_vertex(pE, 1)->idx();
-		if (pV == pV1 || pV == pV2 || pV == pV3 || pW == pV1 || pW == pV2 || pW == pV3)
+		std::cout << "retry==================================\n";
+		search_verts.clear();
+		new_loop.clear();
+		old_dist = DBL_MAX;
+		new_dist = 0;
+		for (int i = 0; i < num_vertices; i++)
 		{
-			pE->sharp() = true;
+			search_verts.push_back(old_loop_vertices[i * old_loop_vertices.size() / num_vertices]->idx());
 		}
-	}*/
-	std::cout << "the vertices are " << pV1 << ", " << pV2 << ", and " << pV3 << "here\n";
-	// get shortest path between pV1, pV2, and pV3
-	std::vector<int> path1 = dijkstra(pV1, pV2);
-	std::cout << "here!???!?!";
-	std::vector<int> path2 = dijkstra(pV2, pV3);
-	std::vector<int> path3 = dijkstra(pV3, pV1);
+		for (int i = 0; i < num_vertices; i++)
+		{
+			std::vector<int> path = dijkstra(search_verts[i % num_vertices], search_verts[(i + 1) % num_vertices]);
+		}
+		std::cout << "searching with " << search_verts.size() << " verts\n";
+		std::cout << "we have " << new_loop.size() << " verts\n";
+		/*int pV1 = loop_vertices[0]->idx();
+	int pV2 = loop_vertices[loop_vertices.size() / 3]->idx();
+	int pV3 = loop_vertices[2 * loop_vertices.size() / 3]->idx();*/
+	//std::cout << "the vertices are " << pV1 << ", " << pV2 << ", and " << pV3 << "here\n";
 
-	std::vector<int> new_loop;
-	new_loop.insert(new_loop.end(), path1.begin(), path1.end());
+	/*int oG1 = pV1;
+	int oG2 = pV2;
+	int oG3 = pV3;*/
+
+
+
+	// get shortest path between pV1, pV2, and pV3
+	/*std::vector<int> path1 = dijkstra(pV1, pV2);
+	std::vector<int> path2 = dijkstra(pV2, pV3);
+	std::vector<int> path3 = dijkstra(pV3, pV1);*/
+
+
+	/*new_loop.insert(new_loop.end(), path1.begin(), path1.end());
 	new_loop.insert(new_loop.end(), path2.begin(), path2.end());
-	new_loop.insert(new_loop.end(), path3.begin(), path3.end());
+	new_loop.insert(new_loop.end(), path3.begin(), path3.end());*/
+
+	/*std::vector<int> oG_loop = new_loop;*/
 	/*for (auto pE : m_boundary_edges)
 	{
 		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
@@ -637,73 +678,118 @@ void CHandleTunnelLoop::_shorten()
 			}
 		}
 	}*/
-	while (old_dist > new_dist)
-	{
-		std::cout << "did it again\n";
-		pV1 = new_loop[0 + 1];
-		pV2 = new_loop[new_loop.size() / 3 + 1];
-		pV3 = new_loop[2 * new_loop.size() / 3 + 1];
-		/*for (auto pE : m_boundary_edges)
+		while (old_dist > new_dist)
 		{
-			int pV = m_pMesh->edge_vertex(pE, 0)->idx();
-			int pW = m_pMesh->edge_vertex(pE, 1)->idx();
-			if (pV == pV1 || pV == pV2 || pV == pV3 || pW == pV1 || pW == pV2 || pW == pV3)
+			std::cout << "did it again\n";
+			search_verts.clear();
+			old_dist = new_dist;
+			new_dist = 0;
+			for (int i = 0; i < num_vertices; i++)
 			{
-				pE->sharp() = true;
+				search_verts.push_back(new_loop[(i * new_loop.size() / num_vertices + 1)%new_loop.size()]);
 			}
-		}*/
-		old_dist = new_dist;
-		new_dist = 0;
-		path1 = dijkstra(pV1, pV2);
-		path2 = dijkstra(pV2, pV3);
-		path3 = dijkstra(pV3, pV1);
+			new_loop.clear();
+			for (int i = 0; i < num_vertices; i++)
+			{
+				std::vector<int> path = dijkstra(search_verts[i % num_vertices], search_verts[(i + 1) % num_vertices]);
+			}
+			//pV1 = new_loop[0 + 1];
+			//pV2 = new_loop[new_loop.size() / 3 + 1];
+			//pV3 = new_loop[2 * new_loop.size() / 3 + 1];
+			/*for (auto pE : m_boundary_edges)
+			{
+				int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+				int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+				if (pV == pV1 || pV == pV2 || pV == pV3 || pW == pV1 || pW == pV2 || pW == pV3)
+				{
+					pE->sharp() = true;
+				}
+			}*/
+			//std::cout << "the vertices are " << pV1 << ", " << pV2 << ", and " << pV3 << "\n";
+			//old_dist = new_dist;
+			//new_dist = 0;
+			//path1 = dijkstra(pV1, pV2);
+			//path2 = dijkstra(pV2, pV3);
+			//path3 = dijkstra(pV3, pV1);
 
-		new_loop.clear();
-		new_loop.insert(new_loop.end(), path1.begin(), path1.end());
-		new_loop.insert(new_loop.end(), path2.begin(), path2.end());
-		new_loop.insert(new_loop.end(), path3.begin(), path3.end());
-		std::cout << "old length is " << old_dist << " while the new distance is, " << new_dist << "\n";
-		std::cout << "the vertices are " << pV1 << ", " << pV2 << ", and " << pV3 << "\n";
-		std::cout << "there are " << new_loop.size() << " vertices\n\n";
-	}
-	std::cout << "final distance was " << new_dist << "\n";
-	/*for (auto pE : m_boundary_edges)
-	{
-		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
-		int pW = m_pMesh->edge_vertex(pE, 1)->idx();
-		if (pV == pV1 || pV == pV2 || pV == pV3 || pW == pV1 || pW == pV2 || pW == pV3)
-		{
-			final_edges.push_back(pE);
+			//new_loop.clear();
+			//new_loop.insert(new_loop.end(), path1.begin(), path1.end());
+			//new_loop.insert(new_loop.end(), path2.begin(), path2.end());
+			//new_loop.insert(new_loop.end(), path3.begin(), path3.end());
+			std::cout << "old length is " << old_dist << " while the new distance is, " << new_dist << "\n";
+
+			std::cout << "there are " << new_loop.size() << " vertices\n\n";
+
 		}
-	}*/
-	int n = 0;
-	
-	for (auto pE : m_boundary_edges)
-	{
-		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
-		int pW = m_pMesh->edge_vertex(pE, 1)->idx();
-		std::vector<int>::iterator i1 = std::find(new_loop.begin(), new_loop.end(), pV);
-		std::vector<int>::iterator i2 = std::find(new_loop.begin(), new_loop.end(), pW);
-		if ( i1 != new_loop.end() && i2 != new_loop.end())
+		std::cout << "final distance was " << new_dist << "\n";
+		//for (auto pE : m_boundary_edges)
+		//{
+		//	int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+		//	int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+		//	if (pV == pV1 || pV == pV2 || pV == pV3 || pW == pV1 || pW == pV2 || pW == pV3)
+		//	{
+		//		final_edges.push_back(pE);
+		//	}
+		//}
+		//if (new_loop.size() < 7)
+		//{
+		//	for (auto pE : m_boundary_edges)
+		//	{
+		//		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+		//		int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+		//		if (pV == oG1 || pV == oG2 || pV == oG3 || pW == oG1 || pW == oG2 || pW == oG3)
+		//		{
+		//			//pE->sharp() = true;
+		//			final_edges.push_back(pE);
+
+		//		}
+		//	}
+		//	for (auto pE : m_boundary_edges)
+		//	{
+		//		int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+		//		int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+		//		std::vector<int>::iterator i1 = std::find(oG_loop.begin(), oG_loop.end(), pV);
+		//		std::vector<int>::iterator i2 = std::find(oG_loop.begin(), oG_loop.end(), pW);
+		//		if (i1 != oG_loop.end() && i2 != oG_loop.end())
+		//		{
+		//			if (std::distance(oG_loop.begin(), i1) - std::distance(oG_loop.begin(), i2) == -1
+		//				|| std::distance(oG_loop.begin(), i1) - std::distance(oG_loop.begin(), i2) == 1
+		//				|| std::distance(oG_loop.begin(), i1) - std::distance(oG_loop.begin(), i2) == oG_loop.size() - 1
+		//				|| std::distance(oG_loop.begin(), i1) - std::distance(oG_loop.begin(), i2) == -1 * oG_loop.size() + 1)
+		//			{
+		//				final_edges.push_back(pE);
+		//			}
+		//		}
+		//	}
+		//}
+		if (new_loop.size() >= 5)
 		{
-			if (std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1
-				|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == 1
-				|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == new_loop.size() - 1
-				|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1 * new_loop.size() + 1)
+			for (auto pE : m_boundary_edges)
 			{
-				n += 1;
-				std::cout << "edge " << n << "\n";
-				final_edges.push_back(pE);
+				int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+				int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+				std::vector<int>::iterator i1 = std::find(new_loop.begin(), new_loop.end(), pV);
+				std::vector<int>::iterator i2 = std::find(new_loop.begin(), new_loop.end(), pW);
+				if (i1 != new_loop.end() && i2 != new_loop.end())
+				{
+					if (std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1
+						|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == 1
+						|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == new_loop.size() - 1
+						|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1 * new_loop.size() + 1)
+					{
+						final_edges.push_back(pE);
+					}
+				}
 			}
 		}
+		num_vertices *= 2;
+		//std::cout << "the length of one random edge is  " << (m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 0)->point() - m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->point()).norm() << "\n";
+		//std::cout << "this should be the samve as above " << graph[m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 0)->idx()][m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->idx()] << "\n";
+		//std::cout << "also should be the samve as above " << graph[m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->idx()][m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 0)->idx()] << "\n";
+		//std::cout << "the first point was " << m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 0)->point().print() << "\n";
+		//std::cout << "the second point is " << m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->point().print() << "\n";
+		
 	}
-	std::cout << "the length of one random edge is  " << (m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 0)->point() - m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->point()).norm() << "\n";
-	std::cout << "this should be the samve as above " << graph[m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 0)->idx()][m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->idx()] << "\n";
-	std::cout << "also should be the samve as above " << graph[m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->idx()][m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 0)->idx()] << "\n";
-	std::cout << "the first point was " << m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 0)->point().print() << "\n";
-	std::cout << "the second point is " << m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->point().print() << "\n";
-	old_dist = DBL_MAX;
-	new_dist = 0;
 }
 bool CHandleTunnelLoop::_shrink_triangles()
 {
@@ -896,7 +982,6 @@ int CHandleTunnelLoop::minDistance(std::vector<double> dist, std::vector<bool> s
 
 std::vector<int> CHandleTunnelLoop::dijkstra(int src, int dest)
 {
-	std::cout << "started it \n";
 	// The output array. dist[i] 
 	// will hold the shortest 
 	// distance from src to i 
@@ -930,7 +1015,6 @@ std::vector<int> CHandleTunnelLoop::dijkstra(int src, int dest)
 
 	// Find shortest path 
 	// for all vertices 
-	std::cout << "at A\n";
 	for (int count = 0; count < m_boundary_vertices.size(); count++)
 	{
 		//std::cout << "at " << count << "\n";
@@ -950,7 +1034,6 @@ std::vector<int> CHandleTunnelLoop::dijkstra(int src, int dest)
 		// picked vertex. 
 		for (int v = 0; v < m_boundary_vertices.size(); v++)
 		{
-			//std::cout << "got here\n";
 			// Update dist[v] only if is 
 			// not in sptSet, there is 
 			// an edge from u to v, and  
@@ -965,7 +1048,6 @@ std::vector<int> CHandleTunnelLoop::dijkstra(int src, int dest)
 			}
 		}
 	}
-	std::cout << " here maybe?\n";
 	new_dist += dist[dest];
 	// print the constructed 
 	// distance array 
@@ -976,6 +1058,8 @@ std::vector<int> CHandleTunnelLoop::dijkstra(int src, int dest)
 		loc = parent[loc];
 		new_verts.insert(new_verts.begin(), loc);
 	}
+	std::cout << "new_verts had " << new_verts.size() << "vertices\n";
+	new_loop.insert(new_loop.end(), new_verts.begin(), new_verts.end());
 	return new_verts;
 }
 
