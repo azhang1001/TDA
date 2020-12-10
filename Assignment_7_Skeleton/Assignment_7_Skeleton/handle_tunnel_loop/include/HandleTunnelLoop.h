@@ -97,6 +97,10 @@ class CHandleTunnelLoop
 	double old_dist = DBL_MAX;
 	double new_dist = 0.0;
 
+	std::vector<bool> in;//CHANGES HERE==============================================================================================================
+	std::vector<M::CVertex*> idx_verts;
+	std::vector<M::CEdge*> idx_edges;
+
 	int time = 0;
 	
 };
@@ -158,7 +162,7 @@ class Cycle
             m_cycle.push_back(pw);
     };
 
-	/*void add(T* pw, bool in[])
+	/*void add(T* pw)
 	{
 		if (in[pw->idx()] == true)
 		{

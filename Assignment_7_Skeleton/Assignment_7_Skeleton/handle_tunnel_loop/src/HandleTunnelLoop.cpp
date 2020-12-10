@@ -107,9 +107,11 @@ void CHandleTunnelLoop::_extract_interior_volume()
     }
 
     int eid = 1;
+	idx_edges.push_back(NULL);
     for (auto pE : m_boundary_edges)
     {
         pE->idx() = eid++;
+		idx_edges.push_back(pE);
     }
 
     for (M::EdgeIterator eiter(m_pMesh); !eiter.end(); eiter++)
@@ -119,6 +121,7 @@ void CHandleTunnelLoop::_extract_interior_volume()
             continue;
 
         pE->idx() = eid++;
+		idx_edges.push_back(pE);
         m_inner_edges.insert(pE);
     }
 
@@ -156,6 +159,7 @@ void CHandleTunnelLoop::interior_volume_pair()
         {
             std::cout << "Generator Edge " << pE->idx() << std::endl;
 			//_mark_loop(pE);
+			//handle_loops.push_back(pE);
         }
         else if (pE->generator() && pE->pair() != NULL)
         {
@@ -247,7 +251,7 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
     for (auto eiter = edges.begin(); eiter != edges.end(); eiter++)
     {
         M::CEdge* pE = *eiter;
-        //std::cout << ".";
+        std::cout << ".";
 
         //insert your code here
         Cycle<M::CVertex, Compare<M::CVertex>> vcycle;
@@ -301,31 +305,103 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 {
 	int killer_faces = 0;
 	int generator_faces = 0;
+	double add_time = 0;
+	double head_time = 0;
     for (auto fiter = faces.begin(); fiter != faces.end(); fiter++)
     {
         M::CFace* pF = *fiter;
         std::cout << "-";
 
+		int number = 0;
         //insert your code here
+		in.assign(m_inner_edges.size() + m_boundary_edges.size() + 1, false);
 		Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
 		for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
 		{
 			M::CEdge* pEd = *feiter;
+			clock_t b = clock();
+			// COMBINE THE TWO! USE THE BOOL VECTOR TO CHECK IF IN, THEN USE THE ORIGINAL HEAD(maybe use set)!!-------------------------------------------------------
+			// remove is slow, so have an array/vector storing index of the item when it's added for easier removal
+			/*if (in[pEd->idx()])
+			{
+				in[pEd->idx()] = false;
+				number -= 1;
+			}
+			else
+			{
+				in[pEd->idx()] = true;
+				number += 1;
+			}*/
 			ecycle.add(pEd);
+			clock_t e = clock();
+			add_time += double(e - b) / CLOCKS_PER_SEC;
+
+
 		}
+		
+
+
+		clock_t b = clock();
 		M::CEdge* pE = ecycle.head();
+		/*M::CEdge* pE = NULL;
+		int i;
+		if (number > 0)
+		{
+			for (i = m_inner_edges.size() + m_boundary_edges.size(); i > 0; i--)
+			{
+				if (in[i] && idx_edges[i]->generator())
+				{
+					pE = idx_edges[i];
+					break;
+				}
+			}
+		}*/
+		clock_t e = clock();
+		head_time += double(e - b) / CLOCKS_PER_SEC;
 
 		while (!ecycle.empty() && pE->pair())
+		//while(number > 0 && pE->pair())
 		{
 			M::CFace* pF2 = pE->pair();
 			for (M::FaceEdgeIterator feiter2(pF2); !feiter2.end(); ++feiter2)
 			{
 				M::CEdge* pE2 = *feiter2;
+				clock_t b = clock();
+				/*if (in[pE2->idx()])
+				{
+					in[pE2->idx()] = false;
+					number -= 1;
+				}
+				else
+				{
+					in[pE2->idx()] = true;
+					number += 1;
+				}*/
 				ecycle.add(pE2);
+				clock_t e = clock();
+				add_time += double(e - b) / CLOCKS_PER_SEC;
+				
 			}
+			clock_t b = clock();
+			
+			/*if (number > 0)
+			{
+				for (int i = m_inner_edges.size() + m_boundary_edges.size(); i > 0; i--)
+				{
+					if (in[i] && idx_edges[i]->generator())
+					{
+						pE = idx_edges[i];
+						break;
+					}
+				}
+			}*/
 			pE = ecycle.head();
+			clock_t e = clock();
+			head_time += double(e - b) / CLOCKS_PER_SEC;
+			
 		}
 		if (!ecycle.empty())
+		//if (number > 0)
 		{
 			killer_faces += 1;
 			pE->pair() = pF;
@@ -337,6 +413,7 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 		}
     }
 	std::cout << "finished, there are " << killer_faces << " killers and " << generator_faces << " generator faces.\n";
+	std::cout << "time taken to add edges " << add_time << " while head time was " << head_time << "\n";
 };
 
 /*!
@@ -623,7 +700,7 @@ void CHandleTunnelLoop::_shorten()
 	std::vector<int> search_verts;
 	old_dist = DBL_MAX;
 	new_dist = 0;
-	while (new_dist == 0 || new_loop.size() <= 4)
+	while (new_dist == 0 || new_loop.size() < 3)
 	{
 		std::cout << "retry==================================\n";
 		search_verts.clear();
@@ -762,7 +839,7 @@ void CHandleTunnelLoop::_shorten()
 		//		}
 		//	}
 		//}
-		if (new_loop.size() >= 5)
+		if (new_loop.size() >= 3)
 		{
 			for (auto pE : m_boundary_edges)
 			{
