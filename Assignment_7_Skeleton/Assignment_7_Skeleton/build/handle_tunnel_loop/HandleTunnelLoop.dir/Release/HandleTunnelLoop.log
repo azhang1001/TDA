@@ -1,6 +1,6 @@
 ﻿  HandleTunnelLoop.cpp
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(73,102): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(520,25): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(594,25): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(372,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message : while compiling class template member function 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)'
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :         with
@@ -11,15 +11,15 @@ C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdpart
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             Dart=DartLib::CMyDart_2,
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             _Ty=DartLib::CPoint
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :         ]
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :         with
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :         [
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             V=DartLib::CMyVertex_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             E=DartLib::CMyEdge_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             F=DartLib::CMyFace_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             Dart=DartLib::CMyDart_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             _Ty=DartLib::CPoint
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :         ]
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :         with
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :         [
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             V=DartLib::CMyVertex_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             E=DartLib::CMyEdge_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             F=DartLib::CMyFace_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             Dart=DartLib::CMyDart_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             _Ty=DartLib::CPoint
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :         ]
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(68): message : see reference to class template instantiation 'DartLib::TBaseMesh_2<V,E,F,Dart>' being compiled
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(68): message :         with
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(68): message :         [
@@ -28,7 +28,7 @@ C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(68): message :             F=DartLib::CMyFace_2,
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(68): message :             Dart=DartLib::CMyDart_2
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(68): message :         ]
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message : see reference to class template instantiation 'DartLib::TMyMesh<DartLib::CMyVertex_2,DartLib::CMyEdge_2,DartLib::CMyFace_2,DartLib::CMyDart_2>' being compiled
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message : see reference to class template instantiation 'DartLib::TMyMesh<DartLib::CMyVertex_2,DartLib::CMyEdge_2,DartLib::CMyFace_2,DartLib::CMyDart_2>' being compiled
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\include\utility(165,1): warning C4267: 'initializing': conversion from 'size_t' to '_Ty2', possible loss of data
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\include\utility(165,1): warning C4267:         with
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\include\utility(165,1): warning C4267:         [
@@ -151,14 +151,14 @@ C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdpart
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             Dart=DartLib::CMyDart_2,
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             _Ty=DartLib::CPoint
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :         ]
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :         with
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :         [
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             V=DartLib::CMyVertex_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             E=DartLib::CMyEdge_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             F=DartLib::CMyFace_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             Dart=DartLib::CMyDart_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :             _Ty=DartLib::CPoint
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(603): message :         ]
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :         with
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :         [
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             V=DartLib::CMyVertex_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             E=DartLib::CMyEdge_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             F=DartLib::CMyFace_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             Dart=DartLib::CMyDart_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :             _Ty=DartLib::CPoint
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(677): message :         ]
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh\BaseMesh_3.h(627): warning C4715: 'DartLib::TBaseMesh_3<DartLib::CMyVertex,DartLib::CMyEdge,DartLib::CMyFace,DartLib::CMyTet,DartLib::CMyDart>::edge_vertex': not all control paths return a value
   HandleTunnelLoop.vcxproj -> C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\build\handle_tunnel_loop\Release\HandleTunnelLoop.exe

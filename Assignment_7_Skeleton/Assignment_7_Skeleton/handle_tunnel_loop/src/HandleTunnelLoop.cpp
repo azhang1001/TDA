@@ -82,9 +82,11 @@ void CHandleTunnelLoop::_extract_interior_volume()
 {
     int vid = 1;
 	std::map<int, double> m;
+	idx_verts.push_back(NULL);
     for (auto pV : m_boundary_vertices)
     {
         pV->idx() = vid++;
+		idx_verts.push_back(pV);
 		graph.push_back(m);
     }
 	graph.push_back(m);
@@ -103,6 +105,7 @@ void CHandleTunnelLoop::_extract_interior_volume()
             continue;
 
         pV->idx() = vid++;
+		idx_verts.push_back(pV);
         m_inner_vertices.insert(pV);
     }
 
@@ -146,6 +149,7 @@ void CHandleTunnelLoop::_extract_interior_volume()
 */
 void CHandleTunnelLoop::interior_volume_pair()
 {
+	clock_t b = clock();
     _pair(m_inner_vertices);
     _pair(m_inner_edges);
     _pair(m_inner_faces);
@@ -173,7 +177,8 @@ void CHandleTunnelLoop::interior_volume_pair()
 			std::cout << "this is a bug";
 		}
     }
-    
+	clock_t e = clock();
+	printf("Interior pair time: %g s\n", double(e - b) / CLOCKS_PER_SEC);
     for (size_t i = 0; i < handle_loops.size(); i++)
     {
 		_mark_loop(handle_loops[i]);
@@ -248,40 +253,93 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
 	int generator_edges = 0;
 	int killer_edges = 0;
 	std::cout << "starting edge pairing";
+	double assign = 0;
+	double pairing = 0;
+
     for (auto eiter = edges.begin(); eiter != edges.end(); eiter++)
     {
         M::CEdge* pE = *eiter;
         std::cout << ".";
-
+		int number = 0;
+		clock_t b = clock();
+		in.assign(m_inner_vertices.size() + m_boundary_vertices.size() + 1, false);
+		clock_t e = clock();
+		assign += double(e - b) / CLOCKS_PER_SEC;
+		inSet.clear();
+		b = clock();
         //insert your code here
         Cycle<M::CVertex, Compare<M::CVertex>> vcycle;
 		//start from youngest positive vertex (all vertices are positive)
 		M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
 		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
-		vcycle.add(pV); //vcycle.add(pV, in);
-		vcycle.add(pW); //vcycle.add(pW, in);
-		//vcycle.print();
-		pV = vcycle.head();
-		while (!vcycle.empty() && pV->pair())
+		/*vcycle.add(pV); //vcycle.add(pV, in);
+		vcycle.add(pW); //vcycle.add(pW, in);*/
+		if (in[pV->idx()])
 		{
-			/*std::cout << "--------\n";
-			for (auto const& pair : in) {
-				std::cout << "{" << pair.first << ": " << pair.second << "}\n";
-			}*/
-			M::CEdge* pE2 = pV->pair();
-			//std::cout << pE2->idx() << " this was the index of the edge\n";
-			M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
-			//std::cout << pV2->idx() << " this was the index of vertex 1\n";
-			
-			//vcycle.print();
-			M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
-			//std::cout << pW2->idx() << " this was the index of vertex 2\n";
-			vcycle.add(pV2); //vcycle.add(pV2, in);
-			vcycle.add(pW2); // vcycle.add(pW2, in);
-			//vcycle.print();
-			pV = vcycle.head();
+			in[pV->idx()] = false;
+			inSet.erase(pV->idx());
+			number -= 1;
 		}
-		if (!vcycle.empty())
+		else
+		{
+			in[pV->idx()] = true;
+			inSet.insert(pV->idx());
+			number += 1;
+		}
+		if (in[pW->idx()])
+		{
+			in[pW->idx()] = false;
+			inSet.erase(pW->idx());
+			number -= 1;
+		}
+		else
+		{
+			in[pW->idx()] = true;
+			inSet.insert(pW->idx());
+			number += 1;
+		}
+		//vcycle.print();
+		pV = idx_verts[*inSet.rbegin()];
+		//while (!vcycle.empty() && pV->pair())
+		while (number > 0 && pV->pair())
+		{
+			M::CEdge* pE2 = pV->pair();
+			M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
+			M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
+			//vcycle.add(pV2); //vcycle.add(pV2, in);
+			//vcycle.add(pW2); // vcycle.add(pW2, in);
+			if (in[pV2->idx()])
+			{
+				in[pV2->idx()] = false;
+				inSet.erase(pV2->idx());
+				number -= 1;
+			}
+			else
+			{
+				in[pV2->idx()] = true;
+				inSet.insert(pV2->idx());
+				number += 1;
+			}
+			if (in[pW2->idx()])
+			{
+				in[pW2->idx()] = false;
+				inSet.erase(pW2->idx());
+				number -= 1;
+			}
+			else
+			{
+				in[pW2->idx()] = true;
+				inSet.insert(pW2->idx());
+				number += 1;
+			}
+			if (*inSet.rbegin())
+			{
+				pV = idx_verts[*inSet.rbegin()];
+			}
+			//pV = vcycle.head();
+		}
+		//if (!vcycle.empty())
+		if (number > 0)
 		{
 			killer_edges += 1;
 			pV->pair() = pE;
@@ -291,9 +349,11 @@ void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
 			generator_edges += 1;
 			pE->generator() = true;
 		}
-		
+		e = clock();
+		pairing += double(e - b) / CLOCKS_PER_SEC;
 
     }
+	std::cout << "\n edge pairing took " << pairing << " seconds, while assigning took " << assign << "seconds.";
 	std::cout << "\nfinished with edges, there are " << killer_edges << " killers and " << generator_edges << " generator edges.\n";
 
 };
@@ -315,36 +375,40 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 		int number = 0;
         //insert your code here
 		in.assign(m_inner_edges.size() + m_boundary_edges.size() + 1, false);
+		inSet.clear();
 		Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
 		for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
 		{
 			M::CEdge* pEd = *feiter;
-			clock_t b = clock();
+			//clock_t b = clock();
 			// COMBINE THE TWO! USE THE BOOL VECTOR TO CHECK IF IN, THEN USE THE ORIGINAL HEAD(maybe use set)!!-------------------------------------------------------
 			// remove is slow, so have an array/vector storing index of the item when it's added for easier removal
-			/*if (in[pEd->idx()])
+			if (in[pEd->idx()])
 			{
 				in[pEd->idx()] = false;
+				inSet.erase(pEd->idx());
 				number -= 1;
 			}
 			else
 			{
 				in[pEd->idx()] = true;
+				inSet.insert(pEd->idx());
 				number += 1;
-			}*/
-			ecycle.add(pEd);
-			clock_t e = clock();
-			add_time += double(e - b) / CLOCKS_PER_SEC;
+			}
+			//ecycle.add(pEd);
+			//clock_t e = clock();
+			//add_time += double(e - b) / CLOCKS_PER_SEC;
 
 
 		}
 		
 
 
-		clock_t b = clock();
-		M::CEdge* pE = ecycle.head();
-		/*M::CEdge* pE = NULL;
-		int i;
+		//clock_t b = clock();
+		//M::CEdge* pE = ecycle.head();
+		
+		M::CEdge* pE = idx_edges[*inSet.rbegin()];
+		/*int i;
 		if (number > 0)
 		{
 			for (i = m_inner_edges.size() + m_boundary_edges.size(); i > 0; i--)
@@ -356,35 +420,43 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 				}
 			}
 		}*/
-		clock_t e = clock();
-		head_time += double(e - b) / CLOCKS_PER_SEC;
+		//clock_t e = clock();
+		//head_time += double(e - b) / CLOCKS_PER_SEC;
 
-		while (!ecycle.empty() && pE->pair())
-		//while(number > 0 && pE->pair())
+		//while (!ecycle.empty() && pE->pair())
+		while(number > 0 && pE->pair())
 		{
 			M::CFace* pF2 = pE->pair();
 			for (M::FaceEdgeIterator feiter2(pF2); !feiter2.end(); ++feiter2)
 			{
 				M::CEdge* pE2 = *feiter2;
-				clock_t b = clock();
-				/*if (in[pE2->idx()])
+				//clock_t b = clock();
+				if (in[pE2->idx()])
 				{
 					in[pE2->idx()] = false;
+					inSet.erase(pE2->idx());
 					number -= 1;
 				}
 				else
 				{
 					in[pE2->idx()] = true;
+					inSet.insert(pE2->idx());
 					number += 1;
-				}*/
-				ecycle.add(pE2);
-				clock_t e = clock();
-				add_time += double(e - b) / CLOCKS_PER_SEC;
+				}
+				//ecycle.add(pE2);
+				//clock_t e = clock();
+				//add_time += double(e - b) / CLOCKS_PER_SEC;
 				
 			}
-			clock_t b = clock();
+			//clock_t b = clock();
 			
-			/*if (number > 0)
+			
+			if (*inSet.rbegin())
+			{
+				pE = idx_edges[*inSet.rbegin()];
+			}
+			/*
+			if (number > 0)
 			{
 				for (int i = m_inner_edges.size() + m_boundary_edges.size(); i > 0; i--)
 				{
@@ -395,13 +467,13 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 					}
 				}
 			}*/
-			pE = ecycle.head();
-			clock_t e = clock();
-			head_time += double(e - b) / CLOCKS_PER_SEC;
+			//pE = ecycle.head();
+			//clock_t e = clock();
+			//head_time += double(e - b) / CLOCKS_PER_SEC;
 			
 		}
-		if (!ecycle.empty())
-		//if (number > 0)
+		//if (!ecycle.empty())
+		if (number > 0)
 		{
 			killer_faces += 1;
 			pE->pair() = pF;
@@ -413,7 +485,7 @@ void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 		}
     }
 	std::cout << "finished, there are " << killer_faces << " killers and " << generator_faces << " generator faces.\n";
-	std::cout << "time taken to add edges " << add_time << " while head time was " << head_time << "\n";
+	//std::cout << "time taken to add edges " << add_time << " while head time was " << head_time << "\n";
 };
 
 /*!
@@ -700,7 +772,7 @@ void CHandleTunnelLoop::_shorten()
 	std::vector<int> search_verts;
 	old_dist = DBL_MAX;
 	new_dist = 0;
-	while (new_dist == 0 || new_loop.size() < 3)
+	while (new_dist == 0 || new_loop.size() <= 3)
 	{
 		std::cout << "retry==================================\n";
 		search_verts.clear();
@@ -839,7 +911,7 @@ void CHandleTunnelLoop::_shorten()
 		//		}
 		//	}
 		//}
-		if (new_loop.size() >= 3)
+		if (new_loop.size() > 3)
 		{
 			for (auto pE : m_boundary_edges)
 			{
