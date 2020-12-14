@@ -46,6 +46,8 @@ class CHandleTunnelLoop
 
 	void display();
 
+	void display_before(int which);
+
   protected:
 	
     void _extract_boundary_surface();
@@ -66,7 +68,8 @@ class CHandleTunnelLoop
     void _prune();
 
 	int CHandleTunnelLoop::minDistance(std::vector<double> dist, std::vector<bool> sptSet);
-	std::vector<int> CHandleTunnelLoop::dijkstra(int src, int dest);
+	std::vector<int> CHandleTunnelLoop::dijkstra2(int src, int dest);
+	std::vector<int> CHandleTunnelLoop::dijkstra(int s, int t);
     
   protected:
     M* m_pMesh;
@@ -90,9 +93,11 @@ class CHandleTunnelLoop
 	std::vector<M::CEdge*> loop_edges;
 
 	std::vector<M::CEdge*> final_edges;
+	std::vector<std::vector<M::CEdge*>> before_edges;
 
 	//double graph[V][V];
 	std::vector<std::map<int, double>> graph;
+	std::vector<std::vector<std::pair<int, double>>> adj;
 
 	double old_dist = DBL_MAX;
 	double new_dist = 0.0;

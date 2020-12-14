@@ -42,6 +42,9 @@ std::string g_output;
 /* arcball object */
 CArcball arcball;
 
+// which loop to display
+int which = 0;
+
 /*! setup the object, transform from the world to the object coordinate system */
 void setupObject(void)
 {
@@ -319,6 +322,7 @@ void keyBoard(unsigned char key, int x, int y)
 
     CMyTMesh::CBoundary boundary(&mesh);
     clock_t begin, end;
+	
 
     switch (key)
     {
@@ -395,6 +399,12 @@ void keyBoard(unsigned char key, int x, int y)
 			break;
 		case 'D':
 			handler.display();
+			break;
+		case 'B':
+			std::cout << "which was " << which << "\n";
+			handler.display_before(which);
+			which = which + 1;
+			std::cout << "which is " << which << "\n";
 			break;
         case '?':
             help();
@@ -549,9 +559,9 @@ int main(int argc, char* argv[])
     /* glut stuff */
     glutInit(&argc, argv); /* Initialize GLUT */
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-    glutInitWindowSize(600, 600);
+    glutInitWindowSize(1000, 1000);
     glutCreateWindow("Mesh Viewer"); /* Create window with given title */
-    glViewport(0, 0, 800, 800);
+    glViewport(0, 0, 10000, 10000);
 
     glutDisplayFunc(display); /* Set-up callback functions */
     glutReshapeFunc(reshape);

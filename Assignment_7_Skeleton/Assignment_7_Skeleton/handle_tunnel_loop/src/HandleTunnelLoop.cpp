@@ -82,20 +82,25 @@ void CHandleTunnelLoop::_extract_interior_volume()
 {
     int vid = 1;
 	std::map<int, double> m;
+	std::vector < std::pair<int, double>> m2;
 	idx_verts.push_back(NULL);
     for (auto pV : m_boundary_vertices)
     {
         pV->idx() = vid++;
 		idx_verts.push_back(pV);
 		graph.push_back(m);
+		adj.push_back(m2);
     }
 	graph.push_back(m);
+	adj.push_back(m2);
 	for (auto pE : m_boundary_edges)
 	{
 		M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
 		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
 		graph[pV->idx()][pW->idx()] = (pW->point() - pV->point()).norm();
 		graph[pW->idx()][pV->idx()] = (pV->point() - pW->point()).norm();
+		adj[pV->idx()].push_back(std::make_pair(pW->idx(), (pW->point() - pV->point()).norm()));
+		adj[pW->idx()].push_back(std::make_pair(pV->idx(), (pV->point() - pW->point()).norm()));
 	}
 
     for (M::VertexIterator viter(m_pMesh); !viter.end(); viter++)
@@ -577,10 +582,13 @@ void CHandleTunnelLoop::_mark_loop(M::CEdge* pE)
 	}
 	std::cout << "====================== started with " << loop_edges.size() << " edges =================\n";
 	prune();
+	std::vector<M::CEdge*> old_cycle;
 	for (auto pE : loop_edges)
 	{
+		old_cycle.push_back(pE);
 		pE->sharp() = false;
 	}
+	before_edges.push_back(old_cycle);
 	shorten();
 };
 
@@ -690,6 +698,7 @@ void CHandleTunnelLoop::prune()
 
 void CHandleTunnelLoop::shorten()
 {
+	clock_t start = clock();
 	bool cont = true;
 
 	/*bool isContinue = false;
@@ -762,7 +771,8 @@ void CHandleTunnelLoop::shorten()
 	std::cout << "there are now " << loop_edges.size() <<" edges left\n";
 	std::cout << "there are  " << loop_vertices.size() << " vertices\n";
 	_shorten();
-
+	clock_t end = clock();
+	std::cout << "shorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
 }
 
 void CHandleTunnelLoop::_shorten()
@@ -772,7 +782,7 @@ void CHandleTunnelLoop::_shorten()
 	std::vector<int> search_verts;
 	old_dist = DBL_MAX;
 	new_dist = 0;
-	while (new_dist == 0 || new_loop.size() <= 3)
+	while (new_dist == 0 /*|| new_loop.size() <= num_vertices*/)
 	{
 		std::cout << "retry==================================\n";
 		search_verts.clear();
@@ -911,7 +921,8 @@ void CHandleTunnelLoop::_shorten()
 		//		}
 		//	}
 		//}
-		if (new_loop.size() > 3)
+		std::cout << "new loop has size: " << new_loop.size() << " while we started with " << num_vertices << " vertices\n";
+		if (new_loop.size() > num_vertices)
 		{
 			for (auto pE : m_boundary_edges)
 			{
@@ -1129,7 +1140,7 @@ int CHandleTunnelLoop::minDistance(std::vector<double> dist, std::vector<bool> s
 	return min_index;
 }
 
-std::vector<int> CHandleTunnelLoop::dijkstra(int src, int dest)
+std::vector<int> CHandleTunnelLoop::dijkstra2(int src, int dest)
 {
 	// The output array. dist[i] 
 	// will hold the shortest 
@@ -1212,6 +1223,82 @@ std::vector<int> CHandleTunnelLoop::dijkstra(int src, int dest)
 	return new_verts;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+std::vector<int> CHandleTunnelLoop::dijkstra(int s, int t)
+{
+	std::vector<double> d;
+	std::vector<int> p;
+	int n = adj.size();
+	d.assign(n, 10000000.0);
+	p.assign(n, -1);
+
+	d[s] = 0;
+	std::set<std::pair<double, int>> q;
+	q.insert({ 0.0, s });
+	while (!q.empty()) {
+		int v = q.begin()->second;
+		if (v == t)
+		{
+			break;
+		}
+		q.erase(q.begin());
+
+		for (auto edge : adj[v]) {
+			int to = edge.first;
+			double len = edge.second;
+
+			if (d[v] + len < d[to]) 
+			{
+				q.erase({ d[to], to });
+				d[to] = d[v] + len;
+				p[to] = v;
+				q.insert({ d[to], to });
+			}
+		}
+	}
+	new_dist += d[t];
+	// print the constructed 
+	// distance array 
+	int loc = t;
+	std::vector<int> new_verts;
+	while (loc != s)
+	{
+		loc = p[loc];
+		new_verts.insert(new_verts.begin(), loc);
+	}
+	std::cout << "new_verts had " << new_verts.size() << "vertices\n";
+	new_loop.insert(new_loop.end(), new_verts.begin(), new_verts.end());
+	return new_verts;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void CHandleTunnelLoop::display()
 {
 	for (auto pE : m_boundary_edges)
@@ -1219,6 +1306,19 @@ void CHandleTunnelLoop::display()
 		pE->sharp() = false;
 	}
 	for (auto pE : final_edges)
+	{
+		pE->sharp() = true;
+	}
+}
+void CHandleTunnelLoop::display_before(int which)
+{
+	which = which % before_edges.size();
+	std::cout << "displaying " << which << "\n";
+	for (auto pE : m_boundary_edges)
+	{
+		pE->sharp() = false;
+	}
+	for (auto pE : before_edges[which])
 	{
 		pE->sharp() = true;
 	}
