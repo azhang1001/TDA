@@ -140,7 +140,7 @@ void draw_halffaces(std::vector<CMyTMesh::CDart*>& darts, GLenum mode)
 void draw_sharp_edges(CMyTMesh* pMesh)
 {
     glDisable(GL_LIGHTING);
-    glLineWidth(3.0);
+    glLineWidth(7.0);
     glBegin(GL_LINES);
 
     for (CMyTMesh::EdgeIterator eiter(pMesh); !eiter.end(); eiter++)
@@ -197,7 +197,7 @@ void draw_boundary_surface()
 void draw_boundary_sharp_edges()
 {
     glDisable(GL_LIGHTING);
-    glLineWidth(3.0);
+    glLineWidth(7.0);
     glBegin(GL_LINES);
 
     for (auto pF : boundary_surface)
@@ -398,13 +398,29 @@ void keyBoard(unsigned char key, int x, int y)
 			handler.shorten();
 			break;
 		case 'D':
-			handler.display();
+			handler.display_all_after();
+			break;
+		case 'd':
+			handler.display_all_before();
 			break;
 		case 'B':
-			std::cout << "which was " << which << "\n";
 			handler.display_before(which);
-			which = which + 1;
-			std::cout << "which is " << which << "\n";
+			break;
+		case 'A':
+			handler.display_after(which);
+			break;
+		case 'N':
+			which += 1;
+			std::cout << "displaying " << which << "\n";
+			break;
+		case 'W':
+			handler.display_all_before();
+			handler.write_m("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_before_loops.txt");
+			handler.display_all_after();
+			handler.write_m("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_after_loops.txt");
+			break;
+		case 'O':
+			handler.show_original();
 			break;
         case '?':
             help();

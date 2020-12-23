@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <algorithm>
+#include <fstream>
 
 #include "MyTMesh.h"
 #include "MyMesh.h"
@@ -44,9 +45,18 @@ class CHandleTunnelLoop
 
 	void shorten();
 
-	void display();
+	void display_all_before();
+	
+	void display_all_after();
 
 	void display_before(int which);
+
+	void display_after(int which);
+
+	void show_original();
+
+	void show_starting();
+
 
   protected:
 	
@@ -92,8 +102,11 @@ class CHandleTunnelLoop
 	std::vector<int> new_loop;
 	std::vector<M::CEdge*> loop_edges;
 
-	std::vector<M::CEdge*> final_edges;
+	std::vector<std::vector<M::CEdge*>> final_edges;
 	std::vector<std::vector<M::CEdge*>> before_edges;
+	std::vector<int> before_edges_search_size;
+	std::vector<M::CEdge*> handletunnel_edges;
+	std::vector<M::CEdge*> search_start_edges;
 
 	//double graph[V][V];
 	std::vector<std::map<int, double>> graph;
@@ -107,7 +120,7 @@ class CHandleTunnelLoop
 	std::vector<M::CEdge*> idx_edges;
 	std::set<int> inSet;
 
-
+	
 	int time = 0;
 	
 };
