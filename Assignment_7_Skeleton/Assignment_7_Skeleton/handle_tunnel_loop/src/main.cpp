@@ -164,14 +164,14 @@ void draw_sharp_edges(CMyTMesh* pMesh)
         glVertex3d(p2[0], p2[1], p2[2]);
     }
     glEnd();
-    glLineWidth(1.0);
+    glLineWidth(0.5);
     glEnable(GL_LIGHTING);
 }
 
 void draw_boundary_surface() 
 {
     glEnable(GL_LIGHTING);
-    glLineWidth(1.0);
+    glLineWidth(0.5);
     glColor3f(229.0 / 255.0, 162.0 / 255.0, 141.0 / 255.0);
 
     for (auto pF : boundary_surface)
@@ -221,7 +221,7 @@ void draw_boundary_sharp_edges()
     }
 
     glEnd();
-    glLineWidth(1.0);
+    glLineWidth(0.5);
     glEnable(GL_LIGHTING);
 }
 
@@ -288,7 +288,7 @@ void reshape(int w, int h)
     // magic imageing commands
     gluPerspective(40.0, /* field of view in degrees */
                    ar,   /* aspect ratio */
-                   1.0,  /* Z near */
+                   0.01,  /* Z near */
                    100.0 /* Z far */);
 
     glMatrixMode(GL_MODELVIEW);
@@ -419,8 +419,17 @@ void keyBoard(unsigned char key, int x, int y)
 			handler.display_all_after();
 			handler.write_m("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_after_loops.txt");
 			break;
+		case 'E':
+			handler.write_after_obj("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_after_loops.obj");
+			break;
+		case 'R':
+			handler.write_before_obj("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_before_loops.obj");
+			break;
 		case 'O':
 			handler.show_original();
+			break;
+		case 'Q':
+			handler.show_starting();
 			break;
         case '?':
             help();

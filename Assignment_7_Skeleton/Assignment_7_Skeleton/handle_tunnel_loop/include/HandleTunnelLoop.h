@@ -38,6 +38,8 @@ class CHandleTunnelLoop
     std::set<M::CEdge*>& boundary_edges() { return m_boundary_edges; };
 
     void write_m(const std::string& output);
+	void write_after_obj(const std::string& output);
+	void write_before_obj(const std::string& output);
     
     void exact_boundary(S& surface);
 
@@ -81,6 +83,8 @@ class CHandleTunnelLoop
 	std::vector<int> CHandleTunnelLoop::dijkstra2(int src, int dest);
 	std::vector<int> CHandleTunnelLoop::dijkstra(int s, int t);
     
+	void remove_dup(std::vector<int>& v);
+
   protected:
     M* m_pMesh;
 
@@ -107,6 +111,8 @@ class CHandleTunnelLoop
 	std::vector<int> before_edges_search_size;
 	std::vector<M::CEdge*> handletunnel_edges;
 	std::vector<M::CEdge*> search_start_edges;
+	std::vector<std::vector<int>> final_vertices;
+	std::vector<std::vector<int>> before_vertices;
 
 	//double graph[V][V];
 	std::vector<std::map<int, double>> graph;
@@ -117,6 +123,7 @@ class CHandleTunnelLoop
 
 	std::vector<bool> in;//CHANGES HERE==============================================================================================================
 	std::vector<M::CVertex*> idx_verts;
+	std::vector<M::CVertex*> idx_all_verts;
 	std::vector<M::CEdge*> idx_edges;
 	std::set<int> inSet;
 

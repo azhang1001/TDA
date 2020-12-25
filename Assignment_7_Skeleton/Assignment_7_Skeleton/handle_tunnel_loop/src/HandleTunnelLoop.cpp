@@ -88,6 +88,7 @@ namespace DartLib
 		{
 			pV->idx() = vid++;
 			idx_verts.push_back(pV);
+			idx_all_verts.push_back(pV);
 			graph.push_back(m);
 			adj.push_back(m2);
 		}
@@ -110,6 +111,8 @@ namespace DartLib
 				continue;
 
 			pV->idx() = vid++;
+			idx_all_verts.push_back(pV);
+			adj.push_back(m2);
 			idx_verts.push_back(pV);
 			m_inner_vertices.insert(pV);
 		}
@@ -131,6 +134,10 @@ namespace DartLib
 			pE->idx() = eid++;
 			idx_edges.push_back(pE);
 			m_inner_edges.insert(pE);
+			M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
+			M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+			adj[pV->idx()].push_back(std::make_pair(pW->idx(), (pW->point() - pV->point()).norm()));
+			adj[pW->idx()].push_back(std::make_pair(pV->idx(), (pV->point() - pW->point()).norm()));
 		}
 
 		int fid = 1;
@@ -687,6 +694,103 @@ namespace DartLib
 		_os.close();
 	}
 
+	void CHandleTunnelLoop::write_after_obj(const std::string& output)
+	{
+		std::fstream _os(output, std::fstream::out);
+
+		if (_os.fail())
+		{
+			fprintf(stderr, "Error is opening file %s\n", output);
+			return;
+		}
+
+		//M::CBoundary boundary(m_pMesh);
+		//const auto& surface = boundary.boundary_surface();
+
+		/*std::set<M::CVertex*> vSet;
+		for (M::FaceIterator fiter(m_pMesh); !fiter.end(); fiter++)
+		{
+			M::CFace* pF = *fiter;
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				vSet.insert(pV);
+			}
+		}*/
+		for (auto pV : idx_all_verts)
+		{
+			CPoint& p = pV->point();
+			_os << "v " << p[0] << " " << p[1] << " " << p[2] << "\n";
+		}
+		for (M::FaceIterator fiter(m_pMesh); !fiter.end(); fiter++)
+		{
+			M::CFace* pF = *fiter;
+			_os << "f";
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				_os << " " << pV->idx();
+			}
+			_os << "\n";
+		}
+		for (auto final_v : final_vertices)
+		{
+			int v = final_v[0];
+			for (int i = 2; i < final_v.size(); i++)
+			{
+				_os << "f " << v << " " << final_v[i-1] << " " << final_v[i] << "\n";
+			}
+		}
+	}
+
+	void CHandleTunnelLoop::write_before_obj(const std::string& output)
+	{
+		std::fstream _os(output, std::fstream::out);
+
+		if (_os.fail())
+		{
+			fprintf(stderr, "Error is opening file %s\n", output);
+			return;
+		}
+
+		M::CBoundary boundary(m_pMesh);
+		const auto& surface = boundary.boundary_surface();
+
+		std::set<M::CVertex*> vSet;
+		for (auto pF : surface)
+		{
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				vSet.insert(pV);
+			}
+		}
+		for (auto pV : vSet)
+		{
+			CPoint& p = pV->point();
+			_os << "v " << p[0] << " " << p[1] << " " << p[2] << "\n";
+		}
+		for (auto pF : surface)
+		{
+			_os << "f";
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				_os << " " << pV->idx();
+			}
+			_os << "\n";
+		}
+		for (auto before_v : before_vertices)
+		{
+			int v = before_v[0];
+			for (int i = 2; i < before_v.size(); i++)
+			{
+				_os << "f " << v << " " << before_v[i - 1] << " " << before_v[i] << "\n";
+			}
+		}
+	}
+
+
 	void CHandleTunnelLoop::exact_boundary(S& surface) 
 	{
 		M::CBoundary boundary(m_pMesh);
@@ -799,6 +903,12 @@ namespace DartLib
 
 		std::cout << "there are now " << loop_edges.size() <<" edges left\n";
 		std::cout << "there are  " << loop_vertices.size() << " vertices\n";
+		std::vector<int> before_v;
+		for (auto i : loop_vertices)
+		{
+			before_v.push_back(i->idx());
+		}
+		before_vertices.push_back(before_v);
 		_shorten();
 		clock_t end = clock();
 		std::cout << "shorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
@@ -808,13 +918,13 @@ namespace DartLib
 	{
 		std::vector<M::CVertex*> old_loop_vertices = loop_vertices;
 		int start_vertices = 2;
-		start_vertices += loop_vertices.size() / 50;
+		start_vertices += loop_vertices.size() / 3;
 		std::vector<int> search_verts;
 		old_dist = DBL_MAX;
 		new_dist = 0;
 		int num_vertices = start_vertices;
 		before_edges_search_size.push_back(start_vertices + 1);
-		while (new_dist == 0 || new_loop.size() < 4 || (new_loop.size() < num_vertices && num_vertices <= 6))
+		while (true/*new_dist == 0 || new_loop.size() < 4 || (new_loop.size() < num_vertices && num_vertices <= 6)*/)
 		{
 			start_vertices += 1;
 			num_vertices = start_vertices;
@@ -832,6 +942,7 @@ namespace DartLib
 					new_loop.push_back(vertex->idx());
 				}
 				std::vector<M::CEdge*> f_edges;
+				
 				for (auto pE : m_boundary_edges)
 				{
 					int pV = m_pMesh->edge_vertex(pE, 0)->idx();
@@ -849,6 +960,7 @@ namespace DartLib
 						}
 					}
 				}
+				final_vertices.push_back(new_loop);
 				final_edges.push_back(f_edges);
 				break;
 			}
@@ -885,9 +997,9 @@ namespace DartLib
 
 			while (new_loop.size() > num_vertices)
 			{
-				if (num_vertices >= new_loop.size() / 2 && num_vertices >= 8)
+				if (num_vertices >= 9)
 				{
-					num_vertices /= 2;
+					num_vertices /= 3;
 				}
 				search_verts.clear();
 				old_dist = new_dist;
@@ -920,7 +1032,7 @@ namespace DartLib
 			std::cout << "final distance was " << new_dist << "\n";
 			std::cout << "new loop has size: " << new_loop.size() << " while we started with " << num_vertices << " vertices\n";
 
-			
+			remove_dup(new_loop);
 			if (new_loop.size() > num_vertices && new_loop.size() >= 4)
 			{
 				std::vector<M::CEdge*> f_edges;
@@ -941,6 +1053,7 @@ namespace DartLib
 						}
 					}
 				}
+				final_vertices.push_back(new_loop);
 				final_edges.push_back(f_edges);
 				break;
 			}
@@ -1271,18 +1384,16 @@ namespace DartLib
 		return new_verts;
 	}
 
+	void CHandleTunnelLoop::remove_dup(std::vector<int>& v)
+	{
+		auto end = v.end();
+		for (auto it = v.begin(); it != end; ++it) 
+		{
+			end = std::remove(it + 1, end, *it);
+		}
 
-
-
-
-
-
-
-
-
-
-
-
+		v.erase(end, v.end());
+	}
 
 
 
@@ -1322,6 +1433,7 @@ namespace DartLib
 	{
 		which = which % before_edges.size();
 		std::cout << "This loop was shortened starting with " << before_edges_search_size[which] << "\n";
+		std::cout << before_edges[which].size() << " started with this many edges\n";
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
@@ -1334,6 +1446,7 @@ namespace DartLib
 	void CHandleTunnelLoop::display_after(int which)
 	{
 		which = which % final_edges.size();
+		std::cout << final_edges[which].size() << " ended with this many edges\n";
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
