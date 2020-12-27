@@ -619,7 +619,7 @@ namespace DartLib
 		}
 		else
 		{
-			std::cout << "this is right";
+			std::cout << "this is right\n";
 			pE->generator() = true;
 		}
 		std::cout << "====================== started with " << loop_edges.size() << " edges =================\n";
@@ -627,8 +627,6 @@ namespace DartLib
 		std::vector<M::CEdge*> old_cycle;
 		for (auto pE : loop_edges)
 		{
-			int pVi = m_pMesh->edge_vertex(pE, 0)->idx();
-			int pWi = m_pMesh->edge_vertex(pE, 1)->idx();
 			old_cycle.push_back(pE);
 			pE->sharp() = false;
 
@@ -722,9 +720,11 @@ namespace DartLib
 			CPoint& p = pV->point();
 			_os << "v " << p[0] << " " << p[1] << " " << p[2] << "\n";
 		}
-		for (M::FaceIterator fiter(m_pMesh); !fiter.end(); fiter++)
+		/*for (M::FaceIterator fiter(m_pMesh); !fiter.end(); fiter++)
 		{
-			M::CFace* pF = *fiter;
+			M::CFace* pF = *fiter;*/
+		/*for (auto pF: m_boundary_faces)
+		{
 			_os << "f";
 			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
 			{
@@ -732,7 +732,7 @@ namespace DartLib
 				_os << " " << pV->idx();
 			}
 			_os << "\n";
-		}
+		}*/
 		for (auto final_v : final_vertices)
 		{
 			int v = final_v[0];
@@ -770,16 +770,6 @@ namespace DartLib
 			CPoint& p = pV->point();
 			_os << "v " << p[0] << " " << p[1] << " " << p[2] << "\n";
 		}
-		for (auto pF : surface)
-		{
-			_os << "f";
-			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
-			{
-				M::CVertex* pV = *fviter;
-				_os << " " << pV->idx();
-			}
-			_os << "\n";
-		}
 		for (auto before_v : before_vertices)
 		{
 			int v = before_v[0];
@@ -790,6 +780,49 @@ namespace DartLib
 		}
 	}
 
+	void CHandleTunnelLoop::write_before_ply(const std::string& output)
+	{
+		std::fstream _os(output, std::fstream::out);
+
+		if (_os.fail())
+		{
+			fprintf(stderr, "Error is opening file %s\n", output);
+			return;
+		}
+
+		M::CBoundary boundary(m_pMesh);
+		const auto& surface = boundary.boundary_surface();
+
+		std::set<M::CVertex*> vSet;
+		for (auto pF : surface)
+		{
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				vSet.insert(pV);
+			}
+		}
+		_os << "ply\nformat ascii 1.0\n";
+		_os << "element vertex " << vSet.size() << "\n";
+		_os << "property float x\nproperty float y\nproperty float z\n";
+		_os << "element face " << before_vertices.size() << "\n";
+		_os << "property list uchar int vertex_index\nend_header\n";
+		for (auto pV : vSet)
+		{
+			CPoint& p = pV->point();
+			_os << p[0] << " " << p[1] << " " << p[2] << "\n";
+		}
+
+		for (auto before_v : before_vertices)
+		{
+			_os << before_v.size();
+			for (int i : before_v)
+			{
+				_os << " " << i - 1;
+			}
+			_os << "\n";
+		}
+	}
 
 	void CHandleTunnelLoop::exact_boundary(S& surface) 
 	{
@@ -864,7 +897,7 @@ namespace DartLib
 		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
 		std::cout << "started with " << loop_edges.size() << " edges left\n";
 		loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE), loop_edges.end());
-
+		loop_vertices.push_back(pW);
 		while (pV != pW)
 		{
 			//if (!cont)
@@ -899,6 +932,7 @@ namespace DartLib
 			
 			}
 		}
+		
 
 
 		std::cout << "there are now " << loop_edges.size() <<" edges left\n";
@@ -916,15 +950,14 @@ namespace DartLib
 
 	void CHandleTunnelLoop::_shorten()
 	{
-		std::vector<M::CVertex*> old_loop_vertices = loop_vertices;
-		int start_vertices = 2;
-		start_vertices += loop_vertices.size() / 3;
+		/*std::vector<M::CVertex*> old_loop_vertices = loop_vertices;
+		int start_vertices = 3 * loop_vertices.size() / 4 + 1;
 		std::vector<int> search_verts;
 		old_dist = DBL_MAX;
 		new_dist = 0;
 		int num_vertices = start_vertices;
 		before_edges_search_size.push_back(start_vertices + 1);
-		while (true/*new_dist == 0 || new_loop.size() < 4 || (new_loop.size() < num_vertices && num_vertices <= 6)*/)
+		while (true new_dist == 0 || new_loop.size() < 4 || (new_loop.size() < num_vertices && num_vertices <= 6))
 		{
 			start_vertices += 1;
 			num_vertices = start_vertices;
@@ -960,33 +993,31 @@ namespace DartLib
 						}
 					}
 				}
+				for (auto pE : m_inner_edges)
+				{
+					int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+					int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+					std::vector<int>::iterator i1 = std::find(new_loop.begin(), new_loop.end(), pV);
+					std::vector<int>::iterator i2 = std::find(new_loop.begin(), new_loop.end(), pW);
+					if (i1 != new_loop.end() && i2 != new_loop.end())
+					{
+						if (std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1
+							|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == 1
+							|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == new_loop.size() - 1
+							|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1 * new_loop.size() + 1)
+						{
+							f_edges.push_back(pE);
+						}
+					}
+				}
 				final_vertices.push_back(new_loop);
 				final_edges.push_back(f_edges);
 				break;
 			}
-			if (old_loop_vertices.size() > 10)
+
+			for (int i = 0; i < num_vertices; i++)
 			{
-				search_verts.push_back(old_loop_vertices[0]->idx());
-				search_verts.push_back(old_loop_vertices[1]->idx());
-				for (M::VertexEdgeIterator veiter(m_pMesh, old_loop_vertices[0]); !veiter.end(); ++veiter)
-				{
-					M::CEdge* pE2 = *veiter;
-					if (old_loop_vertices[1] == m_pMesh->edge_vertex(pE2, 0) || old_loop_vertices[1] == m_pMesh->edge_vertex(pE2, 0))
-					{
-						search_start_edges.push_back(pE2);
-					}
-				}
-				for (int i = 1; i < num_vertices - 1; i++)
-				{
-					search_verts.push_back(old_loop_vertices[i * old_loop_vertices.size() / (num_vertices - 1)]->idx());
-				}
-			}
-			else
-			{
-				for (int i = 0; i < num_vertices; i++)
-				{
-					search_verts.push_back(old_loop_vertices[i * old_loop_vertices.size() / num_vertices]->idx());
-				}
+				search_verts.push_back(old_loop_vertices[(i * old_loop_vertices.size()) / num_vertices]->idx());
 			}
 			for (int i = 0; i < num_vertices; i++)
 			{
@@ -997,16 +1028,16 @@ namespace DartLib
 
 			while (new_loop.size() > num_vertices)
 			{
-				if (num_vertices >= 9)
+				if (num_vertices >= 5)
 				{
-					num_vertices /= 3;
+					num_vertices  = (num_vertices * 4) / 5;
 				}
 				search_verts.clear();
 				old_dist = new_dist;
 				new_dist = 0;
 				for (int i = 0; i < num_vertices; i++)
 				{
-					search_verts.push_back(new_loop[(i * new_loop.size() / num_vertices + new_loop.size() / num_vertices / 2) % new_loop.size()]);
+					search_verts.push_back(new_loop[(((i + 1/2)* new_loop.size()) / num_vertices) % new_loop.size()]);
 				}
 				new_loop.clear();
 				for (int i = 0; i < num_vertices; i++)
@@ -1015,14 +1046,8 @@ namespace DartLib
 				}
 				if (old_dist <= new_dist || new_loop.size() <= num_vertices )
 				{
-					if (num_vertices >= loop_vertices.size() / 100 && num_vertices > 5 || new_loop.size() <= num_vertices)
-					{
-						num_vertices -= 1;
-					}
-					else
-					{
-						break;
-					}
+					break;
+					
 				}
 				std::cout << "old length is " << old_dist << " while the new distance is, " << new_dist << "\n";
 
@@ -1030,13 +1055,31 @@ namespace DartLib
 
 			}
 			std::cout << "final distance was " << new_dist << "\n";
+			
+			remove_dup(new_loop);
 			std::cout << "new loop has size: " << new_loop.size() << " while we started with " << num_vertices << " vertices\n";
 
-			remove_dup(new_loop);
 			if (new_loop.size() > num_vertices && new_loop.size() >= 4)
 			{
 				std::vector<M::CEdge*> f_edges;
 				for (auto pE : m_boundary_edges)
+				{
+					int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+					int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+					std::vector<int>::iterator i1 = std::find(new_loop.begin(), new_loop.end(), pV);
+					std::vector<int>::iterator i2 = std::find(new_loop.begin(), new_loop.end(), pW);
+					if (i1 != new_loop.end() && i2 != new_loop.end())
+					{
+						if (std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1
+							|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == 1
+							|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == new_loop.size() - 1
+							|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1 * new_loop.size() + 1)
+						{
+							f_edges.push_back(pE);
+						}
+					}
+				}
+				for (auto pE : m_inner_edges)
 				{
 					int pV = m_pMesh->edge_vertex(pE, 0)->idx();
 					int pW = m_pMesh->edge_vertex(pE, 1)->idx();
@@ -1064,7 +1107,98 @@ namespace DartLib
 			//std::cout << "the first point was " << m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 0)->point().print() << "\n";
 			//std::cout << "the second point is " << m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->point().print() << "\n";
 		
+		}*/
+		int num_vertices =  (1 + loop_vertices.size()) / 2;
+		if (loop_vertices.size() > 300)
+		{
+			num_vertices = 3;
 		}
+		old_dist = DBL_MAX;
+		new_dist = 0;
+		new_loop.clear();
+		std::vector<int> search_verts;
+		int shift = 0;
+		before_edges_search_size.push_back(num_vertices);
+		for (auto vertex : loop_vertices)
+		{
+			new_loop.push_back(vertex->idx());
+		}
+
+		while (num_vertices >= 3)
+		{
+			bool dec = true;
+			shift = 0;
+			std::vector<int> old_loop = new_loop;
+			while (shift < new_loop.size())
+			{						
+				old_dist = new_dist;
+				new_dist = 0;		
+				search_verts.clear();
+				for (int i = 0; i < num_vertices; i++)
+				{					
+					search_verts.push_back(new_loop[((i * new_loop.size()) / num_vertices + shift) % new_loop.size()]);
+				}					
+				new_loop.clear();	
+				for (int i = 0; i < num_vertices; i++)
+				{					
+					std::vector<int> path = dijkstra(search_verts[i % num_vertices], search_verts[(i + 1) % num_vertices]);
+				}					
+				shift += 1;			
+				if (old_dist - new_dist > 0.0001)
+				{					
+					//dec = false;
+					break;
+				}
+				else
+				{
+					new_loop = old_loop;
+				}
+			}
+			if (dec)
+			{
+				num_vertices = std::min(int(new_loop.size()), num_vertices - 1);
+			}
+
+		}
+		std::vector<M::CEdge*> f_edges;
+		for (auto pE : m_boundary_edges)
+		{
+			int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+			int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+			std::vector<int>::iterator i1 = std::find(new_loop.begin(), new_loop.end(), pV);
+			std::vector<int>::iterator i2 = std::find(new_loop.begin(), new_loop.end(), pW);
+			if (i1 != new_loop.end() && i2 != new_loop.end())
+			{
+				if (std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1
+					|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == 1
+					|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == new_loop.size() - 1
+					|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1 * new_loop.size() + 1)
+				{
+					f_edges.push_back(pE);
+				}
+			}
+		}
+		for (auto pE : m_inner_edges)
+		{
+			int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+			int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+			std::vector<int>::iterator i1 = std::find(new_loop.begin(), new_loop.end(), pV);
+			std::vector<int>::iterator i2 = std::find(new_loop.begin(), new_loop.end(), pW);
+			if (i1 != new_loop.end() && i2 != new_loop.end())
+			{
+				if (std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1
+					|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == 1
+					|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == new_loop.size() - 1
+					|| std::distance(new_loop.begin(), i1) - std::distance(new_loop.begin(), i2) == -1 * new_loop.size() + 1)
+				{
+					f_edges.push_back(pE);
+				}
+			}
+		}
+		final_vertices.push_back(new_loop);
+		final_edges.push_back(f_edges);
+
+
 	}
 	bool CHandleTunnelLoop::_shrink_triangles()
 	{
@@ -1379,7 +1513,6 @@ namespace DartLib
 			loc = p[loc];
 			new_verts.insert(new_verts.begin(), loc);
 		}
-		std::cout << "new_verts had " << new_verts.size() << "vertices\n";
 		new_loop.insert(new_loop.end(), new_verts.begin(), new_verts.end());
 		return new_verts;
 	}

@@ -423,7 +423,7 @@ void keyBoard(unsigned char key, int x, int y)
 			handler.write_after_obj("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_after_loops.obj");
 			break;
 		case 'R':
-			handler.write_before_obj("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_before_loops.obj");
+			handler.write_before_ply("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_before_loops.ply");
 			break;
 		case 'O':
 			handler.show_original();

@@ -40,6 +40,7 @@ class CHandleTunnelLoop
     void write_m(const std::string& output);
 	void write_after_obj(const std::string& output);
 	void write_before_obj(const std::string& output);
+	void write_before_ply(const std::string& output);
     
     void exact_boundary(S& surface);
 
