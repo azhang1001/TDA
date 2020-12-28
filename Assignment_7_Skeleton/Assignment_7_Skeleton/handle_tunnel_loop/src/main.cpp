@@ -384,7 +384,7 @@ void keyBoard(unsigned char key, int x, int y)
             boundary_edges = &handler.boundary_edges();
 
             handler.exact_boundary(boundary_mesh);
-            
+        
             if (!g_output.empty())
                 handler.write_m(g_output);
 
@@ -424,6 +424,9 @@ void keyBoard(unsigned char key, int x, int y)
 			break;
 		case 'R':
 			handler.write_before_ply("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_before_loops.ply");
+			break;
+		case 'T':
+			handler.write_good_after_obj("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_good_after_loops.obj");
 			break;
 		case 'O':
 			handler.show_original();

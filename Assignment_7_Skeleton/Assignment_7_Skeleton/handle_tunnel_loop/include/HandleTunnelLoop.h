@@ -10,6 +10,7 @@
 #include <map>
 #include <algorithm>
 #include <fstream>
+#include <numeric>
 
 #include "MyTMesh.h"
 #include "MyMesh.h"
@@ -39,6 +40,7 @@ class CHandleTunnelLoop
 
     void write_m(const std::string& output);
 	void write_after_obj(const std::string& output);
+	void write_good_after_obj(const std::string& output);
 	void write_before_obj(const std::string& output);
 	void write_before_ply(const std::string& output);
     
@@ -59,6 +61,10 @@ class CHandleTunnelLoop
 	void show_original();
 
 	void show_starting();
+
+
+	int gcd(int a, int b);
+	int lcm(int a, int b);
 
 
   protected:
@@ -108,11 +114,13 @@ class CHandleTunnelLoop
 	std::vector<M::CEdge*> loop_edges;
 
 	std::vector<std::vector<M::CEdge*>> final_edges;
+	std::vector<std::vector<M::CEdge*>> good_final_edges;
 	std::vector<std::vector<M::CEdge*>> before_edges;
 	std::vector<int> before_edges_search_size;
 	std::vector<M::CEdge*> handletunnel_edges;
 	std::vector<M::CEdge*> search_start_edges;
 	std::vector<std::vector<int>> final_vertices;
+	std::vector<std::vector<int>> good_final_vertices;
 	std::vector<std::vector<int>> before_vertices;
 
 	//double graph[V][V];
@@ -127,6 +135,7 @@ class CHandleTunnelLoop
 	std::vector<M::CVertex*> idx_all_verts;
 	std::vector<M::CEdge*> idx_edges;
 	std::set<int> inSet;
+	int fails = 0;
 
 	
 	int time = 0;

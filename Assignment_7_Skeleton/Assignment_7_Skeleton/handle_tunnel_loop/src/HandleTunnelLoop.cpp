@@ -742,6 +742,56 @@ namespace DartLib
 			}
 		}
 	}
+	void CHandleTunnelLoop::write_good_after_obj(const std::string& output)
+	{
+		std::fstream _os(output, std::fstream::out);
+
+		if (_os.fail())
+		{
+			fprintf(stderr, "Error is opening file %s\n", output);
+			return;
+		}
+
+		//M::CBoundary boundary(m_pMesh);
+		//const auto& surface = boundary.boundary_surface();
+
+		/*std::set<M::CVertex*> vSet;
+		for (M::FaceIterator fiter(m_pMesh); !fiter.end(); fiter++)
+		{
+			M::CFace* pF = *fiter;
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				vSet.insert(pV);
+			}
+		}*/
+		for (auto pV : idx_all_verts)
+		{
+			CPoint& p = pV->point();
+			_os << "v " << p[0] << " " << p[1] << " " << p[2] << "\n";
+		}
+		/*for (M::FaceIterator fiter(m_pMesh); !fiter.end(); fiter++)
+		{
+			M::CFace* pF = *fiter;*/
+			/*for (auto pF: m_boundary_faces)
+			{
+				_os << "f";
+				for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+				{
+					M::CVertex* pV = *fviter;
+					_os << " " << pV->idx();
+				}
+				_os << "\n";
+			}*/
+		for (auto final_v : good_final_vertices)
+		{
+			int v = final_v[0];
+			for (int i = 2; i < final_v.size(); i++)
+			{
+				_os << "f " << v << " " << final_v[i - 1] << " " << final_v[i] << "\n";
+			}
+		}
+	}
 
 	void CHandleTunnelLoop::write_before_obj(const std::string& output)
 	{
@@ -1108,31 +1158,82 @@ namespace DartLib
 			//std::cout << "the second point is " << m_pMesh->edge_vertex(final_edges[final_edges.size() - 1], 1)->point().print() << "\n";
 		
 		}*/
-		int num_vertices =  (1 + loop_vertices.size()) / 2;
-		if (loop_vertices.size() > 300)
+		int num_vertices;
+		if (loop_vertices.size() > 600)
 		{
-			num_vertices = 3;
+			num_vertices = loop_vertices.size() / 200; //temporary
 		}
-		old_dist = DBL_MAX;
+		else if (loop_vertices.size() > 300)
+		{
+			num_vertices = loop_vertices.size() / 100; //temporary
+		}
+		else if (loop_vertices.size() > 150)
+		{
+			num_vertices = loop_vertices.size() / 50; //temporary
+		}
+		else if (loop_vertices.size() > 100)
+		{
+			num_vertices = loop_vertices.size() / 3;
+		}
+		else if (loop_vertices.size() > 50)
+		{
+			num_vertices = loop_vertices.size() / 2;
+		}
+		else if (loop_vertices.size() > 10)
+		{
+			num_vertices = 2 * loop_vertices.size() / 3;
+		}
+		else
+		{
+			num_vertices = 3 * loop_vertices.size() / 4;
+		}
+
+		old_dist = 0;
+		// find the current distance of the starting loop
+		for (int i = 0; i < loop_vertices.size() - 1; i++)
+		{
+			for (auto p : adj[loop_vertices[i]->idx()])
+			{
+				if (p.first == loop_vertices[i + 1]->idx())
+				{
+					old_dist += p.second;
+					break;
+				}
+			}
+		}
+		for (auto p : adj[loop_vertices[loop_vertices.size() - 1]->idx()])
+		{
+			if (p.first == loop_vertices[0]->idx())
+			{
+				old_dist += p.second;
+				break;
+			}
+		}
 		new_dist = 0;
 		new_loop.clear();
 		std::vector<int> search_verts;
 		int shift = 0;
 		before_edges_search_size.push_back(num_vertices);
+		std::vector<int> starting_loop;
 		for (auto vertex : loop_vertices)
 		{
 			new_loop.push_back(vertex->idx());
+			starting_loop.push_back(vertex->idx());
 		}
-
+		std::vector<int> old_loop = new_loop;
 		while (num_vertices >= 3)
 		{
 			bool dec = true;
 			shift = 0;
-			std::vector<int> old_loop = new_loop;
-			while (shift < new_loop.size())
-			{						
-				old_dist = new_dist;
-				new_dist = 0;		
+			std::vector<double> distances_shift;
+			std::vector<std::vector<int>> loops_list;
+			int best_idx = -1;
+			double best = old_dist;
+			std::cout << "the lcm is " << lcm(new_loop.size(), num_vertices) << "\n";
+			std::cout << "the search amount is " << lcm(new_loop.size(), num_vertices) / num_vertices << "\n";
+			int shift_amount = lcm(new_loop.size(), num_vertices) / num_vertices;
+			while (shift < shift_amount)
+			{
 				search_verts.clear();
 				for (int i = 0; i < num_vertices; i++)
 				{					
@@ -1143,15 +1244,58 @@ namespace DartLib
 				{					
 					std::vector<int> path = dijkstra(search_verts[i % num_vertices], search_verts[(i + 1) % num_vertices]);
 				}					
-				shift += 1;			
-				if (old_dist - new_dist > 0.0001)
-				{					
-					//dec = false;
+				std::vector<int> temp = new_loop;
+				remove_dup(new_loop);
+				if (temp != new_loop)
+				{
+					loops_list.push_back({ 0 });
+					distances_shift.push_back(100000.0);
+					new_dist = 0;
+					new_loop = old_loop;
+					continue;
+				}
+				//std::cout << "last2\n";
+				std::vector<int> ol = old_loop;
+				std::vector<int> nl = new_loop;
+				std::sort(ol.begin(), ol.end());
+				std::sort(nl.begin(), nl.end());
+				//std::cout << "last3\n";
+				loops_list.push_back(new_loop);
+				distances_shift.push_back(new_dist);
+				if (new_dist < best)
+				{
+					best = new_dist;
+					best_idx = shift;
+				}
+				new_dist = 0;
+				new_loop = old_loop;
+				shift += 1;
+				//std::cout << "last4 " << num_vertices <<"\n"; 
+				/*if (old_dist - new_dist >= 0.0 && ol != nl)
+				{
+					old_dist = new_dist;
+					new_dist = 0;
+					if (num_vertices == 3)
+					{
+						dec = false;
+					}
 					break;
 				}
 				else
 				{
+					new_dist = 0;
 					new_loop = old_loop;
+				}*/
+			}
+			if (best < old_dist)
+			{
+				std::cout << "it was here "<< best_idx<< " " << loops_list.size() << " " << distances_shift.size() << "\n";
+				old_loop = loops_list[best_idx];
+				old_dist = distances_shift[best_idx];
+				std::cout << "not here\n";
+				if (num_vertices == 3)
+				{
+					dec = false;
 				}
 			}
 			if (dec)
@@ -1159,6 +1303,12 @@ namespace DartLib
 				num_vertices = std::min(int(new_loop.size()), num_vertices - 1);
 			}
 
+		}
+		if (new_loop.size() <= 3)
+		{
+			new_loop = starting_loop;
+			std::cout << "I have failed you, Anakin, I have failed you.";
+			fails += 1;
 		}
 		std::vector<M::CEdge*> f_edges;
 		for (auto pE : m_boundary_edges)
@@ -1195,8 +1345,16 @@ namespace DartLib
 				}
 			}
 		}
-		final_vertices.push_back(new_loop);
-		final_edges.push_back(f_edges);
+		if (new_loop == starting_loop)
+		{
+			final_vertices.push_back(new_loop);
+			final_edges.push_back(f_edges);
+		}
+		else
+		{
+			good_final_vertices.push_back(new_loop);
+			good_final_edges.push_back(f_edges);
+		}
 
 
 	}
@@ -1529,11 +1687,27 @@ namespace DartLib
 	}
 
 
+	// Recursive function to return gcd of a and b 
+	int CHandleTunnelLoop::gcd(int a, int b)
+	{
+		if (b == 0)
+			return a;
+		return gcd(b, a % b);
+	}
 
+	// Function to return LCM of two numbers 
+	int CHandleTunnelLoop::lcm(int a, int b)
+	{
+		return (a / gcd(a, b)) * b;
+	}
 
 	void CHandleTunnelLoop::display_all_before()
 	{
 		for (auto pE : m_boundary_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto pE : m_inner_edges)
 		{
 			pE->sharp() = false;
 		}
@@ -1549,7 +1723,12 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::display_all_after()
 	{
+		std::cout << "I have failed you " << fails << " times :(\n";
 		for (auto pE : m_boundary_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto pE : m_inner_edges)
 		{
 			pE->sharp() = false;
 		}
@@ -1571,6 +1750,10 @@ namespace DartLib
 		{
 			pE->sharp() = false;
 		}
+		for (auto pE : m_inner_edges)
+		{
+			pE->sharp() = false;
+		}
 		for (auto pE : before_edges[which])
 		{
 			pE->sharp() = true;
@@ -1581,6 +1764,10 @@ namespace DartLib
 		which = which % final_edges.size();
 		std::cout << final_edges[which].size() << " ended with this many edges\n";
 		for (auto pE : m_boundary_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto pE : m_inner_edges)
 		{
 			pE->sharp() = false;
 		}
