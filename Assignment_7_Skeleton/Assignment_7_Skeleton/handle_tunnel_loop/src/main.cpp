@@ -18,6 +18,10 @@
 
 using namespace DartLib;
 
+
+std::vector<int> user_dis;
+std::string inp;
+
 /* window width and height */
 int win_width, win_height;
 int gButton;
@@ -140,7 +144,7 @@ void draw_halffaces(std::vector<CMyTMesh::CDart*>& darts, GLenum mode)
 void draw_sharp_edges(CMyTMesh* pMesh)
 {
     glDisable(GL_LIGHTING);
-    glLineWidth(7.0);
+    glLineWidth(3.0);
     glBegin(GL_LINES);
 
     for (CMyTMesh::EdgeIterator eiter(pMesh); !eiter.end(); eiter++)
@@ -197,7 +201,7 @@ void draw_boundary_surface()
 void draw_boundary_sharp_edges()
 {
     glDisable(GL_LIGHTING);
-    glLineWidth(7.0);
+    glLineWidth(3.0);
     glBegin(GL_LINES);
 
     for (auto pF : boundary_surface)
@@ -327,11 +331,11 @@ void keyBoard(unsigned char key, int x, int y)
     switch (key)
     {
         case '+':
-            d += 0.05;
+            d = std::min(d + 0.05, 1.0);
             mesh.cut(CPlane(n, d));
             break;
         case '-':
-            d -= 0.05;
+			d = std::max(d - 0.05, -1.0);
             mesh.cut(CPlane(n, d));
             break;
         case 'x':
@@ -409,6 +413,9 @@ void keyBoard(unsigned char key, int x, int y)
 		case 'A':
 			handler.display_after(which);
 			break;
+		case 'C':
+			handler.display_before_prune(which);
+			break;
 		case 'N':
 			which += 1;
 			std::cout << "displaying " << which << "\n";
@@ -432,7 +439,18 @@ void keyBoard(unsigned char key, int x, int y)
 			handler.show_original();
 			break;
 		case 'Q':
-			handler.show_starting();
+			handler.show_starting(which);
+			break;
+		case 'M':
+			user_dis.clear();
+			std::cin >> inp;
+			while (inp != "s")
+			{
+				int d = std::stoi(inp);
+				user_dis.push_back(d);
+				std::cin >> inp;
+			}
+			handler.display_loop(user_dis);
 			break;
         case '?':
             help();
@@ -549,6 +567,7 @@ void mouseMove(int x, int y)
 
 int main(int argc, char* argv[])
 {
+
     if (argc < 2)
     {
         printf("Usage: %s mesh_name\n", argv[0]);

@@ -60,7 +60,11 @@ class CHandleTunnelLoop
 
 	void show_original();
 
-	void show_starting();
+	void show_starting(int which);
+
+	void display_before_prune(int which);
+
+	void display_loop(std::vector<int> l);
 
 
 	int gcd(int a, int b);
@@ -90,7 +94,7 @@ class CHandleTunnelLoop
 	std::vector<int> CHandleTunnelLoop::dijkstra2(int src, int dest);
 	std::vector<int> CHandleTunnelLoop::dijkstra(int s, int t);
     
-	void remove_dup(std::vector<int>& v);
+	std::vector<int> remove_dup(std::vector<int> v);
 
   protected:
     M* m_pMesh;
@@ -113,12 +117,15 @@ class CHandleTunnelLoop
 	std::vector<int> new_loop;
 	std::vector<M::CEdge*> loop_edges;
 
+
+	std::vector<std::vector<M::CEdge*>> before_prune_edges;
 	std::vector<std::vector<M::CEdge*>> final_edges;
 	std::vector<std::vector<M::CEdge*>> good_final_edges;
 	std::vector<std::vector<M::CEdge*>> before_edges;
 	std::vector<int> before_edges_search_size;
 	std::vector<M::CEdge*> handletunnel_edges;
 	std::vector<M::CEdge*> search_start_edges;
+	std::vector<std::vector<int>> search_start_verts;
 	std::vector<std::vector<int>> final_vertices;
 	std::vector<std::vector<int>> good_final_vertices;
 	std::vector<std::vector<int>> before_vertices;
@@ -126,6 +133,8 @@ class CHandleTunnelLoop
 	//double graph[V][V];
 	std::vector<std::map<int, double>> graph;
 	std::vector<std::vector<std::pair<int, double>>> adj;
+	std::vector<std::vector<int>> face_exist;
+	std::vector<int> ignore_these;
 
 	double old_dist = DBL_MAX;
 	double new_dist = 0.0;
@@ -136,6 +145,7 @@ class CHandleTunnelLoop
 	std::vector<M::CEdge*> idx_edges;
 	std::set<int> inSet;
 	int fails = 0;
+	int MVERT = 4; //  minimum number of vertices used for searching;
 
 	
 	int time = 0;
