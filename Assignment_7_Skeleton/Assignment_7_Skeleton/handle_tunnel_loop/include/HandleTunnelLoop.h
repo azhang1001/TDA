@@ -49,6 +49,9 @@ class CHandleTunnelLoop
     void prune();
 
 	void shorten();
+	void next_shorten_step();
+	void go_back();
+	void go_forward();
 
 	void display_all_before();
 	
@@ -65,7 +68,8 @@ class CHandleTunnelLoop
 	void display_before_prune(int which);
 
 	void display_loop(std::vector<int> l);
-
+	void display_loop(std::vector<M::CEdge*> l);
+	
 
 	int gcd(int a, int b);
 	int lcm(int a, int b);
@@ -86,7 +90,15 @@ class CHandleTunnelLoop
 
     bool _shrink_triangles();
 
+	void _shorten2();
+
 	void _shorten();
+	double _check_double();
+	bool _shorten_double();
+	double _check_single();
+	void _change_double();
+	void _change_single();
+	void _intersection(std::vector<M::CFace*> v1, std::vector<M::CFace*> v2);
 
     void _prune();
 
@@ -116,6 +128,15 @@ class CHandleTunnelLoop
 	std::vector<M::CVertex*> loop_vertices;
 	std::vector<int> new_loop;
 	std::vector<M::CEdge*> loop_edges;
+	std::vector<M::CEdge*> current_loop_edges;
+	std::vector<M::CEdge*> fall_back;
+	std::vector<M::CFace*> face_intersection;
+	CPoint center_of_mass;
+	M::CVertex* last_step_d1;
+	M::CVertex* last_step_d2;
+	M::CVertex* last_step_s;
+	std::vector<std::pair<M::CFace*, M::CEdge*>> single_to_double;
+	std::vector<std::pair<M::CFace*, std::vector<M::CEdge*>>> double_to_single;
 
 
 	std::vector<std::vector<M::CEdge*>> before_prune_edges;
@@ -129,6 +150,9 @@ class CHandleTunnelLoop
 	std::vector<std::vector<int>> final_vertices;
 	std::vector<std::vector<int>> good_final_vertices;
 	std::vector<std::vector<int>> before_vertices;
+
+	std::vector<std::vector<M::CFace*>> edges_faces;
+
 
 	//double graph[V][V];
 	std::vector<std::map<int, double>> graph;
@@ -148,6 +172,35 @@ class CHandleTunnelLoop
 	int MVERT = 4; //  minimum number of vertices used for searching;
 
 	
+
+
+	//variables for shortening in double and single
+	
+	double best_improve_o = 0.0;
+	M::CFace* best_face_o;
+
+	M::CEdge* best_edge_o1;
+	M::CEdge* best_edge_o2;
+	int idx_best_edge_o1;
+	int idx_best_edge_o2;
+
+	M::CEdge* best_edge_o;
+	int idx_best_edge_o;
+
+
+
+	std::vector<M::CFace*> best_face_os;
+
+	std::vector<M::CEdge*> best_edge_o1s;
+	std::vector<M::CEdge*> best_edge_o2s;
+	std::vector<int> idx_best_edge_o1s;
+	std::vector<int> idx_best_edge_o2s;
+
+	std::vector<M::CEdge*> best_edge_os;
+	std::vector<int> idx_best_edge_os;
+
+
+
 	int time = 0;
 	
 };

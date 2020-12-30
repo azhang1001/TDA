@@ -399,7 +399,13 @@ void keyBoard(unsigned char key, int x, int y)
 			handler.prune();
 			break;
 		case 'S':
-			handler.shorten();
+			handler.next_shorten_step();
+			break;
+		case 'L':
+			handler.go_back();
+			break;
+		case ':':
+			handler.go_forward();
 			break;
 		case 'D':
 			handler.display_all_after();
