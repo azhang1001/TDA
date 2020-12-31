@@ -68,6 +68,7 @@ class CHandleTunnelLoop
 	void display_before_prune(int which);
 
 	void display_loop(std::vector<int> l);
+	void display_loop(std::vector<M::CVertex*> l);
 	void display_loop(std::vector<M::CEdge*> l);
 	
 
@@ -177,6 +178,8 @@ class CHandleTunnelLoop
 	//variables for shortening in double and single
 	
 	double best_improve_o = 0.0;
+	double equal_dist_imp = 0.0;
+
 	M::CFace* best_face_o;
 
 	M::CEdge* best_edge_o1;

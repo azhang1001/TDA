@@ -2089,6 +2089,67 @@ namespace DartLib
 		}
 		std::cout << "loop length is " << d << "\n";
 	}
+	void CHandleTunnelLoop::display_loop(std::vector<M::CVertex*> l)
+	{
+		std::vector<int> loop;
+		for (auto i : l)
+		{
+			loop.push_back(i->idx());
+		}
+		std::cout << "this loop has " << loop.size() << " vertices\n";
+		for (auto pE : m_boundary_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto pE : m_inner_edges)
+		{
+			pE->sharp() = false;
+		}
+		std::vector<M::CEdge*> loop_e;
+		for (auto pE : m_boundary_edges)
+		{
+			int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+			int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+			std::vector<int>::iterator i1 = std::find(loop.begin(), loop.end(), pV);
+			std::vector<int>::iterator i2 = std::find(loop.begin(), loop.end(), pW);
+			if (i1 != loop.end() && i2 != loop.end())
+			{
+				if (std::distance(loop.begin(), i1) - std::distance(loop.begin(), i2) == -1
+					|| std::distance(loop.begin(), i1) - std::distance(loop.begin(), i2) == 1
+					|| std::distance(loop.begin(), i1) - std::distance(loop.begin(), i2) == loop.size() - 1
+					|| std::distance(loop.begin(), i1) - std::distance(loop.begin(), i2) == -1 * loop.size() + 1)
+				{
+					loop_e.push_back(pE);
+				}
+			}
+		}
+		for (auto pE : m_inner_edges)
+		{
+			int pV = m_pMesh->edge_vertex(pE, 0)->idx();
+			int pW = m_pMesh->edge_vertex(pE, 1)->idx();
+			std::vector<int>::iterator i1 = std::find(loop.begin(), loop.end(), pV);
+			std::vector<int>::iterator i2 = std::find(loop.begin(), loop.end(), pW);
+			if (i1 != loop.end() && i2 != loop.end())
+			{
+				if (std::distance(loop.begin(), i1) - std::distance(loop.begin(), i2) == -1
+					|| std::distance(loop.begin(), i1) - std::distance(loop.begin(), i2) == 1
+					|| std::distance(loop.begin(), i1) - std::distance(loop.begin(), i2) == loop.size() - 1
+					|| std::distance(loop.begin(), i1) - std::distance(loop.begin(), i2) == -1 * loop.size() + 1)
+				{
+					loop_e.push_back(pE);
+				}
+			}
+		}
+		double d = 0;
+		for (auto pE : loop_e)
+		{
+			M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
+			M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+			d += (pW->point() - pV->point()).norm();
+			pE->sharp() = true;
+		}
+		std::cout << "loop length is " << d << "\n";
+	}
 	void CHandleTunnelLoop::display_loop(std::vector<M::CEdge*> loop)
 	{
 		for (auto pE : m_boundary_edges)
@@ -2114,21 +2175,21 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::go_forward()
 	{
-		display_loop(current_loop_edges);
+		display_loop(loop_vertices);
 	}
 	void CHandleTunnelLoop::_shorten()
 	{
 		fall_back = current_loop_edges;
-		center_of_mass *= 0.0;
+		/*center_of_mass *= 0.0;
 		for (M::CVertex* v : loop_vertices)
 		{
 			center_of_mass += v->point();
 		}
 		center_of_mass /= double(loop_vertices.size());
-		std::cout << "center of mass is: " <<  center_of_mass.print() << "\n";
+		std::cout << "center of mass is: " <<  center_of_mass.print() << "\n";*/
 		int tester = 0;
 		bool failed_previously = false;
-		while (tester < 1000)
+		while (tester < 1)
 		{
 			best_edge_o1s.clear();
 			best_edge_o2s.clear();
@@ -2152,6 +2213,7 @@ namespace DartLib
 			}*/
 			if (best_doub <= 0.0 && best_sing <= 0.0)
 			{
+				std::cout << "we were here--------------------------------------------------------------------------------------------------------------------\n";
 				// TRY SHORTENING ALL THE DOUBLES, AND TRY AGAIN.
 				// FAIL TWICE = EXIT!
 				if (failed_previously)
@@ -2164,25 +2226,24 @@ namespace DartLib
 				single_to_double.clear();
 				double_to_single.clear();
 				failed_previously = true;
-				continue;
 				bool go_on = _shorten_double();
-				if (go_on)
+				// shorten all the doubles
+				while (go_on)
 				{
-					std::cout << "shortened the loop as needed\n";
-					continue;
+					go_on = _shorten_double();
+					std::cout << "shortened the loop as needed.||";
 				}
-				else
-				{
-					break;
-				}
+				continue;
 			}
-			else if (best_doub >= best_sing)
+			else if (best_doub >/*=*/ 0/*best_sing*/)
 			{
+				std::cout << "d";
 				failed_previously = false;
 				_change_double();
 			}
-			else if (best_sing > best_doub)
+			else if (best_sing > 0/*best_doub*/)
 			{
+				std::cout << "s";
 				failed_previously = false;
 				_change_single();
 			}
@@ -2226,6 +2287,7 @@ namespace DartLib
 			}
 			*/
 		}
+		//std::cout << "new center of mass is: " << center_of_mass.print() << "\n";
 		display_loop(current_loop_edges);
 		std::vector<int> lv;
 		for (M::CVertex* v : loop_vertices)
@@ -2238,6 +2300,7 @@ namespace DartLib
 	double CHandleTunnelLoop::_check_double()
 	{
 		best_improve_o = 0.0;
+		equal_dist_imp = 0.0;
 		for (int i = 0; i < current_loop_edges.size(); i++)
 		{
 			M::CEdge* edg1 = current_loop_edges[i % current_loop_edges.size()];
@@ -2336,10 +2399,21 @@ namespace DartLib
 				}*/
 				double improvement = (p2 - center_of_mass).norm() - (p1 - center_of_mass).norm();
 				double distance = (p2 - center_of_mass).norm();
-				if (improvement > 0 && distance > best_improve_o )
+				if (improvement > 0 && distance >= best_improve_o )
 				{
 					//std::cout << "there was an improvement in the doubles!? The indices of the verts are: "
 					//	<< pV->idx() << " " << shared_v->idx() << " " << pW->idx() << "\n";
+					if (distance == best_improve_o)
+					{
+						if (improvement > equal_dist_imp)
+						{
+							equal_dist_imp = improvement;
+						}
+						else
+						{
+							continue;
+						}
+					}
 					best_improve_o = distance; // improvement instead of distance?
 					best_edge_o1 = edg1;
 					best_edge_o2 = edg2;
@@ -2370,7 +2444,7 @@ namespace DartLib
 	{
 		//pick the best single edge to split into 2 edges (for each edge pick best face/new vertex, compare the bests)
 		best_improve_o = 0.0;
-
+		equal_dist_imp = 0.0;
 		for (int i = 0; i < current_loop_edges.size(); i++)
 		{
 			M::CEdge* pE = current_loop_edges[i];
@@ -2469,8 +2543,19 @@ namespace DartLib
 				// find improvement = old dist - new dist
 				double improve = (p2 - center_of_mass).norm() - (p1 - center_of_mass).norm();
 				double distance = (p2 - center_of_mass).norm();
-				if (improve > 0.0 && distance > best_improve_o )
+				if (improve > 0.0 && distance >= best_improve_o )
 				{
+					if (distance == best_improve_o)
+					{
+						if (improve > equal_dist_imp)
+						{
+							equal_dist_imp = improve;
+						}
+						else
+						{
+							continue;
+						}
+					}
 					best_edge_o = pE;
 					best_face_o = pF;
 					best_improve_o = distance; // improve instead of distance?
@@ -2551,9 +2636,27 @@ namespace DartLib
 		two_edges.push_back(edg2);
 		std::pair<M::CFace*, std::vector<M::CEdge*>> this_pair = std::make_pair(fac1, two_edges);
 		double_to_single.push_back(this_pair);
-		loop_vertices.erase(std::remove(loop_vertices.begin(), loop_vertices.end(), shared_v), loop_vertices.end());
+		//loop_vertices.erase(std::remove(loop_vertices.begin(), loop_vertices.end(), shared_v), loop_vertices.end());
 		// update edge list by removing edg1 and edg2 but adding edg3 at position i;
-		current_loop_edges.erase(std::remove(current_loop_edges.begin(), current_loop_edges.end(), edg1), current_loop_edges.end());
+		// check if 2nd edge is at index 0 now
+		//std::cout << "index of shared v: " << std::find(loop_vertices.begin(), loop_vertices.end(), shared_v) - loop_vertices.begin() << " of out " << loop_vertices.size() << "\n";
+		//std::cout << "while the 2nd edge index was " << idx_best_edge_o2 << " out of " << current_loop_edges.size() << "\n";
+		if (idx_best_edge_o2 == 0)
+		{
+			current_loop_edges.erase(current_loop_edges.begin() + idx_best_edge_o1);
+			current_loop_edges.erase(current_loop_edges.begin());
+			current_loop_edges.push_back(edg3);
+			loop_vertices.erase(loop_vertices.begin());
+		}
+		else
+		{
+			current_loop_edges.erase(current_loop_edges.begin() + idx_best_edge_o2);
+			current_loop_edges.erase(current_loop_edges.begin() + idx_best_edge_o1);
+			current_loop_edges.insert(current_loop_edges.begin() + idx_best_edge_o1, edg3);
+			loop_vertices.erase(loop_vertices.begin() + idx_best_edge_o2);
+
+		}
+		/*current_loop_edges.erase(std::remove(current_loop_edges.begin(), current_loop_edges.end(), edg1), current_loop_edges.end());
 		current_loop_edges.erase(std::remove(current_loop_edges.begin(), current_loop_edges.end(), edg2), current_loop_edges.end());
 		if (idx_best_edge_o1 >= current_loop_edges.size())
 		{
@@ -2562,7 +2665,7 @@ namespace DartLib
 		else
 		{
 			current_loop_edges.insert(current_loop_edges.begin() + idx_best_edge_o1, edg3);
-		}
+		}*/
 		//std::cout << "after inserting, current loop has size " << current_loop_edges.size() << "\n";
 	}
 	void CHandleTunnelLoop::_change_single()
@@ -2571,7 +2674,7 @@ namespace DartLib
 		// make change to the best edge
 
 		// remove current edge
-		current_loop_edges.erase(std::remove(current_loop_edges.begin(), current_loop_edges.end(), best_edge_o), current_loop_edges.end());
+		current_loop_edges.erase(current_loop_edges.begin() + idx_best_edge_o);
 
 		// get the other 2 edges's vertices and the removed edge's vertices
 		M::CEdge* edg1 = NULL;
@@ -2624,9 +2727,13 @@ namespace DartLib
 				other_v2 = V2;
 			}
 		}
+		std::pair<M::CFace*, M::CEdge*> this_pair2 = std::make_pair(best_face_o, best_edge_o);
+		single_to_double.push_back(this_pair2);
 		CPoint shared_p = shared_v->point();
-		CPoint other_p1 = other_v1->point();
-		CPoint other_p2 = other_v2->point();
+		// update center of mass
+		center_of_mass *= loop_vertices.size();
+		center_of_mass += shared_p;
+		center_of_mass /= double(loop_vertices.size() + 1);
 		// add 2 edges in the correct order(check next edge, the current ith edge)
 		M::CVertex* V3 = m_pMesh->edge_vertex(current_loop_edges[idx_best_edge_o % int(current_loop_edges.size())], 0);
 		M::CVertex* W3 = m_pMesh->edge_vertex(current_loop_edges[idx_best_edge_o % int(current_loop_edges.size())], 1);
@@ -2634,22 +2741,37 @@ namespace DartLib
 		// insert the other edge at ith index
 		if ((other_v1 == V3 || other_v1 == W3) && (other_v2 != V3 && other_v2 != W3))
 		{
-			int index = idx_best_edge_o % int(current_loop_edges.size());
-			current_loop_edges.insert(current_loop_edges.begin() + index, edg1);
-			current_loop_edges.insert(current_loop_edges.begin() + index, edg2);
+			if (idx_best_edge_o == current_loop_edges.size())
+			{
+				// we removed the last edge
+				current_loop_edges.push_back(edg2);
+				current_loop_edges.push_back(edg1);
+				loop_vertices.push_back(shared_v);
+			}
+			else
+			{
+				current_loop_edges.insert(current_loop_edges.begin() + idx_best_edge_o, edg1);
+				current_loop_edges.insert(current_loop_edges.begin() + idx_best_edge_o, edg2);
+				loop_vertices.insert(loop_vertices.begin() + idx_best_edge_o + 1, shared_v);
+			}
 		}
 		else
 		{
+			if (idx_best_edge_o == current_loop_edges.size())
 			{
-				int index = idx_best_edge_o % int(current_loop_edges.size());
-				current_loop_edges.insert(current_loop_edges.begin() + index, edg2);
-				current_loop_edges.insert(current_loop_edges.begin() + index, edg1);
+				// we removed the last edge
+				current_loop_edges.push_back(edg1);
+				current_loop_edges.push_back(edg2);
+				loop_vertices.push_back(shared_v);
+			}
+			else
+			{
+				current_loop_edges.insert(current_loop_edges.begin() + idx_best_edge_o, edg2);
+				current_loop_edges.insert(current_loop_edges.begin() + idx_best_edge_o, edg1);
+				loop_vertices.insert(loop_vertices.begin() + idx_best_edge_o + 1, shared_v);
 			}
 		}
-		// update center of mass
-		center_of_mass *= loop_vertices.size();
-		center_of_mass += shared_p;
-		center_of_mass /= double(loop_vertices.size() + 1);
+		/*
 		// add the 3rd vertex, find index of the 2 vertices, i and i + 1. insert 3rd vertex at i+1
 		auto pos1 = std::find(loop_vertices.begin(), loop_vertices.end(), other_v1);
 		auto pos2 = std::find(loop_vertices.begin(), loop_vertices.end(), other_v2);
@@ -2676,13 +2798,12 @@ namespace DartLib
 		{
 			loop_vertices.insert(pos1, shared_v);
 		}
-		std::pair<M::CFace*, M::CEdge*> this_pair = std::make_pair(best_face_o, best_edge_o);
-		single_to_double.push_back(this_pair);
+
 		//last_step_s = shared_v;
+		*/
 	}
 	bool CHandleTunnelLoop::_shorten_double()
 	{
-		double best_shorter = 0.0;
 		for (int i = 0; i < current_loop_edges.size(); i++)
 		{
 			M::CEdge* edg1 = current_loop_edges[i % current_loop_edges.size()];
@@ -2712,113 +2833,90 @@ namespace DartLib
 				M::CVertex* pW1 = m_pMesh->edge_vertex(edg1, 1);
 				M::CVertex* pV2 = m_pMesh->edge_vertex(edg2, 0);
 				M::CVertex* pW2 = m_pMesh->edge_vertex(edg2, 1);
-				M::CVertex* shared_v;
 
+
+
+				bool bad = false;
+				for (std::pair<M::CFace*, M::CEdge*> pair2 : single_to_double)
+				{
+					if (fac1 == pair2.first && edg3 == pair2.second)
+					{
+						bad = true;
+						break;
+					}
+				}
+				if (bad)
+				{
+					continue;
+				}
+				std::vector<M::CEdge*> vec3;
+				std::vector<M::CEdge*> vec4;
+				vec3.push_back(edg1);
+				vec3.push_back(edg2);
+				vec4.push_back(edg2);
+				vec4.push_back(edg1);
+				bad = false;
+				for (std::pair<M::CFace*, std::vector<M::CEdge*>> pair2 : double_to_single)
+				{
+					if (fac1 == pair2.first)
+					{
+						if (vec3 == pair2.second || vec4 == pair2.second)
+						{
+							bad = true;
+							break;
+						}
+					}
+				}
+				if (bad)
+				{
+					continue;
+				}
+
+				M::CVertex* shared_v;
+				CPoint p2;
 				if (pV1 == pV2 || pV1 == pW2)
 				{
+					p2 = pV1->point();
 					shared_v = pV1;
 				}
 				else if (pW1 == pV2 || pW1 == pW2)
 				{
+					p2 = pW1->point();
 					shared_v = pW1;
 				}
 				else
 				{
 					std::cout << "ERROR: edges share a face but don't share a vertex-----------------------";
 				}
-				if (last_step_s != NULL && shared_v == last_step_s)
+				//std::cout << "made a change!\n";
+				// make the change, since p1 is closer to center of mass than p2
+				// update center of mass by removing p2;
+				center_of_mass *= loop_vertices.size();
+				center_of_mass -= p2;
+				center_of_mass /= double(loop_vertices.size() - 1);
+				// update vertex list by removing shared_v;
+				std::vector<M::CEdge*> two_edges;
+				two_edges.push_back(edg1);
+				two_edges.push_back(edg2);
+				std::pair<M::CFace*, std::vector<M::CEdge*>> this_pair = std::make_pair(fac1, two_edges);
+				double_to_single.push_back(this_pair);
+				loop_vertices.erase(std::remove(loop_vertices.begin(), loop_vertices.end(), shared_v), loop_vertices.end());
+				// update edge list by removing edg1 and edg2 but adding edg3 at position i;
+				current_loop_edges.erase(std::remove(current_loop_edges.begin(), current_loop_edges.end(), edg1), current_loop_edges.end());
+				current_loop_edges.erase(std::remove(current_loop_edges.begin(), current_loop_edges.end(), edg2), current_loop_edges.end());
+				if (idx_best_edge_o1 >= current_loop_edges.size())
 				{
-					continue;
+					current_loop_edges.push_back(edg3);
 				}
-				double l2 = (pV1->point() - pW1->point()).norm() + (pV2->point() - pW2->point()).norm();
+				else
+				{
+					current_loop_edges.insert(current_loop_edges.begin() + i, edg3);
+				}
+				return true;
 
-				double improvement = l2 - l1;
-				if (improvement > best_shorter)
-				{
-					best_shorter = improvement;
-					best_edge_o1 = edg1;
-					best_edge_o2 = edg2;
-					best_face_o = fac1;
-					idx_best_edge_o1 = i;
-					idx_best_edge_o2 = (i + 1) % current_loop_edges.size();
-				}
-
 			}
 		}
-		if (best_shorter <= 0.0)
-		{
-			return false;
-		}
-		else
-		{
-			M::CEdge* edg1 = best_edge_o1;
-			M::CEdge* edg2 = best_edge_o2;
-			M::CEdge* edg3;
-			std::vector<M::CFace*> vec1 = edges_faces[edg1->idx()];
-			std::vector<M::CFace*> vec2 = edges_faces[edg2->idx()];
-			_intersection(vec1, vec2);
-			if (face_intersection.size() != 1)
-			{
-				std::cout << "face intersection was 1, but now is not??";
-				return false;
-			}
-			M::CFace* fac1 = face_intersection[0];
-			for (M::FaceEdgeIterator feiter(fac1); !feiter.end(); ++feiter)
-			{
-				M::CEdge* pE = *feiter;
-				if (pE != edg1 && pE != edg2)
-				{
-					edg3 = pE;
-					break;
-				}
-			}
-			// find center of edg3
-			M::CVertex* pV = m_pMesh->edge_vertex(edg3, 0);
-			M::CVertex* pW = m_pMesh->edge_vertex(edg3, 1);
-			CPoint p1 = (pV->point() + pW->point()) / 2.0;
-			// find shared vertex of edg1 and edg2
-			M::CVertex* pV1 = m_pMesh->edge_vertex(edg1, 0);
-			M::CVertex* pW1 = m_pMesh->edge_vertex(edg1, 1);
-			M::CVertex* pV2 = m_pMesh->edge_vertex(edg2, 0);
-			M::CVertex* pW2 = m_pMesh->edge_vertex(edg2, 1);
-			M::CVertex* shared_v;
-			CPoint p2;
-			if (pV1 == pV2 || pV1 == pW2)
-			{
-				p2 = pV1->point();
-				shared_v = pV1;
-			}
-			else if (pW1 == pV2 || pW1 == pW2)
-			{
-				p2 = pW1->point();
-				shared_v = pW1;
-			}
-			else
-			{
-				std::cout << "ERROR: edges share a face but don't share a vertex-----------------------";
-			}
-			//std::cout << "made a change!\n";
-			// make the change, since p1 is closer to center of mass than p2
-			// update center of mass by removing p2;
-			center_of_mass *= loop_vertices.size();
-			center_of_mass -= p2;
-			center_of_mass /= double(loop_vertices.size() - 1);
-			// update vertex list by removing shared_v;
-			last_step_d2 = shared_v;
-			loop_vertices.erase(std::remove(loop_vertices.begin(), loop_vertices.end(), shared_v), loop_vertices.end());
-			// update edge list by removing edg1 and edg2 but adding edg3 at position i;
-			current_loop_edges.erase(std::remove(current_loop_edges.begin(), current_loop_edges.end(), edg1), current_loop_edges.end());
-			current_loop_edges.erase(std::remove(current_loop_edges.begin(), current_loop_edges.end(), edg2), current_loop_edges.end());
-			if (idx_best_edge_o1 >= current_loop_edges.size())
-			{
-				current_loop_edges.push_back(edg3);
-			}
-			else
-			{
-				current_loop_edges.insert(current_loop_edges.begin() + idx_best_edge_o1, edg3);
-			}
-			return true;
-		}
+		return false;
 	}
 	void CHandleTunnelLoop::_intersection(std::vector<M::CFace*> v1, std::vector<M::CFace*> v2)
 	{
