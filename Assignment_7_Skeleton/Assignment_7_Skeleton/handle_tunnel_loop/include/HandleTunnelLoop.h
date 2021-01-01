@@ -94,6 +94,7 @@ class CHandleTunnelLoop
 	void _shorten2();
 
 	void _shorten();
+	bool _delete_triple();
 	double _check_double();
 	bool _shorten_double();
 	double _check_single();
@@ -136,7 +137,7 @@ class CHandleTunnelLoop
 	M::CVertex* last_step_d1;
 	M::CVertex* last_step_d2;
 	M::CVertex* last_step_s;
-	std::vector<std::pair<M::CFace*, M::CEdge*>> single_to_double;
+	std::vector<std::pair<M::CFace*, std::pair<M::CEdge*, CPoint>>> single_to_double;
 	std::vector<std::pair<M::CFace*, std::vector<M::CEdge*>>> double_to_single;
 
 
@@ -203,7 +204,7 @@ class CHandleTunnelLoop
 	std::vector<int> idx_best_edge_os;
 
 
-
+	int stopped_naturally = 0;
 	int time = 0;
 	
 };
