@@ -2212,11 +2212,11 @@ namespace DartLib
 		int tester = 0;
 		bool failed_previously = false;
 		bool correct = false;
-		while (tester < 1) //50000
+		while (tester < 10000) //50000
 		{
 
 			//^ allows repeating moves
-
+			
 
 			best_edge_o1s.clear();
 			best_edge_o2s.clear();
