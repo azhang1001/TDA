@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\data\eight_I.t</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\data\torus_I.t</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

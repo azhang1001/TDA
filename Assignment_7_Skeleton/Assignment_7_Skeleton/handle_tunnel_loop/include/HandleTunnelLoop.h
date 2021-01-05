@@ -53,6 +53,8 @@ class CHandleTunnelLoop
 	void go_back();
 	void go_forward();
 
+	void display_individual(int which_edge);
+
 	void display_all_before();
 	
 	void display_all_after();
@@ -98,9 +100,19 @@ class CHandleTunnelLoop
 	double _check_double();
 	bool _shorten_double();
 	double _check_single();
+	bool _fill_gaps(int index);
+	bool _repeats(int index);
+	bool _repeats2(int index);
+	bool _triple0(int index);
+	bool _triple1(int index);
+	bool _triple2(int index);
+	bool _double(int index);
+	bool _single(int index);
 	void _change_double();
 	void _change_single();
 	void _intersection(std::vector<M::CFace*> v1, std::vector<M::CFace*> v2);
+	int _intersection(M::CEdge* e1, M::CEdge* e2, M::CEdge* e3);
+	int _intersection(M::CEdge* e1, M::CEdge* e2);
 
     void _prune();
 
@@ -172,8 +184,8 @@ class CHandleTunnelLoop
 	std::set<int> inSet;
 	int fails = 0;
 	int MVERT = 4; //  minimum number of vertices used for searching;
-
-	
+	int index = 0;
+	bool skip_singles = false;
 
 
 	//variables for shortening in double and single

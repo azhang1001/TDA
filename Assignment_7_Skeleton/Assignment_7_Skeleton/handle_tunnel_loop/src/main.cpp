@@ -48,6 +48,7 @@ CArcball arcball;
 
 // which loop to display
 int which = 0;
+int which_edge = 0;
 
 /*! setup the object, transform from the world to the object coordinate system */
 void setupObject(void)
@@ -400,6 +401,10 @@ void keyBoard(unsigned char key, int x, int y)
 			break;
 		case 'S':
 			handler.next_shorten_step();
+			break;
+		case 'X':
+			handler.display_individual(which_edge);
+			which_edge += 1;
 			break;
 		case 'L':
 			handler.go_back();
