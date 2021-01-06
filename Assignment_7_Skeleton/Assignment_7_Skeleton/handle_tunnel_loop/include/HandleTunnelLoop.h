@@ -113,6 +113,7 @@ class CHandleTunnelLoop
 	void _intersection(std::vector<M::CFace*> v1, std::vector<M::CFace*> v2);
 	int _intersection(M::CEdge* e1, M::CEdge* e2, M::CEdge* e3);
 	int _intersection(M::CEdge* e1, M::CEdge* e2);
+	bool _different_side(M::CVertex* A, M::CVertex* B, CPoint M, M::CVertex* C);
 
     void _prune();
 

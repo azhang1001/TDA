@@ -2103,6 +2103,7 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::display_loop(std::vector<M::CEdge*> loop)
 	{
+		std::cout << "displaying new loop! ";
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
@@ -2111,10 +2112,12 @@ namespace DartLib
 		{
 			pE->sharp() = false;
 		}
+		std::cout << "turned off all the edges ";
 		for (M::CEdge* ed : loop)
 		{
 			ed->sharp() = true;
 		}
+		std::cout << "finished displaying that loop.\n";
 	}
 	void CHandleTunnelLoop::next_shorten_step()
 	{
@@ -2214,6 +2217,7 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::_shorten()
 	{
+		std::cout << "why does it break1\n";
 		fall_back = current_loop_edges;
 		center_of_mass *= 0.0;
 		for (M::CVertex* v : loop_vertices)
@@ -2221,6 +2225,7 @@ namespace DartLib
 			//std::cout << v->point().print() << " ";
 			center_of_mass += v->point();
 		}
+		std::cout << "why does it break2\n";
 		center_of_mass /= double(loop_vertices.size());
 		int tester = 0;
 		bool failed_previously = false;
@@ -2245,54 +2250,55 @@ namespace DartLib
 					index += 2;
 					std::cout << "~~~we filled a gap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
+					std::cout << "new index is " << index << ", out of " << loop_vertices.size() << "\n";
 					continue;
 				}
-				else if (_repeats(index))
+				if (_repeats(index))
 				{
 					std::cout << "we removed a double spike!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
 					continue;
 				}
-				else if (_repeats((index + 1) % current_loop_edges.size()))
+				if (_repeats((index + 1) % current_loop_edges.size()))
 				{
 					std::cout << "we removed a double spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
 					continue;
 				}
-				else if (_repeats2((index + 1) % current_loop_edges.size()))
+				if (_repeats2((index + 1) % current_loop_edges.size()))
 				{
 					std::cout << "we removed a spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
 					continue;
 				}
-				else if (_triple0(index))
+				if (_triple0(index))
 				{
 					change_happened = true;
 					std::cout << "triple0 removed\n";
 					continue;
 				}
-				else if (_triple1(index))
+				if (_triple1(index))
 				{
 					change_happened = true;
 					std::cout << "triple0 removed\n";
 					index -= 1;
 					continue;
 				}
-				else if (_triple2(index))
+				if (_triple2(index))
 				{
 					change_happened = true;
 					std::cout << "triple0 removed\n";
 					index -= 2;
 					continue;
 				}
-				else if (_double(index))
+				if (_double(index))
 				{
 					std::cout << "double\n";
 					change_happened = true;
 					_change_double();
 					continue;
 				}
-				else if (_single(index))
+				if (_single(index))
 				{
 					change_happened = true;
 					index += 1;
@@ -2563,6 +2569,11 @@ namespace DartLib
 			{
 				std::cout << "this was not at all what I expected! Wrong now!\n";
 			}
+			if (add_edge == NULL)
+			{
+				std::cout << "edge to be added is null!??\n";
+				return false;
+			}
 			center_of_mass *= loop_vertices.size();
 			center_of_mass += other->point();
 			center_of_mass /= double(loop_vertices.size() + 1);
@@ -2599,6 +2610,11 @@ namespace DartLib
 				_intersection(vec2, vec3);
 				if (face_intersection.size() == 1)
 				{
+					if (edg1 == edg2 || edg1 == edg3 || edg2 == edg3)
+					{
+						std::cout << "duplicated edges put inside the triples?? this should have been removed earlier...\n";
+						return false;
+					}
 					// these 3 can all be removed, along with verts
 					int i1 = (i + 0) % current_loop_edges.size();
 					int i2 = (i + 1) % current_loop_edges.size();
@@ -2761,7 +2777,8 @@ namespace DartLib
 			p5 = shared_v->point();
 			//shared point - midpoint of new edge
 			double improvement = (p5 - COM).norm() - (p4 - COM).norm();
-			if (improvement > 0)
+			//if (improvement > 0)
+			if (_different_side(pV, pW, center_of_mass, shared_v))
 			{
 				best_edge_o1 = edg1;
 				best_edge_o2 = edg2;
@@ -2784,7 +2801,8 @@ namespace DartLib
 		CPoint closer_point = (pV1->point() - center_of_mass).norm() < (pV2->point() - center_of_mass).norm() ? pV1->point() : pV2->point();
 		CPoint mid_orig = (pV1->point() + pV2->point()) / 2.0;
 		double distance = (mid_orig - center_of_mass).norm();
-
+		double orig_mid_distance = (mid_orig - center_of_mass).norm();
+		double further_point_dist = (further_point - center_of_mass).norm();
 		for (M::CFace* pF : edges_faces[pE->idx()])
 		{
 			bool bad = false;
@@ -2845,11 +2863,22 @@ namespace DartLib
 			}*/
 			//compare midpoint of closer new edge to midpoint of original edge
 			CPoint mid_closer = (closer_point + pV3->point()) / 2.0;
+			CPoint mid_further = (further_point + pV3->point()) / 2.0;
 			//compare to new vertex
 			mid_closer = pV3->point();
-			if ((mid_closer - center_of_mass).norm() < distance)
+
+			if (_different_side(pV1, pV2, center_of_mass, pV3))
 			{
-				distance = (mid_closer - center_of_mass).norm();
+				continue;
+			}
+			//if ((mid_closer - center_of_mass).norm() < distance)
+			//if ((mid_closer - center_of_mass).norm() < orig_mid_distance && (mid_further - center_of_mass).norm() < further_point_dist)
+			if ((pV3->point() - center_of_mass).norm() < further_point_dist)
+			{
+				//distance = (mid_closer - center_of_mass).norm();
+				//orig_mid_distance = (mid_closer - center_of_mass).norm();
+				//further_point_dist = (mid_further - center_of_mass).norm();
+				further_point_dist = (pV3->point() - center_of_mass).norm();
 				best_face_o = pF;
 				best_edge_o = pE;
 				idx_best_edge_o = i;
@@ -3693,5 +3722,27 @@ namespace DartLib
 			return 0;
 		}
 		return -1;
+	}
+	bool CHandleTunnelLoop::_different_side(M::CVertex* A, M::CVertex* B, CPoint M, M::CVertex* C)
+	{
+		//std::cout << A->point().print() << " " << B->point().print() << " " << M.print() << " " << C->point().print() << "\n";
+		// line segment AB, center of mass M, third point C.
+		CPoint line_seg1 = A->point() - B->point(); // vector AB;
+		CPoint N = line_seg1 * ((line_seg1 * (M - B->point())) / (line_seg1 * line_seg1));
+		CPoint X = (M - B->point()) - N;
+		double Y = N * X;
+		double M_side = (X * (M - B->point())) / Y - 1.0;
+		double C_side = (X * (C->point() - B->point())) / Y - 1.0;
+		//std::cout << M_side << " " << C_side << "\n";
+		if ((M_side > 0 && C_side > 0) || (M_side < 0 && C_side < 0))
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+
+
 	}
 }
