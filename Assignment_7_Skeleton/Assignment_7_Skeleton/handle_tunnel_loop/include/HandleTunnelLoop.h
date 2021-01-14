@@ -78,6 +78,7 @@ class CHandleTunnelLoop
 	int lcm(int a, int b);
 
 
+
   protected:
 	
     void _extract_boundary_surface();
@@ -123,6 +124,8 @@ class CHandleTunnelLoop
     
 	std::vector<int> remove_dup(std::vector<int> v);
 
+
+
   protected:
     M* m_pMesh;
 
@@ -165,7 +168,7 @@ class CHandleTunnelLoop
 	std::vector<std::vector<int>> final_vertices;
 	std::vector<std::vector<int>> good_final_vertices;
 	std::vector<std::vector<int>> before_vertices;
-
+	std::vector<M::CEdge*> green_edges;
 	std::vector<std::vector<M::CFace*>> edges_faces;
 
 
@@ -183,6 +186,7 @@ class CHandleTunnelLoop
 	std::vector<M::CVertex*> idx_all_verts;
 	std::vector<M::CEdge*> idx_edges;
 	std::set<int> inSet;
+	std::set<int> inSetGens;
 	int fails = 0;
 	int MVERT = 4; //  minimum number of vertices used for searching;
 	int index = 0;
@@ -204,6 +208,7 @@ class CHandleTunnelLoop
 	M::CEdge* best_edge_o;
 	int idx_best_edge_o;
 
+	double epsi = 0.00005;
 
 
 	std::vector<M::CFace*> best_face_os;
@@ -216,6 +221,7 @@ class CHandleTunnelLoop
 	std::vector<M::CEdge*> best_edge_os;
 	std::vector<int> idx_best_edge_os;
 
+	M::CEdge* current_edge_to_green;
 
 	int stopped_naturally = 0;
 	int time = 0;

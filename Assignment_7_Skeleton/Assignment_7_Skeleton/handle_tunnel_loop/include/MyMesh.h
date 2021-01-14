@@ -33,12 +33,14 @@ class CMyVertex_2 : public TVertex<2>
 class CMyEdge_2 : public TEdge<2>
 {
   public:
-    CMyEdge_2() : m_sharp(false){};
+    CMyEdge_2() : m_sharp(false), m_green(false){};
 
     bool& sharp() { return m_sharp; };
+	bool& green() { return m_green; };
 
   protected:
     bool m_sharp;
+	bool m_green;
 };
 
 class CMyFace_2 : public TFace<2>

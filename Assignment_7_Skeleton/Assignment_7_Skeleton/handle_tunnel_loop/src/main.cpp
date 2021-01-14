@@ -43,6 +43,8 @@ std::vector<CMyTMesh::CFace*> boundary_surface;
 CMyMesh boundary_mesh;
 std::string g_output;
 
+
+
 /* arcball object */
 CArcball arcball;
 
@@ -151,10 +153,11 @@ void draw_sharp_edges(CMyTMesh* pMesh)
     for (CMyTMesh::EdgeIterator eiter(pMesh); !eiter.end(); eiter++)
     {
         CMyTMesh::CEdge* pE = *eiter;
-        if (!pE->sharp())
+        if (!pE->sharp() && !pE->green())
             continue;
-
-        if (boundary_edges->find(pE) != boundary_edges->end())
+		if (pE->green())
+			glColor3f(1.0, 1.0, 0.0);
+        else if (boundary_edges->find(pE) != boundary_edges->end())
             glColor3f(1.0, 0.0, 0.0);
         else
             glColor3f(0.0, 0.0, 1.0);
@@ -210,9 +213,24 @@ void draw_boundary_sharp_edges()
         for (CMyTMesh::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
         {
             CMyTMesh::CEdge* pE = *feiter;
-            if ( !pE->sharp() ) continue;
+            
 
-            glColor3f(1.0, 0.0, 0.0);
+			if (pE->green())
+			{
+				glColor3f(0.0, 1.0, 0.0);
+
+				CMyTMesh::CVertex* pv1 = mesh.edge_vertex(pE, 0);
+				CMyTMesh::CVertex* pv2 = mesh.edge_vertex(pE, 1);
+
+				CPoint p1 = pv1->point();
+				CPoint p2 = pv2->point();
+
+				glVertex3d(p1[0], p1[1], p1[2]);
+				glVertex3d(p2[0], p2[1], p2[2]);
+				continue;
+			}
+			if (!pE->sharp()) continue;
+            glColor3f(0.0, 1.0, 0.0);
 
             CMyTMesh::CVertex* pv1 = mesh.edge_vertex(pE, 0);
             CMyTMesh::CVertex* pv2 = mesh.edge_vertex(pE, 1);

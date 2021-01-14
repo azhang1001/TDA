@@ -42,14 +42,16 @@ class CMyVertex : public TVertex<3>
 class CMyEdge : public TEdge<3>
 {
   public:
-    CMyEdge() : m_sharp(false), m_idx(0), m_pair(NULL), m_generator(false){};
+    CMyEdge() : m_sharp(false), m_idx(0), m_pair(NULL), m_generator(false), m_green(false) {};
 
     bool& sharp()    { return m_sharp; };
+	bool& green() { return m_green; };
     int & idx()      { return m_idx; };
     CMyFace*& pair() { return m_pair; };
     bool& generator(){ return m_generator; };
   protected:
     bool     m_sharp;
+	bool     m_green;
     int      m_idx;
     CMyFace* m_pair;
     bool     m_generator;

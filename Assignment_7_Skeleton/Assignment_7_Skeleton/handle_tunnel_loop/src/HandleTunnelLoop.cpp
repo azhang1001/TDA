@@ -171,6 +171,7 @@ namespace DartLib
 			face_exist.push_back(vertices_of_face);
 			if (pF->idx() > 0)
 			{
+
 				continue;
 			}
 
@@ -200,13 +201,13 @@ namespace DartLib
 				//generator not killed = tunnel loop
 				std::cout << "Generator Edge " << pE->idx() << std::endl;
 				//_mark_loop(pE);
-				tunnel_loops.push_back(pE);//----------------------------------------------turn back on to get tunnel loops from the interior volume---------------
+				//tunnel_loops.push_back(pE);//----------------------------------------------turn back on to get tunnel loops from the interior volume---------------
 			}
 			else if (pE->generator() && pE->pair() != NULL)
 			{
 				// generator that has been killed = handle loop
 				std::cout << "Handle Loop Edge " << pE->idx() << std::endl;
-				//handle_loops.push_back(pE); //----------------------------------------------------------------------turn back on-------------------------------------
+				handle_loops.push_back(pE); //----------------------------------------------------------------------turn back on-------------------------------------
 				//pE->sharp() = true;
 			}
 			else
@@ -321,32 +322,15 @@ namespace DartLib
 			}
 			edges_used = 0;
 			int number = 0;
-			clock_t b = clock();
-			//in.assign(m_inner_vertices.size() + m_boundary_vertices.size() + 1, false);
 			inSet.clear();
-			clock_t e = clock();
-			assign += double(e - b) / CLOCKS_PER_SEC;
-			b = clock();
-			//insert your code here
-			//Cycle<M::CVertex, Compare<M::CVertex>> vcycle;
-			//start from youngest positive vertex (all vertices are positive)
 			M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
 			M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
-			/*vcycle.add(pV); //vcycle.add(pV, in);
-			vcycle.add(pW); //vcycle.add(pW, in);*/
 			inSet.insert(pV->idx());
 			number += 1;
 			inSet.insert(pW->idx());
 			number += 1;
-			e = clock();
-			add_pairing += double(e - b) / CLOCKS_PER_SEC;
-			//vcycle.print();
-			b = clock();
 			pV = idx_verts[*inSet.rbegin()];
-			e = clock();
-			head_pairing += double(e - b) / CLOCKS_PER_SEC;
-			//while (!vcycle.empty() && pV->pair())
-			while (number > 0 && pV->pair())
+			while (number > 0 && pV->pair() != NULL)
 			{
 				edges_used += 1;
 				if (number > largest_number)
@@ -356,61 +340,45 @@ namespace DartLib
 				M::CEdge* pE2 = pV->pair();
 				M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
 				M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
-				//vcycle.add(pV2); //vcycle.add(pV2, in);
-				//vcycle.add(pW2); // vcycle.add(pW2, in);
-				b = clock();
+
 				if (inSet.find(pV2->idx()) != inSet.end())
 				{
-					//in[pV2->idx()] = false;
 					inSet.erase(pV2->idx());
 					number -= 1;
 				}
 				else
 				{
-					//in[pV2->idx()] = true;
 					inSet.insert(pV2->idx());
 					number += 1;
 				}
 				if (inSet.find(pW2->idx()) != inSet.end())
 				{
-					//in[pW2->idx()] = false;
 					inSet.erase(pW2->idx());
 					number -= 1;
 				}
 				else
 				{
-					//in[pW2->idx()] = true;
 					inSet.insert(pW2->idx());
 					number += 1;
 				}
-				e = clock();
-				add_pairing += double(e - b) / CLOCKS_PER_SEC;
-				b = clock();
 				if (*inSet.rbegin())
 				{
 					pV = idx_verts[*inSet.rbegin()];
 				}
-				e = clock();
-				head_pairing += double(e - b) / CLOCKS_PER_SEC;
-
-				//pV = vcycle.head();
 			}
-			//if (!vcycle.empty())
 			if (number > 0)
 			{
 				killer_edges += 1;
 				pV->pair() = pE;
+				pE->generator() = false;
 			}
 			else
 			{
 				generator_edges += 1;
 				pE->generator() = true;
 			}
-			//e = clock();
-			//pairing += double(e - b) / CLOCKS_PER_SEC;
 
 		}
-		std::cout << "\n add/removing edges took " << add_pairing << " seconds, while finding head took " << head_pairing << " seconds, and assigning took " << assign << " seconds\n";
 		std::cout << "\nfinished with edges, there are " << killer_edges << " killers and " << generator_edges << " generator edges.\n";
 		std::cout << "\n at one point, there were " << largest_number << " vertices inside the cycle\n";
 		std::cout << "\n we once used " << largest_edges_used << " edges\n";
@@ -436,111 +404,83 @@ namespace DartLib
 				std::cout << "-";
 			}
 			M::CFace* pF = *fiter;
-
 			int number = 0;
-			//insert your code here
-			clock_t b = clock();
-			//in.assign(m_inner_edges.size() + m_boundary_edges.size() + 1, false);
 			inSet.clear();
-			clock_t e = clock();
-			assign += double(e - b) / CLOCKS_PER_SEC;
+			inSetGens.clear();
 			Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
 			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
 			{
 				M::CEdge* pEd = *feiter;
-				b = clock();
-				// COMBINE THE TWO! USE THE BOOL VECTOR TO CHECK IF IN, THEN USE THE ORIGINAL HEAD(maybe use set)!!-------------------------------------------------------
-				// remove is slow, so have an array/vector storing index of the item when it's added for easier removal
 				if (inSet.find(pEd->idx()) != inSet.end())
 				{
-					//in[pEd->idx()] = false;
 					inSet.erase(pEd->idx());
 					number -= 1;
 				}
 				else
 				{
-					//in[pEd->idx()] = true;
 					inSet.insert(pEd->idx());
 					number += 1;
 				}
-				//ecycle.add(pEd);
-				e = clock();
-				add_time += double(e - b) / CLOCKS_PER_SEC;
-
-
-			}
-		
-
-
-			b = clock();
-			//M::CEdge* pE = ecycle.head();
-		
-			M::CEdge* pE = idx_edges[*inSet.rbegin()];
-			/*int i;
-			if (number > 0)
-			{
-				for (i = m_inner_edges.size() + m_boundary_edges.size(); i > 0; i--)
+				if (pEd->generator())
 				{
-					if (in[i] && idx_edges[i]->generator())
+					if (inSetGens.find(pEd->idx()) != inSetGens.end())
 					{
-						pE = idx_edges[i];
-						break;
+						inSetGens.erase(pEd->idx());
+					}
+					else
+					{
+						inSetGens.insert(pEd->idx());
 					}
 				}
-			}*/
-			e = clock();
-			head_time += double(e - b) / CLOCKS_PER_SEC;
+			}
+		
+		
+			M::CEdge* pE = idx_edges[*inSetGens.rbegin()];
 
-			//while (!ecycle.empty() && pE->pair())
-			while(number > 0 && pE->pair())
+			while(number > 0 && pE->pair() != NULL)
 			{
 				M::CFace* pF2 = pE->pair();
 				for (M::FaceEdgeIterator feiter2(pF2); !feiter2.end(); ++feiter2)
 				{
 					M::CEdge* pE2 = *feiter2;
-					b = clock();
 					if (inSet.find(pE2->idx()) != inSet.end())
 					{
-						//in[pE2->idx()] = false;
 						inSet.erase(pE2->idx());
 						number -= 1;
 					}
 					else
 					{
-						//in[pE2->idx()] = true;
 						inSet.insert(pE2->idx());
 						number += 1;
 					}
-					//ecycle.add(pE2);
-					e = clock();
-					add_time += double(e - b) / CLOCKS_PER_SEC;
-				
-				}
-				b = clock();
-			
-			
-				if (*inSet.rbegin())
-				{
-					pE = idx_edges[*inSet.rbegin()];
-				}
-				/*
-				if (number > 0)
-				{
-					for (int i = m_inner_edges.size() + m_boundary_edges.size(); i > 0; i--)
+					if (pE2->generator())
 					{
-						if (in[i] && idx_edges[i]->generator())
+						if (inSetGens.find(pE2->idx()) != inSetGens.end())
 						{
-							pE = idx_edges[i];
-							break;
+							inSetGens.erase(pE2->idx());
+						}
+						else
+						{
+							inSetGens.insert(pE2->idx());
 						}
 					}
-				}*/
-				//pE = ecycle.head();
-				e = clock();
-				head_time += double(e - b) / CLOCKS_PER_SEC;
+				
+				}
+				if (!*inSetGens.rbegin() && *inSet.rbegin())
+				{
+					std::cout << "I thought this would never happen\n";
+				}
+				if (*inSetGens.rbegin())
+				{
+					pE = idx_edges[*inSetGens.rbegin()];
+					//if (*inSetGens.rbegin() != *inSet.rbegin())
+					//{
+					//	std::cout << *inSetGens.rbegin() << " " << *inSet.rbegin() << "\n";
+					//}
+				}
+			
 			
 			}
-			//if (!ecycle.empty())
 			if (number > 0)
 			{
 				killer_faces += 1;
@@ -555,6 +495,58 @@ namespace DartLib
 		std::cout << "finished, there are " << killer_faces << " killers and " << generator_faces << " generator faces.\n";
 		std::cout << "time taken to add edges was " << add_time << " seconds while head time was " << head_time << " seconds."
 			<< "time taken to assign boolean to false was " << assign <<  " seconds \n";
+		
+		/*for (auto fiter = faces.begin(); fiter != faces.end(); fiter++)
+		{
+			M::CFace* pF = *fiter;
+			std::cout << "-";
+
+			Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
+
+			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
+			{
+				M::CEdge* pE = *feiter;
+				ecycle.add(pE);
+			}
+
+			M::CEdge* phead = ecycle.head();
+			while (!ecycle.empty() && phead->pair() != NULL)
+			{
+				M::CFace* _pF = phead->pair();
+				// ecycle.print();
+				for (M::FaceEdgeIterator feiter(_pF); !feiter.end(); ++feiter)
+				{
+					M::CEdge* pE = *feiter;
+					ecycle.add(pE);
+				}
+				phead = ecycle.head();
+			}
+
+			if (!ecycle.empty())
+			{
+				// pe is a killer
+				pF->generator() = false;
+				phead->pair() = pF;
+
+				if (m_generators.size() != m_genus * 2)
+					continue;
+				if (m_generators.find(phead) == m_generators.end())
+					continue;
+				int paired_generators = 0;
+				for (auto eiter = m_generators.begin(); eiter != m_generators.end(); eiter++)
+				{
+					M::CEdge* pE = *eiter;
+					if (pE->pair() != NULL)
+						paired_generators++;
+				}
+				if (paired_generators == m_genus)
+					return;
+			}
+			else
+			{
+				pF->generator() = true;
+			}
+		}*/
 	};
 
 	/*!
@@ -610,7 +602,6 @@ namespace DartLib
 
 	void CHandleTunnelLoop::_mark_loop(M::CEdge* pE)
 	{
-		
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
@@ -621,7 +612,59 @@ namespace DartLib
 		}
 		std::vector<M::CEdge*> one_loop;
 		one_loop.push_back(pE);
+		loop_edges.clear();
+		loop_vertices.clear();
+		loop_edges.push_back(pE);
 		pE->sharp() = true;
+		inSet.clear();
+		int number = 0;
+		//Cycle<M::CVertex, Compare<M::CVertex>> vcycle;
+		//start from youngest positive vertex (all vertices are positive)
+		M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
+		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+		number += 2;
+		inSet.insert(pV->idx());
+		inSet.insert(pW->idx());
+		pV = idx_verts[*inSet.rbegin()];
+		while (number > 0 && pV->pair())
+		{
+			M::CEdge* pE2 = pV->pair();
+			one_loop.push_back(pE2);
+			loop_edges.push_back(pE2);
+			pE2->sharp() = true;
+
+			M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
+			M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
+			if (inSet.find(pV2->idx()) != inSet.end())
+			{
+				inSet.erase(pV2->idx());
+				number -= 1;
+			}
+			else
+			{
+				inSet.insert(pV2->idx());
+				number += 1;
+			}
+			if (inSet.find(pW2->idx()) != inSet.end())
+			{
+				inSet.erase(pW2->idx());
+				number -= 1;
+			}
+			else
+			{
+				inSet.insert(pW2->idx());
+				number += 1;
+			}
+			if (number > 0)
+			{
+				pV = idx_verts[*inSet.rbegin()];
+			}
+		}
+		if (number > 0)
+		{
+			std::cout << "this is wrong, the edge should be a generator.\n";
+		}
+		/*pE->sharp() = true;
 		loop_edges.clear();
 		loop_vertices.clear();
 		loop_edges.push_back(pE);
@@ -655,7 +698,7 @@ namespace DartLib
 		{
 			std::cout << "this is right\n";
 			pE->generator() = true;
-		}
+		}*/
 		before_prune_edges.push_back(one_loop);
 		std::cout << "====================== started with " << loop_edges.size() << " edges =================\n";
 		prune();
@@ -758,23 +801,44 @@ namespace DartLib
 		/*for (M::FaceIterator fiter(m_pMesh); !fiter.end(); fiter++)
 		{
 			M::CFace* pF = *fiter;*/
-		/*for (auto pF: m_boundary_faces)
-		{
-			_os << "f";
-			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			/*for (auto pF: m_boundary_faces)
 			{
-				M::CVertex* pV = *fviter;
-				_os << " " << pV->idx();
-			}
-			_os << "\n";
-		}*/
+				_os << "f";
+				for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+				{
+					M::CVertex* pV = *fviter;
+					_os << " " << pV->idx();
+				}
+				_os << "\n";
+			}*/
 		for (auto final_v : final_vertices)
 		{
-			int v = final_v[0];
+			/*int v = final_v[0];
 			for (int i = 2; i < final_v.size(); i++)
 			{
-				_os << "f " << v << " " << final_v[i-1] << " " << final_v[i] << "\n";
+				_os << "f " << v << " " << final_v[i - 1] << " " << final_v[i] << "\n";
+			}*/
+			int larger = final_v.size() - 1;
+			int smaller = 0;
+			int next = smaller + 1;
+			while (true)
+			{
+				if (next == larger)
+				{
+					break;
+				}
+				_os << "f " << final_v[smaller] << " " << final_v[larger] << " " << final_v[next] << "\n";
+				smaller = next;
+				next = larger - 1;
+				if (next == smaller)
+				{
+					break;
+				}
+				_os << "f " << final_v[smaller] << " " << final_v[larger] << " " << final_v[next] << "\n";
+				larger = next;
+				next = smaller + 1;
 			}
+			std::cout << "\n\n";
 		}
 	}
 	void CHandleTunnelLoop::write_good_after_obj(const std::string& output)
@@ -2103,21 +2167,25 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::display_loop(std::vector<M::CEdge*> loop)
 	{
-		std::cout << "displaying new loop! ";
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
+			pE->green() = false;
 		}
 		for (auto pE : m_inner_edges)
 		{
 			pE->sharp() = false;
+			pE->green() = false;
 		}
-		std::cout << "turned off all the edges ";
 		for (M::CEdge* ed : loop)
 		{
 			ed->sharp() = true;
 		}
-		std::cout << "finished displaying that loop.\n";
+		for (M::CEdge* ed : green_edges)
+		{
+			ed->green() = true;
+		}
+		//current_edge_to_green->green() = true;
 	}
 	void CHandleTunnelLoop::next_shorten_step()
 	{
@@ -2210,14 +2278,13 @@ namespace DartLib
 		before_vertices.push_back(before_v);
 		single_to_double.clear();
 		double_to_single.clear();
-		//_shorten();
+		_shorten();
 		display_loop(current_loop_edges);
 		clock_t end = clock();
 		std::cout << "shorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
 	}
 	void CHandleTunnelLoop::_shorten()
 	{
-		std::cout << "why does it break1\n";
 		fall_back = current_loop_edges;
 		center_of_mass *= 0.0;
 		for (M::CVertex* v : loop_vertices)
@@ -2225,75 +2292,97 @@ namespace DartLib
 			//std::cout << v->point().print() << " ";
 			center_of_mass += v->point();
 		}
-		std::cout << "why does it break2\n";
 		center_of_mass /= double(loop_vertices.size());
+		std::cout << center_of_mass.print() << " ";
 		int tester = 0;
 		bool failed_previously = false;
 		bool correct = false;
 		bool change_happened = false;
 		
-		while (tester < 1) //50000
+		while (tester < 100) //50000
 		{
+			change_happened = false;
 			tester += 1;
-			std::cout << "the index is " << index;
-			std::cout << " vert size, edge size " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
+			//std::cout << "the index is " << index;
+			//std::cout << " vert size, edge size " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
 			//^ allows repeating moves
-			//while (true)
-			//{
+			while (true)
+			{
+				green_edges.clear();
 				if (index >= current_loop_edges.size())
 				{
 					index = 0;
 					break;
 				}
-				if (_fill_gaps(index))
+				if (index < 0)
 				{
-					index += 2;
-					std::cout << "~~~we filled a gap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					index = (index + current_loop_edges.size()) % current_loop_edges.size();
+				}
+				current_edge_to_green = current_loop_edges[index];
+				green_edges.push_back(current_edge_to_green);
+				//std::cout << "\n\n";
+				if (_repeats((index + current_loop_edges.size() - 2) % current_loop_edges.size()))
+				{
+					//std::cout << "we removed a double spike in previous edge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					index -= 2;
 					change_happened = true;
-					std::cout << "new index is " << index << ", out of " << loop_vertices.size() << "\n";
 					continue;
 				}
 				if (_repeats(index))
 				{
-					std::cout << "we removed a double spike!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					//std::cout << "we removed a double spike!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
 					continue;
 				}
 				if (_repeats((index + 1) % current_loop_edges.size()))
 				{
-					std::cout << "we removed a double spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					//std::cout << "we removed a double spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
+					continue;
+				}
+				if (_fill_gaps(index))
+				{
+					index += 2;
+					//std::cout << "~~~we filled a gap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					change_happened = true;
+					//std::cout << "new index is " << index << ", out of " << loop_vertices.size() << "\n";
 					continue;
 				}
 				if (_repeats2((index + 1) % current_loop_edges.size()))
 				{
-					std::cout << "we removed a spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					//std::cout << "we removed a spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					change_happened = true;
+					continue;
+				}
+				if (_repeats2(index))
+				{
+					//std::cout << "we removed a spike now!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
 					continue;
 				}
 				if (_triple0(index))
 				{
 					change_happened = true;
-					std::cout << "triple0 removed\n";
+					//std::cout << "triple0 removed\n";
 					continue;
 				}
 				if (_triple1(index))
 				{
 					change_happened = true;
-					std::cout << "triple0 removed\n";
+					//std::cout << "triple0 removed\n";
 					index -= 1;
 					continue;
 				}
 				if (_triple2(index))
 				{
 					change_happened = true;
-					std::cout << "triple0 removed\n";
+					//std::cout << "triple0 removed\n";
 					index -= 2;
 					continue;
 				}
 				if (_double(index))
 				{
-					std::cout << "double\n";
+					//std::cout << "double\n";
 					change_happened = true;
 					_change_double();
 					continue;
@@ -2304,11 +2393,11 @@ namespace DartLib
 					index += 1;
 					if (skip_singles)
 					{
-						std::cout << "single got skipped\n";
+						//std::cout << "single got skipped\n";
 						skip_singles = false;
 						continue;
 					}
-					std::cout << "single\n";
+					//std::cout << "single\n";
 					
 					_change_single();
 					
@@ -2316,10 +2405,11 @@ namespace DartLib
 					continue;
 				}
 				index += 1;
-			//}
+			}
 			if (change_happened == false)
 			{
-				std::cout << "end it!!\n";
+				correct = true;
+				//std::cout << "ended naturally, after " << tester << " tries.\n";
 				break;
 			}
 
@@ -2435,7 +2525,6 @@ namespace DartLib
 		}
 		//std::cout << "new center of mass is: " << center_of_mass.print() << "\n";
 		display_loop(current_loop_edges);
-		std::cout << ".";
 		
 		std::vector<int> lv;
 		for (M::CVertex* v : loop_vertices)
@@ -2523,12 +2612,75 @@ namespace DartLib
 			M::CVertex* pW1 = m_pMesh->edge_vertex(edg2, 0);
 			M::CVertex* pW2 = m_pMesh->edge_vertex(edg2, 1);
 			M::CEdge* add_edge = NULL;
-			M::CVertex* other = NULL;
 
-
-
-
-			for (M::VertexEdgeIterator veiter(m_pMesh, pV1); !veiter.end(); ++veiter)
+			//std::cout << "the 4 vertices are " << pV1->idx() << " " << pV2->idx() << " " << pW1->idx() << " " << pW2->idx() << "\n";
+			//std::cout << "the vertices there have indices: " << loop_vertices[(i + loop_vertices.size() - 1) % loop_vertices.size()]->idx() << " " << loop_vertices[i]->idx() << " " << loop_vertices[(i + 1) % loop_vertices.size()]->idx() << "\n";
+			M::CVertex* other_vert = NULL;
+			/*std::vector < M::CVertex*> four_vertices = { pV1, pV2, pW1, pW2 };
+			for (M::CVertex* fvert : four_vertices)
+			{
+				if (std::find(loop_vertices.begin() + i, loop_vertices.begin() + i + 1, fvert) == loop_vertices.end())
+				{
+					std::cout << "found the other vertex\n";
+					other_vert = fvert;
+				}
+			}*/
+			if (pW1 == loop_vertices[(i + 1) % loop_vertices.size()])
+			{
+				other_vert = pW2;
+			}
+			else if (pW2 == loop_vertices[(i + 1) % loop_vertices.size()])
+			{
+				other_vert = pW1;
+			}
+			else
+			{
+				//std::cout << "my idea for gap filing is broken.\n";
+				return false;
+			}
+			if (other_vert == NULL)
+			{
+				//std::cout << "somthing is wrong here, other_vert is null. this should never happen\n";
+				return false;
+			}
+			// find the edge between othervert and loop_vert[i]
+			for (M::VertexEdgeIterator veiter(m_pMesh, other_vert); !veiter.end(); ++veiter)
+			{
+				M::CEdge* pE = *veiter;
+				M::CVertex* v1 = m_pMesh->edge_vertex(pE, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(pE, 1);
+				if (v1 == other_vert)
+				{
+					if (v2 == loop_vertices[i] /*|| v2 == loop_vertices[(i + 1) % loop_vertices.size()]*/)
+					{
+						if (pE != edg1 && pE != edg2)
+						{
+							add_edge = pE;
+						}
+					}
+				}
+				else if (v2 == other_vert)
+				{
+					if (v1 == loop_vertices[i] /*|| v1 == loop_vertices[(i + 1) % loop_vertices.size()]*/)
+					{
+						if (pE != edg1 && pE != edg2)
+						{
+							add_edge = pE;
+						}
+					}
+				}
+				else
+				{
+					//std::cout << "v1 and v2 are both not the vertex. this should never happpen.\n";
+					return false;
+				}
+			}
+			if (add_edge == NULL)
+			{
+				//std::cout << "my concept for what should be happening is incorrect.\n";
+				return false;
+			}
+			/*for (M::VertexEdgeIterator veiter(m_pMesh, pV1); !veiter.end(); ++veiter)
 			{
 				M::CEdge* pE = *veiter;
 				M::CVertex* v1 = m_pMesh->edge_vertex(pE, 0);
@@ -2538,7 +2690,7 @@ namespace DartLib
 				{
 					if (std::find(loop_vertices.begin(), loop_vertices.end(), other) != loop_vertices.end())
 					{
-						std::cout << "it was actually pV1!!\n";
+						//std::cout << "it was actually pV1!!\n";
 						other = pV1;
 					}
 					add_edge = pE;
@@ -2557,7 +2709,7 @@ namespace DartLib
 					{
 						if (std::find(loop_vertices.begin(), loop_vertices.end(), other) != loop_vertices.end())
 						{
-							std::cout << "it was actually pV2!!\n";
+							//std::cout << "it was actually pV2!!\n";
 							other = pV2;
 						}
 						add_edge = pE;
@@ -2565,29 +2717,30 @@ namespace DartLib
 					}
 				}
 			}
-			if (std::find(loop_vertices.begin(), loop_vertices.end(), other) != loop_vertices.end())
-			{
-				std::cout << "this was not at all what I expected! Wrong now!\n";
-			}
+			//if (std::find(loop_vertices.begin(), loop_vertices.end(), other) != loop_vertices.end())
+			//{
+				//std::cout << "this was not at all what I expected! Wrong now!\n";
+			//}
 			if (add_edge == NULL)
 			{
-				std::cout << "edge to be added is null!??\n";
+				//std::cout << "edge to be added is null!??\n";
 				return false;
-			}
+			}*/
 			center_of_mass *= loop_vertices.size();
-			center_of_mass += other->point();
+			center_of_mass += other_vert->point();
 			center_of_mass /= double(loop_vertices.size() + 1);
+			std::cout << "the vertex and edge are: " << other_vert->idx() << " " << add_edge->idx() << "\n";
 			if (i == current_loop_edges.size() - 1)
 			{
 				current_loop_edges.push_back(add_edge);
-				loop_vertices.push_back(other);
+				loop_vertices.push_back(other_vert);
 			}
 			else
 			{
-				std::cout << "we've fixed the gap!\n";
 				current_loop_edges.insert(current_loop_edges.begin() + i, add_edge);
-				loop_vertices.insert(loop_vertices.begin() + i, other);
+				loop_vertices.insert(loop_vertices.begin() + i, other_vert);
 			}
+			std::cout << "we've fixed the gap!\n";
 			return true;
 		}
 		return false;
@@ -2612,7 +2765,7 @@ namespace DartLib
 				{
 					if (edg1 == edg2 || edg1 == edg3 || edg2 == edg3)
 					{
-						std::cout << "duplicated edges put inside the triples?? this should have been removed earlier...\n";
+						//std::cout << "duplicated edges put inside the triples?? this should have been removed earlier...\n";
 						return false;
 					}
 					// these 3 can all be removed, along with verts
@@ -2778,6 +2931,7 @@ namespace DartLib
 			//shared point - midpoint of new edge
 			double improvement = (p5 - COM).norm() - (p4 - COM).norm();
 			//if (improvement > 0)
+			//std::cout << "double\n";
 			if (_different_side(pV, pW, center_of_mass, shared_v))
 			{
 				best_edge_o1 = edg1;
@@ -2866,7 +3020,7 @@ namespace DartLib
 			CPoint mid_further = (further_point + pV3->point()) / 2.0;
 			//compare to new vertex
 			mid_closer = pV3->point();
-
+			//std::cout << "single\n";
 			if (_different_side(pV1, pV2, center_of_mass, pV3))
 			{
 				continue;
@@ -3357,14 +3511,18 @@ namespace DartLib
 		//std::cout << "while the 2nd edge index was " << idx_best_edge_o2 << " out of " << current_loop_edges.size() << "\n";
 		if (idx_best_edge_o2 == 0)
 		{
+			green_edges.push_back(current_loop_edges[idx_best_edge_o1]);
 			current_loop_edges.erase(current_loop_edges.begin() + idx_best_edge_o1);
+			green_edges.push_back(current_loop_edges[0]);
 			current_loop_edges.erase(current_loop_edges.begin());
 			current_loop_edges.push_back(edg3);
 			loop_vertices.erase(loop_vertices.begin());
 		}
 		else
 		{
+			green_edges.push_back(current_loop_edges[idx_best_edge_o2]);
 			current_loop_edges.erase(current_loop_edges.begin() + idx_best_edge_o2);
+			green_edges.push_back(current_loop_edges[idx_best_edge_o1]);
 			current_loop_edges.erase(current_loop_edges.begin() + idx_best_edge_o1);
 			current_loop_edges.insert(current_loop_edges.begin() + idx_best_edge_o1, edg3);
 			loop_vertices.erase(loop_vertices.begin() + idx_best_edge_o2);
@@ -3686,13 +3844,13 @@ namespace DartLib
 		else if (inter1 == NULL)
 		{
 			
-			std::cout << "there's a hole here!!!\n";
+			//std::cout << "there's a hole here!!!\n";
 			return 1;
 		}
 		else if (inter2 == NULL)
 		{
 
-			std::cout << "there's a hole here!!!\n";
+			//std::cout << "there's a hole here!!!\n";
 			return 2;
 		}
 		return -1;
@@ -3718,7 +3876,7 @@ namespace DartLib
 		if (inter1 == NULL)
 		{
 
-			std::cout << "there's a gap here!!!\n";
+			//std::cout << "there's a gap here!!!\n";
 			return 0;
 		}
 		return -1;
@@ -3729,17 +3887,31 @@ namespace DartLib
 		// line segment AB, center of mass M, third point C.
 		CPoint line_seg1 = A->point() - B->point(); // vector AB;
 		CPoint N = line_seg1 * ((line_seg1 * (M - B->point())) / (line_seg1 * line_seg1));
+		//std::cout << "M - B is " << (M - B->point()).print() << "\n";
+		//std::cout << "C - B is " << (C->point() - B->point()).print() << "\n";
+		//std::cout << "N is " << N.print() << "\n";
+		//std::cout << "line_seg1 is " << line_seg1.print() << "\n";
 		CPoint X = (M - B->point()) - N;
+		//std::cout << "X is " << X.print() << "\n";
 		double Y = N * X;
-		double M_side = (X * (M - B->point())) / Y - 1.0;
-		double C_side = (X * (C->point() - B->point())) / Y - 1.0;
+		//std::cout << "Y is " << Y << "\n";
+		double M_side = (X * (M - B->point()))/* / Y - 1.0*/;
+		double C_side = (X * (C->point() - B->point()))/* / Y - 1.0*/;
 		//std::cout << M_side << " " << C_side << "\n";
 		if ((M_side > 0 && C_side > 0) || (M_side < 0 && C_side < 0))
 		{
+			//if ((C_side < epsi && C_side > 0) || (C_side > (-1 * epsi) && C_side < 0))
+			//{
+			//	return true;
+			//}
 			return false;
 		}
 		else
 		{
+			//if ((C_side < epsi && C_side > 0) || (C_side > (-1 * epsi) && C_side < 0))
+			//{
+			//	return false;
+			//}
 			return true;
 		}
 
