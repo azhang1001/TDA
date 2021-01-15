@@ -1,38 +1,38 @@
 ﻿  HandleTunnelLoop.cpp
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(73,100): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(723,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(779,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(821,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(850,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(892,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(922,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(959,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1212,45): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1216,44): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1220,44): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1224,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1228,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1232,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1236,47): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1240,47): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1300,111): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1433,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1828,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2319,77): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2324,8): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2557,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2586,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2729,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2777,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2796,72): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(780,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(836,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(878,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(907,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(949,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(979,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1016,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1269,45): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1273,44): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1277,44): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1281,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1285,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1289,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1293,47): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1297,47): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1357,111): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1490,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1885,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2361,77): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2366,8): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2599,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2628,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2771,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2819,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2838,72): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2861,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3075,43): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3497,39): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3606,39): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3648,79): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3770,41): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2880,72): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2903,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3117,43): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3539,39): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3648,39): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3690,79): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3812,41): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(372,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message : while compiling class template member function 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)'
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :         with
@@ -43,15 +43,15 @@ C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdpart
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             Dart=DartLib::CMyDart_2,
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             _Ty=DartLib::CPoint
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :         ]
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :         with
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :         [
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             V=DartLib::CMyVertex_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             E=DartLib::CMyEdge_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             F=DartLib::CMyFace_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             Dart=DartLib::CMyDart_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             _Ty=DartLib::CPoint
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :         ]
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :         with
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :         [
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             V=DartLib::CMyVertex_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             E=DartLib::CMyEdge_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             F=DartLib::CMyFace_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             Dart=DartLib::CMyDart_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             _Ty=DartLib::CPoint
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :         ]
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(70): message : see reference to class template instantiation 'DartLib::TBaseMesh_2<V,E,F,Dart>' being compiled
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(70): message :         with
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(70): message :         [
@@ -60,7 +60,7 @@ C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(70): message :             F=DartLib::CMyFace_2,
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(70): message :             Dart=DartLib::CMyDart_2
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\include\MyMesh.h(70): message :         ]
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message : see reference to class template instantiation 'DartLib::TMyMesh<DartLib::CMyVertex_2,DartLib::CMyEdge_2,DartLib::CMyFace_2,DartLib::CMyDart_2>' being compiled
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message : see reference to class template instantiation 'DartLib::TMyMesh<DartLib::CMyVertex_2,DartLib::CMyEdge_2,DartLib::CMyFace_2,DartLib::CMyDart_2>' being compiled
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\include\utility(165,1): warning C4267: 'initializing': conversion from 'size_t' to '_Ty2', possible loss of data
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\include\utility(165,1): warning C4267:         with
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\include\utility(165,1): warning C4267:         [
@@ -183,14 +183,14 @@ C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdpart
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             Dart=DartLib::CMyDart_2,
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             _Ty=DartLib::CPoint
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :         ]
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :         with
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :         [
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             V=DartLib::CMyVertex_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             E=DartLib::CMyEdge_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             F=DartLib::CMyFace_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             Dart=DartLib::CMyDart_2,
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :             _Ty=DartLib::CPoint
-C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1030): message :         ]
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :         with
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :         [
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             V=DartLib::CMyVertex_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             E=DartLib::CMyEdge_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             F=DartLib::CMyFace_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             Dart=DartLib::CMyDart_2,
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :             _Ty=DartLib::CPoint
+C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1087): message :         ]
 C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\3rdparty\DartLib\core\Mesh\BaseMesh_3.h(627): warning C4715: 'DartLib::TBaseMesh_3<DartLib::CMyVertex,DartLib::CMyEdge,DartLib::CMyFace,DartLib::CMyTet,DartLib::CMyDart>::edge_vertex': not all control paths return a value
   HandleTunnelLoop.vcxproj -> C:\Users\alexa\Documents\TDA\Assignment_7_Skeleton\Assignment_7_Skeleton\build\handle_tunnel_loop\Release\HandleTunnelLoop.exe

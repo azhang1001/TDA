@@ -90,6 +90,7 @@ class CHandleTunnelLoop
     void _pair(std::set<M::CFace*>& faces);
 
     void _mark_loop(M::CFace* face);
+	void _mark_loop(M::CEdge* edge, M::CFace* face);
     void _mark_loop(M::CEdge* edge);
 
     bool _shrink_triangles();

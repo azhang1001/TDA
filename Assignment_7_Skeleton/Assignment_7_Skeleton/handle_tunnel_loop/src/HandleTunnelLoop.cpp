@@ -161,17 +161,17 @@ namespace DartLib
 				vertices_of_face.push_back(pV->idx());
 
 			}
-			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
-			{
-				M::CEdge* pE = *feiter;
-				edges_faces[pE->idx()].push_back(pF);
-			}
+
 
 			std::sort(vertices_of_face.begin(), vertices_of_face.end());
 			face_exist.push_back(vertices_of_face);
 			if (pF->idx() > 0)
 			{
-
+				for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
+				{
+					M::CEdge* pE = *feiter;
+					edges_faces[pE->idx()].push_back(pF);
+				}
 				continue;
 			}
 
@@ -189,7 +189,7 @@ namespace DartLib
 		_pair(m_inner_edges);
 		_pair(m_inner_faces);
 
-		std::cout << "After pairing the Interior Volume :" << std::endl;
+		std::cout << "\nAfter pairing the Interior Volume :" << std::endl;
 		std::vector<M::CEdge*> handle_loops;
 		std::vector<M::CEdge*> tunnel_loops;
 		// these are all edges that are generators but haven't been killed by the boundary
@@ -219,7 +219,7 @@ namespace DartLib
 		printf("Interior pair time: %g s\n", double(e - b) / CLOCKS_PER_SEC);
 		for (size_t i = 0; i < handle_loops.size(); i++)
 		{
-			_mark_loop(handle_loops[i]);
+			_mark_loop(handle_loops[i], handle_loops[i]->pair());
 			handletunnel_edges.push_back(handle_loops[i]);
 			//M::CFace* pF = handle_loops[i]->pair();
 			//_mark_loop(pF);
@@ -421,21 +421,10 @@ namespace DartLib
 					inSet.insert(pEd->idx());
 					number += 1;
 				}
-				if (pEd->generator())
-				{
-					if (inSetGens.find(pEd->idx()) != inSetGens.end())
-					{
-						inSetGens.erase(pEd->idx());
-					}
-					else
-					{
-						inSetGens.insert(pEd->idx());
-					}
-				}
 			}
 		
 		
-			M::CEdge* pE = idx_edges[*inSetGens.rbegin()];
+			M::CEdge* pE = idx_edges[*inSet.rbegin()];
 
 			while(number > 0 && pE->pair() != NULL)
 			{
@@ -453,30 +442,11 @@ namespace DartLib
 						inSet.insert(pE2->idx());
 						number += 1;
 					}
-					if (pE2->generator())
-					{
-						if (inSetGens.find(pE2->idx()) != inSetGens.end())
-						{
-							inSetGens.erase(pE2->idx());
-						}
-						else
-						{
-							inSetGens.insert(pE2->idx());
-						}
-					}
 				
 				}
-				if (!*inSetGens.rbegin() && *inSet.rbegin())
+				if (*inSet.rbegin())
 				{
-					std::cout << "I thought this would never happen\n";
-				}
-				if (*inSetGens.rbegin())
-				{
-					pE = idx_edges[*inSetGens.rbegin()];
-					//if (*inSetGens.rbegin() != *inSet.rbegin())
-					//{
-					//	std::cout << *inSetGens.rbegin() << " " << *inSet.rbegin() << "\n";
-					//}
+					pE = idx_edges[*inSet.rbegin()];
 				}
 			
 			
@@ -485,6 +455,19 @@ namespace DartLib
 			{
 				killer_faces += 1;
 				pE->pair() = pF;
+				if (m_generators.size() != m_genus * 2)
+					continue;
+				if (m_generators.find(pE) == m_generators.end())
+					continue;
+				int paired_generators = 0;
+				for (auto eiter = m_generators.begin(); eiter != m_generators.end(); eiter++)
+				{
+					M::CEdge* pE2 = *eiter;
+					if (pE2->pair() != NULL)
+						paired_generators++;
+				}
+				if (paired_generators == m_genus)
+					return;
 			}
 			else
 			{
@@ -495,11 +478,16 @@ namespace DartLib
 		std::cout << "finished, there are " << killer_faces << " killers and " << generator_faces << " generator faces.\n";
 		std::cout << "time taken to add edges was " << add_time << " seconds while head time was " << head_time << " seconds."
 			<< "time taken to assign boolean to false was " << assign <<  " seconds \n";
-		
-		/*for (auto fiter = faces.begin(); fiter != faces.end(); fiter++)
+		/*
+		int numb = 0;
+		for (auto fiter = faces.begin(); fiter != faces.end(); fiter++)
 		{
 			M::CFace* pF = *fiter;
-			std::cout << "-";
+			numb += 1;
+			if (numb % 1000 == 0)
+			{
+				std::cout << "-";
+			}
 
 			Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
 
@@ -599,6 +587,75 @@ namespace DartLib
 		//}
 
 	};
+	void CHandleTunnelLoop::_mark_loop(M::CEdge* edge, M::CFace* face)
+	{
+		std::vector<M::CEdge*> one_loop;
+		loop_edges.clear();
+		loop_vertices.clear();
+		std::set<M::CFace*> section;
+
+		if (m_inner_faces.find(face) != m_inner_faces.end())
+			section.insert(face);
+
+		Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
+		for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+		{
+			M::CEdge* pE = *feiter;
+			ecycle.add(pE);
+		}
+
+		M::CEdge* phead = ecycle.head();
+		while (!ecycle.empty() && phead->pair() != NULL)
+		{
+			M::CFace* pF = phead->pair();
+
+			if (m_inner_faces.find(pF) != m_inner_faces.end())
+				section.insert(pF);
+			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
+			{
+				M::CEdge* pE = *feiter;
+				ecycle.add(pE);
+			}
+			phead = ecycle.head();
+
+			if (phead == edge)
+			{
+				break;
+			}
+		}
+
+		std::cout << "There are " << section.size() << " faces" << std::endl;
+
+		for (auto fiter = section.begin(); fiter != section.end(); fiter++)
+		{
+			M::CFace* pF = *fiter;
+			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
+			{
+				M::CEdge* pE = *feiter;
+				// if (m_edges.find(pwe) != m_edges.end())
+				if (m_boundary_edges.find(pE) != m_boundary_edges.end())
+				{
+					one_loop.push_back(pE);
+					loop_edges.push_back(pE);
+					pE->sharp() = true;
+				}
+			}
+		}
+		
+		before_prune_edges.push_back(one_loop);
+		prune();
+		std::vector<M::CEdge*> old_cycle;
+		for (auto pE : loop_edges)
+		{
+			old_cycle.push_back(pE);
+			pE->sharp() = false;
+
+		}
+		before_edges.push_back(old_cycle);
+		//std::cout << "begining shortening.\n";
+		//shorten();
+	};
+
 
 	void CHandleTunnelLoop::_mark_loop(M::CEdge* pE)
 	{
@@ -710,7 +767,7 @@ namespace DartLib
 
 		}
 		before_edges.push_back(old_cycle);
-		shorten();
+		//shorten();
 	};
 
 
@@ -2205,21 +2262,6 @@ namespace DartLib
 		clock_t start = clock();
 		bool cont = true;
 
-		/*bool isContinue = false;
-		do
-		{
-			_prune();
-			isContinue = _shrink_triangles();
-		} while (isContinue);*/
-		// display the new list of sharp ones lol
-		/*for (auto pE : m_boundary_edges)
-		{
-			pE->sharp() = false;
-		}*/
-		/*for (auto pE : loop_edges)
-		{
-			pE->sharp() = true;
-		}*/
 		// sort the loop edges first
 		loop_vertices.clear();
 		current_loop_edges.clear();
