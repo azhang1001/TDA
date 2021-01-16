@@ -226,6 +226,7 @@ class CHandleTunnelLoop
 
 	int stopped_naturally = 0;
 	int time = 0;
+	int paired_generators = 0;
 	
 };
 

@@ -455,19 +455,19 @@ namespace DartLib
 			{
 				killer_faces += 1;
 				pE->pair() = pF;
-				if (m_generators.size() != m_genus * 2)
-					continue;
-				if (m_generators.find(pE) == m_generators.end())
-					continue;
-				int paired_generators = 0;
-				for (auto eiter = m_generators.begin(); eiter != m_generators.end(); eiter++)
+
+				if (m_generators.size() != 0)
 				{
-					M::CEdge* pE2 = *eiter;
-					if (pE2->pair() != NULL)
-						paired_generators++;
+					if (std::find(m_generators.begin(), m_generators.end(), pE) != m_generators.end())
+					{
+						paired_generators += 1;
+						if (paired_generators == m_genus)
+						{
+							return;
+						}
+					}
+					
 				}
-				if (paired_generators == m_genus)
-					return;
 			}
 			else
 			{
