@@ -463,6 +463,7 @@ namespace DartLib
 						paired_generators += 1;
 						if (paired_generators == m_genus)
 						{
+							std::cout << "ended quicker!\n";
 							return;
 						}
 					}
@@ -589,7 +590,6 @@ namespace DartLib
 	};
 	void CHandleTunnelLoop::_mark_loop(M::CEdge* edge, M::CFace* face)
 	{
-		std::vector<M::CEdge*> one_loop;
 		loop_edges.clear();
 		loop_vertices.clear();
 		std::set<M::CFace*> section;
@@ -635,28 +635,32 @@ namespace DartLib
 				// if (m_edges.find(pwe) != m_edges.end())
 				if (m_boundary_edges.find(pE) != m_boundary_edges.end())
 				{
-					one_loop.push_back(pE);
-					loop_edges.push_back(pE);
+					if (std::find(loop_edges.begin(), loop_edges.end(), pE) == loop_edges.end())
+					{
+						loop_edges.push_back(pE);
+					}
 					pE->sharp() = true;
 				}
 			}
 		}
 		
-		before_prune_edges.push_back(one_loop);
+		before_prune_edges.push_back(loop_edges);
+		
 		prune();
-		std::vector<M::CEdge*> old_cycle;
 		for (auto pE : loop_edges)
 		{
-			old_cycle.push_back(pE);
 			pE->sharp() = false;
 
 		}
-		before_edges.push_back(old_cycle);
-		//std::cout << "begining shortening.\n";
-		//shorten();
+		before_edges.push_back(loop_edges);
+		/*for (auto ed : loop_edges)
+		{
+			std::cout << ed->idx() << " ";
+		}*/
+
+		std::cout << "begining shortening.\n";
+		shorten();
 	};
-
-
 	void CHandleTunnelLoop::_mark_loop(M::CEdge* pE)
 	{
 		for (auto pE : m_boundary_edges)
@@ -999,11 +1003,32 @@ namespace DartLib
 		}
 		for (auto before_v : before_vertices)
 		{
-			int v = before_v[0];
-			for (int i = 2; i < before_v.size(); i++)
+			/*int v = final_v[0];
+			for (int i = 2; i < final_v.size(); i++)
 			{
-				_os << "f " << v << " " << before_v[i - 1] << " " << before_v[i] << "\n";
+				_os << "f " << v << " " << final_v[i - 1] << " " << final_v[i] << "\n";
+			}*/
+			int larger = before_v.size() - 1;
+			int smaller = 0;
+			int next = smaller + 1;
+			while (true)
+			{
+				if (next == larger)
+				{
+					break;
+				}
+				_os << "f " << before_v[smaller] << " " << before_v[larger] << " " << before_v[next] << "\n";
+				smaller = next;
+				next = larger - 1;
+				if (next == smaller)
+				{
+					break;
+				}
+				_os << "f " << before_v[smaller] << " " << before_v[larger] << " " << before_v[next] << "\n";
+				larger = next;
+				next = smaller + 1;
 			}
+			_os << "\n\n";
 		}
 	}
 
@@ -2262,68 +2287,101 @@ namespace DartLib
 		clock_t start = clock();
 		bool cont = true;
 
-		// sort the loop edges first
-		loop_vertices.clear();
-		current_loop_edges.clear();
-		M::CEdge* pE = loop_edges[0];
-		M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
-		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
-		//std::cout << "started with " << loop_edges.size() << " edges left\n";
-		loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE), loop_edges.end());
-		loop_vertices.push_back(pW);
-		current_loop_edges.push_back(pE);
-		while (pV != pW)
+		std::vector<M::CVertex*> vertices_counter;
+		vertices_counter.clear();
+		for (auto edge : loop_edges)
 		{
-			//if (!cont)
-			//{
-			//	break;
-			//}
-			loop_vertices.push_back(pV);
-			cont = false;
-			for (M::VertexEdgeIterator veiter(m_pMesh, pV); !veiter.end(); ++veiter)
+			M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
+			M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
+			vertices_counter.push_back(pV);
+			vertices_counter.push_back(pW);
+		}
+		std::vector<M::CVertex*> bad_vertices;
+		bad_vertices.clear();
+		for (M::CVertex* v : vertices_counter)
+		{
+			if (std::count(vertices_counter.begin(), vertices_counter.end(), v) >= 3)
 			{
-
-				M::CEdge* pE2 = *veiter;
-				if (std::find(loop_edges.begin(), loop_edges.end(), pE2) != loop_edges.end())
+				if (std::find(bad_vertices.begin(), bad_vertices.end(), v) == bad_vertices.end())
 				{
-					current_loop_edges.push_back(pE2);
-					loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE2), loop_edges.end());
-					if (pV == m_pMesh->edge_vertex(pE2, 0))
-					{
-						pV = m_pMesh->edge_vertex(pE2, 1);
-						cont = true;
-					}
-					else if (pV == m_pMesh->edge_vertex(pE2, 1))
-					{
-						pV = m_pMesh->edge_vertex(pE2, 0);
-						cont = true;
-					}
-					else
-					{
-						std::cout << "something wrong happened with finding the vertices of the loop";
-					}
-					break;
+					bad_vertices.push_back(v);
 				}
-
 			}
 		}
-
-
-
-		std::cout << "there are now " << loop_edges.size() << " edges left\n";
-		std::cout << "there are  " << loop_vertices.size() << " vertices\n";
-		std::vector<int> before_v;
-		for (auto i : loop_vertices)
+		
+		if (bad_vertices.size() == 0)
 		{
-			before_v.push_back(i->idx());
+			loop_vertices.clear();
+			current_loop_edges.clear();
+			M::CEdge* pE = loop_edges[0];
+			M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
+			M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+			//std::cout << "started with " << loop_edges.size() << " edges left\n";
+			loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE), loop_edges.end());
+			loop_vertices.push_back(pW);
+			current_loop_edges.push_back(pE);
+			while (pV != pW)
+			{
+				//if (!cont)
+				//{
+				//	break;
+				//}
+				loop_vertices.push_back(pV);
+				cont = false;
+				for (M::VertexEdgeIterator veiter(m_pMesh, pV); !veiter.end(); ++veiter)
+				{
+
+					M::CEdge* pE2 = *veiter;
+					if (std::find(loop_edges.begin(), loop_edges.end(), pE2) != loop_edges.end())
+					{
+						current_loop_edges.push_back(pE2);
+						loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE2), loop_edges.end());
+						if (pV == m_pMesh->edge_vertex(pE2, 0))
+						{
+							pV = m_pMesh->edge_vertex(pE2, 1);
+							cont = true;
+						}
+						else if (pV == m_pMesh->edge_vertex(pE2, 1))
+						{
+							pV = m_pMesh->edge_vertex(pE2, 0);
+							cont = true;
+						}
+						else
+						{
+							std::cout << "something wrong happened with finding the vertices of the loop";
+						}
+						break;
+					}
+
+				}
+			}
+
+
+
+
+			std::cout << "there are now " << loop_edges.size() << " edges left\n";
+			std::cout << "there are  " << loop_vertices.size() << " vertices\n";
+			std::vector<int> before_v;
+			for (auto i : loop_vertices)
+			{
+				before_v.push_back(i->idx());
+			}
+			before_vertices.push_back(before_v);
+			single_to_double.clear();
+			double_to_single.clear();
+			//_shorten();
+			//display_loop(current_loop_edges);
 		}
-		before_vertices.push_back(before_v);
-		single_to_double.clear();
-		double_to_single.clear();
-		_shorten();
-		display_loop(current_loop_edges);
+		else
+		{
+			std::cout << "these are the bad vertices: ";
+			for (M::CVertex* bad_v : bad_vertices)
+			{
+				std::cout << bad_v->idx() << " ";
+			}
+		}
 		clock_t end = clock();
-		std::cout << "shorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
+		std::cout << "\nshorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
 	}
 	void CHandleTunnelLoop::_shorten()
 	{
