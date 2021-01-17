@@ -2286,7 +2286,8 @@ namespace DartLib
 	{
 		clock_t start = clock();
 		bool cont = true;
-
+		std::map<M::CVertex*, std::vector<M::CEdge*>> vertex_edges;
+		vertex_edges.clear();
 		std::vector<M::CVertex*> vertices_counter;
 		vertices_counter.clear();
 		for (auto edge : loop_edges)
@@ -2295,6 +2296,22 @@ namespace DartLib
 			M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
 			vertices_counter.push_back(pV);
 			vertices_counter.push_back(pW);
+			if (vertex_edges.find(pV) == vertex_edges.end())
+			{
+				vertex_edges.insert({ pV, {edge} });
+			}
+			else
+			{
+				vertex_edges[pV].push_back(edge);
+			}
+			if (vertex_edges.find(pW) == vertex_edges.end())
+			{
+				vertex_edges.insert({ pW, {edge} });
+			}
+			else
+			{
+				vertex_edges[pW].push_back(edge);
+			}
 		}
 		std::vector<M::CVertex*> bad_vertices;
 		bad_vertices.clear();
@@ -2374,11 +2391,30 @@ namespace DartLib
 		}
 		else
 		{
+			std::vector<M::CEdge*> visited_edges;
+			loop_vertices.clear();
+			current_loop_edges.clear();
 			std::cout << "these are the bad vertices: ";
 			for (M::CVertex* bad_v : bad_vertices)
 			{
 				std::cout << bad_v->idx() << " ";
 			}
+			M::CVertex* starting_vertex = bad_vertices[0];
+			for (auto edge : vertex_edges[starting_vertex])
+			{
+				std::cout << "edge: " << edge->idx() << "\n";
+			}
+			int badIdx1 = 0;
+			loop_vertices.push_back(starting_vertex);
+			current_loop_edges.push_back(vertex_edges[starting_vertex][0]);
+			visited_edges.push_back(vertex_edges[starting_vertex][0]);
+			while (true)
+			{
+				// go to next edge
+				return;
+			}
+
+
 		}
 		clock_t end = clock();
 		std::cout << "\nshorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
@@ -4015,6 +4051,92 @@ namespace DartLib
 			return true;
 		}
 
+
+	}
+	bool CHandleTunnelLoop::_null_homologous(std::vector<M::CEdge*> myEdges)
+	{
+		inSet.clear();
+		inSetGens.clear();
+		int number = 0;
+		for (M::CEdge* ed : myEdges)
+		{
+			if (inSet.find(ed->idx()) != inSet.end())
+			{
+				inSet.erase(ed->idx());
+				number -= 1;
+			}
+			else
+			{
+				inSet.insert(ed->idx());
+				number += 1;
+			}
+			if (ed->generator())
+			{
+				if (inSetGens.find(ed->idx()) != inSetGens.end())
+				{
+					inSetGens.erase(ed->idx());
+				}
+				else
+				{
+					inSetGens.insert(ed->idx());
+				}
+
+			}
+		}
+		std::cout << "these are the edges in the set generators: ";
+		for (int i : inSetGens)
+		{
+			std::cout << i << " ";
+		}
+		std::cout << "\nthese are the edges in the set: ";
+		for (int i : inSet)
+		{
+			std::cout << i << " ";
+		}
+		std::cout << "\n";
+		M::CEdge* phead = idx_edges[*inSetGens.rbegin()];
+		if (phead == NULL)
+		{
+			std::cout << "There were no edges in the generators list\n";
+			return true;
+		}
+		while (number > 0 && phead->pair() != NULL)
+		{
+			M::CFace* pF = phead->pair();
+			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
+			{
+				M::CEdge* ed = *feiter;
+				if (inSet.find(ed->idx()) != inSet.end())
+				{
+					inSet.erase(ed->idx());
+					number -= 1;
+				}
+				else
+				{
+					inSet.insert(ed->idx());
+					number += 1;
+				}
+				if (ed->generator())
+				{
+					if (inSetGens.find(ed->idx()) != inSetGens.end())
+					{
+						inSetGens.erase(ed->idx());
+					}
+					else
+					{
+						inSetGens.insert(ed->idx());
+					}
+
+				}
+
+
+			}
+			if (*inSetGens.rbegin())
+				phead = idx_edges[*inSetGens.rbegin()];
+			else
+				phead = NULL;
+		}
+		return number <= 0;
 
 	}
 }

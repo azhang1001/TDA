@@ -116,6 +116,7 @@ class CHandleTunnelLoop
 	int _intersection(M::CEdge* e1, M::CEdge* e2, M::CEdge* e3);
 	int _intersection(M::CEdge* e1, M::CEdge* e2);
 	bool _different_side(M::CVertex* A, M::CVertex* B, CPoint M, M::CVertex* C);
+	bool _null_homologous(std::vector<M::CEdge*> myEdges);
 
     void _prune();
 
@@ -171,7 +172,7 @@ class CHandleTunnelLoop
 	std::vector<std::vector<int>> before_vertices;
 	std::vector<M::CEdge*> green_edges;
 	std::vector<std::vector<M::CFace*>> edges_faces;
-
+	
 
 	//double graph[V][V];
 	std::vector<std::map<int, double>> graph;
