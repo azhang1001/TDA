@@ -4,7 +4,8 @@
 
 namespace DartLib
 {
-
+	bool boundary_shorten = true;
+	bool fastFacePairing = true;
 	/*!
 	 *	constructor of the CHandleTunnelLoop
 	 */
@@ -174,7 +175,14 @@ namespace DartLib
 				}
 				continue;
 			}
-
+			if (boundary_shorten == false)
+			{
+				for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
+				{
+					M::CEdge* pE = *feiter;
+					edges_faces[pE->idx()].push_back(pF);
+				}
+			}
 			pF->idx() = fid++;
 			m_inner_faces.insert(pF);
 		}
@@ -456,18 +464,21 @@ namespace DartLib
 				killer_faces += 1;
 				pE->pair() = pF;
 
-				if (m_generators.size() != 0)
+				if (fastFacePairing)
 				{
-					if (std::find(m_generators.begin(), m_generators.end(), pE) != m_generators.end())
+					if (m_generators.size() != 0)
 					{
-						paired_generators += 1;
-						if (paired_generators == m_genus)
+						if (std::find(m_generators.begin(), m_generators.end(), pE) != m_generators.end())
 						{
-							std::cout << "ended quicker!\n";
-							return;
+							paired_generators += 1;
+							if (paired_generators == m_genus)
+							{
+								std::cout << "ended quicker!\n";
+								return;
+							}
 						}
+
 					}
-					
 				}
 			}
 			else
@@ -625,7 +636,11 @@ namespace DartLib
 		}
 
 		std::cout << "There are " << section.size() << " faces" << std::endl;
+		for (auto pE : m_boundary_edges)
+		{
+			pE->sharp() = false;
 
+		}
 		for (auto fiter = section.begin(); fiter != section.end(); fiter++)
 		{
 			M::CFace* pF = *fiter;
@@ -638,8 +653,8 @@ namespace DartLib
 					if (std::find(loop_edges.begin(), loop_edges.end(), pE) == loop_edges.end())
 					{
 						loop_edges.push_back(pE);
+						pE->sharp() = true;
 					}
-					pE->sharp() = true;
 				}
 			}
 		}
@@ -647,16 +662,12 @@ namespace DartLib
 		before_prune_edges.push_back(loop_edges);
 		
 		prune();
-		for (auto pE : loop_edges)
+		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
 
 		}
 		before_edges.push_back(loop_edges);
-		/*for (auto ed : loop_edges)
-		{
-			std::cout << ed->idx() << " ";
-		}*/
 
 		std::cout << "begining shortening.\n";
 		shorten();
@@ -1708,16 +1719,6 @@ namespace DartLib
 					{
 						if (edges[i]->sharp())
 						{
-							/*std::vector<M::CEdge*>::iterator position = std::find(loop_edges.begin(), loop_edges.end(), edges[i]);
-							if (position != loop_edges.end())
-							{
-								std::cout << "we erased a 2-edge called " << *position << "\n";
-								loop_edges.erase(position);
-							}
-							else
-							{
-								std::cout << "we can't find " << edges[i] << "\n";
-							}*/
 							loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), edges[i]), loop_edges.end());
 						}
 						else if (!edges[i]->sharp())
@@ -1972,7 +1973,24 @@ namespace DartLib
 		return n_vect;
 	}
 
-
+	void CHandleTunnelLoop::display_all_before_prune()
+	{
+		for (auto pE : m_boundary_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto pE : m_inner_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto f_edges : before_prune_edges)
+		{
+			for (auto pE : f_edges)
+			{
+				pE->sharp() = true;
+			}
+		}
+	}
 	void CHandleTunnelLoop::display_all_before()
 	{
 		for (auto pE : m_boundary_edges)
@@ -1986,6 +2004,25 @@ namespace DartLib
 		std::cout << "there are " << before_edges.size() << " starting loops\n";
 		std::cout << "there are " << before_edges_search_size.size() << " starting search loops\n";
 		for (auto f_edges : before_edges)
+		{
+			for (auto pE : f_edges)
+			{
+				pE->sharp() = true;
+			}
+		}
+	}
+	void CHandleTunnelLoop::display_all_middle()
+	{
+		for (auto pE : m_boundary_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto pE : m_inner_edges)
+		{
+			pE->sharp() = false;
+		}
+		std::cout << "there are " << middle_edges.size() << " middle loops\n";
+		for (auto f_edges : middle_edges)
 		{
 			for (auto pE : f_edges)
 			{
@@ -2064,23 +2101,7 @@ namespace DartLib
 		std::cout << "\n";
 	}
 
-	void CHandleTunnelLoop::display_before_prune(int which)
-	{
-		which = which % before_prune_edges.size();
-		std::cout << "before pruning we had " << before_prune_edges[which].size() << " many edges\n";
-		for (auto pE : m_boundary_edges)
-		{
-			pE->sharp() = false;
-		}
-		for (auto pE : m_inner_edges)
-		{
-			pE->sharp() = false;
-		}
-		for (auto pE : before_prune_edges[which])
-		{
-			pE->sharp() = true;
-		}
-	}
+
 
 	void CHandleTunnelLoop::show_original()
 	{
@@ -2325,26 +2346,19 @@ namespace DartLib
 				}
 			}
 		}
-		
+		loop_vertices.clear();
+		current_loop_edges.clear();
 		if (bad_vertices.size() == 0)
 		{
-			loop_vertices.clear();
-			current_loop_edges.clear();
 			M::CEdge* pE = loop_edges[0];
 			M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
 			M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
-			//std::cout << "started with " << loop_edges.size() << " edges left\n";
 			loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE), loop_edges.end());
 			loop_vertices.push_back(pW);
 			current_loop_edges.push_back(pE);
 			while (pV != pW)
 			{
-				//if (!cont)
-				//{
-				//	break;
-				//}
 				loop_vertices.push_back(pV);
-				cont = false;
 				for (M::VertexEdgeIterator veiter(m_pMesh, pV); !veiter.end(); ++veiter)
 				{
 
@@ -2356,12 +2370,10 @@ namespace DartLib
 						if (pV == m_pMesh->edge_vertex(pE2, 0))
 						{
 							pV = m_pMesh->edge_vertex(pE2, 1);
-							cont = true;
 						}
 						else if (pV == m_pMesh->edge_vertex(pE2, 1))
 						{
 							pV = m_pMesh->edge_vertex(pE2, 0);
-							cont = true;
 						}
 						else
 						{
@@ -2369,53 +2381,127 @@ namespace DartLib
 						}
 						break;
 					}
-
 				}
 			}
-
-
-
-
-			std::cout << "there are now " << loop_edges.size() << " edges left\n";
-			std::cout << "there are  " << loop_vertices.size() << " vertices\n";
-			std::vector<int> before_v;
-			for (auto i : loop_vertices)
-			{
-				before_v.push_back(i->idx());
-			}
-			before_vertices.push_back(before_v);
-			single_to_double.clear();
-			double_to_single.clear();
-			//_shorten();
-			//display_loop(current_loop_edges);
 		}
-		else
+		else if (bad_vertices.size() >= 0)
 		{
+			std::cout << "HERE IS A BROKEN LOOP-------------------\n";
+			return;
 			std::vector<M::CEdge*> visited_edges;
-			loop_vertices.clear();
-			current_loop_edges.clear();
 			std::cout << "these are the bad vertices: ";
 			for (M::CVertex* bad_v : bad_vertices)
 			{
 				std::cout << bad_v->idx() << " ";
 			}
-			M::CVertex* starting_vertex = bad_vertices[0];
-			for (auto edge : vertex_edges[starting_vertex])
+			M::CVertex* current_vertex = /*bad_vertices*/ vertices_counter[0];
+			for (auto edge : vertex_edges[current_vertex])
 			{
 				std::cout << "edge: " << edge->idx() << "\n";
 			}
 			int badIdx1 = 0;
-			loop_vertices.push_back(starting_vertex);
-			current_loop_edges.push_back(vertex_edges[starting_vertex][0]);
-			visited_edges.push_back(vertex_edges[starting_vertex][0]);
+			loop_vertices.push_back(current_vertex);
+			M::CEdge* current_edge = vertex_edges[current_vertex][0];
+			M::CVertex* next_vertex = current_vertex == m_pMesh->edge_vertex(current_edge, 0) 
+				? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
+			current_loop_edges.push_back(current_edge);
+			visited_edges.push_back(current_edge);
 			while (true)
 			{
-				// go to next edge
-				return;
+				std::cout << "the sizes are: " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
+				/*std::cout << "\n";
+				for (auto ver : loop_vertices)
+				{
+					std::cout << " " << ver->idx();
+				}
+				std::cout << "\n";*/
+				if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) == loop_vertices.end())
+				{
+					loop_vertices.push_back(next_vertex);
+					for (M::CEdge* edge : vertex_edges[next_vertex])
+					{
+						if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
+						{
+							current_edge = edge;
+							visited_edges.push_back(current_edge);
+							current_loop_edges.push_back(current_edge);
+							next_vertex = next_vertex == m_pMesh->edge_vertex(current_edge, 0)
+								? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
+							break;
+						}
+					}
+				}
+				else if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) != loop_vertices.end())
+				{
+					// we've visited this vertex already, check if null homologous
+					std::cout << "potential loop found! We found " << next_vertex->idx();
+					int firstOccIndex = std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) - loop_vertices.begin();
+					std::vector<M::CEdge*> edge_loop(current_loop_edges.begin() + firstOccIndex, current_loop_edges.end());
+					if (_null_homologous(edge_loop))
+					{
+						// delete the edges up to the last triple that still has unvisited edges;
+						M::CEdge* e;
+						M::CVertex* v;
+						while (true)
+						{
+							if (current_loop_edges.size() == 0)
+							{
+								std::cout << "current loop edges has size 0\n";
+								break;
+							}
+							e = current_loop_edges.back();
+							current_loop_edges.pop_back();
+							v = loop_vertices.back();
+							loop_vertices.pop_back();
+							std::cout << "edge, vertex removed: " << e->idx() << " " << v->idx();
+							bool found = false;
+							for (M::CEdge* edge : vertex_edges[v])
+							{
+								if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
+								{
+									loop_vertices.push_back(v);
+									current_edge = edge;
+									visited_edges.push_back(current_edge);
+									current_loop_edges.push_back(current_edge);
+									next_vertex = v == m_pMesh->edge_vertex(current_edge, 0)
+										? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
+									found = true;
+									break;
+								}
+							}
+							if (found)
+							{
+								break;
+							}
+
+						}
+					}
+					else
+					{
+						// this is correct!
+						std::cout << "this is correct! \n";
+						current_loop_edges = edge_loop;
+						std::vector<M::CVertex*> vertices_loop(loop_vertices.begin() + firstOccIndex, loop_vertices.end());
+						loop_vertices = vertices_loop;
+						break;
+						
+					}
+				}
 			}
-
-
 		}
+		std::cout << "there are  " << loop_vertices.size() << " vertices\n";
+		std::cout << "there are  " << current_loop_edges.size() << " edges\n";
+		middle_edges.push_back(current_loop_edges);
+		std::vector<int> before_v;
+		for (auto i : loop_vertices)
+		{
+			before_v.push_back(i->idx());
+		}
+		before_vertices.push_back(before_v);
+		single_to_double.clear();
+		double_to_single.clear();
+		_shorten();
+		//display_loop(current_loop_edges);
 		clock_t end = clock();
 		std::cout << "\nshorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
 	}
@@ -3068,14 +3154,29 @@ namespace DartLib
 			double improvement = (p5 - COM).norm() - (p4 - COM).norm();
 			//if (improvement > 0)
 			//std::cout << "double\n";
-			if (_different_side(pV, pW, center_of_mass, shared_v))
+			if (boundary_shorten == false)
 			{
-				best_edge_o1 = edg1;
-				best_edge_o2 = edg2;
-				best_face_o = fac1;
-				idx_best_edge_o1 = i;
-				idx_best_edge_o2 = (i + 1) % current_loop_edges.size();
-				return true;
+				if (_different_side(pV, pW, center_of_mass, shared_v))
+				{
+					best_edge_o1 = edg1;
+					best_edge_o2 = edg2;
+					best_face_o = fac1;
+					idx_best_edge_o1 = i;
+					idx_best_edge_o2 = (i + 1) % current_loop_edges.size();
+					return true;
+				}
+			}
+			else if (boundary_shorten == true)
+			{
+				if (improvement > 0)
+				{
+					best_edge_o1 = edg1;
+					best_edge_o2 = edg2;
+					best_face_o = fac1;
+					idx_best_edge_o1 = i;
+					idx_best_edge_o2 = (i + 1) % current_loop_edges.size();
+					return true;
+				}
 			}
 		}
 		return false;
@@ -3157,22 +3258,42 @@ namespace DartLib
 			//compare to new vertex
 			mid_closer = pV3->point();
 			//std::cout << "single\n";
-			if (_different_side(pV1, pV2, center_of_mass, pV3))
+			if (boundary_shorten == false)
 			{
-				continue;
+				if (_different_side(pV1, pV2, center_of_mass, pV3))
+				{
+					continue;
+				}
 			}
 			//if ((mid_closer - center_of_mass).norm() < distance)
 			//if ((mid_closer - center_of_mass).norm() < orig_mid_distance && (mid_further - center_of_mass).norm() < further_point_dist)
-			if ((pV3->point() - center_of_mass).norm() < further_point_dist)
+			if (boundary_shorten == false)
 			{
-				//distance = (mid_closer - center_of_mass).norm();
-				//orig_mid_distance = (mid_closer - center_of_mass).norm();
-				//further_point_dist = (mid_further - center_of_mass).norm();
-				further_point_dist = (pV3->point() - center_of_mass).norm();
-				best_face_o = pF;
-				best_edge_o = pE;
-				idx_best_edge_o = i;
-				ret_true = true;
+				if ((pV3->point() - center_of_mass).norm() < further_point_dist)
+				{
+					//distance = (mid_closer - center_of_mass).norm();
+					//orig_mid_distance = (mid_closer - center_of_mass).norm();
+					//further_point_dist = (mid_further - center_of_mass).norm();
+					further_point_dist = (pV3->point() - center_of_mass).norm();
+					best_face_o = pF;
+					best_edge_o = pE;
+					idx_best_edge_o = i;
+					ret_true = true;
+				}
+			}
+			else if (boundary_shorten == true)
+			{
+				if ((pV3->point() - center_of_mass).norm() < further_point_dist)
+				{
+					//distance = (mid_closer - center_of_mass).norm();
+					//orig_mid_distance = (mid_closer - center_of_mass).norm();
+					//further_point_dist = (mid_further - center_of_mass).norm();
+					further_point_dist = (pV3->point() - center_of_mass).norm();
+					best_face_o = pF;
+					best_edge_o = pE;
+					idx_best_edge_o = i;
+					ret_true = true;
+				}
 			}
 		}
 		if (ret_true)
@@ -4058,6 +4179,7 @@ namespace DartLib
 		inSet.clear();
 		inSetGens.clear();
 		int number = 0;
+		int gnumber = 0;
 		for (M::CEdge* ed : myEdges)
 		{
 			if (inSet.find(ed->idx()) != inSet.end())
@@ -4075,20 +4197,22 @@ namespace DartLib
 				if (inSetGens.find(ed->idx()) != inSetGens.end())
 				{
 					inSetGens.erase(ed->idx());
+					gnumber -= 1;
 				}
 				else
 				{
 					inSetGens.insert(ed->idx());
+					gnumber += 1;
 				}
 
 			}
 		}
-		std::cout << "these are the edges in the set generators: ";
+		std::cout << "\nthese are the generator edges: ";
 		for (int i : inSetGens)
 		{
 			std::cout << i << " ";
 		}
-		std::cout << "\nthese are the edges in the set: ";
+		std::cout << "\nthese are the edges: ";
 		for (int i : inSet)
 		{
 			std::cout << i << " ";
@@ -4100,7 +4224,7 @@ namespace DartLib
 			std::cout << "There were no edges in the generators list\n";
 			return true;
 		}
-		while (number > 0 && phead->pair() != NULL)
+		while (number > 0 && phead != NULL && phead->pair() != NULL)
 		{
 			M::CFace* pF = phead->pair();
 			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
@@ -4121,10 +4245,12 @@ namespace DartLib
 					if (inSetGens.find(ed->idx()) != inSetGens.end())
 					{
 						inSetGens.erase(ed->idx());
+						gnumber -= 1;
 					}
 					else
 					{
 						inSetGens.insert(ed->idx());
+						gnumber += 1;
 					}
 
 				}
@@ -4132,11 +4258,22 @@ namespace DartLib
 
 			}
 			if (*inSetGens.rbegin())
+			{
 				phead = idx_edges[*inSetGens.rbegin()];
+				/*for (int i : inSetGens)
+				{
+					std::cout << i << " ";
+				}
+				std::cout << "\n";*/
+			}
 			else
+			{
 				phead = NULL;
+			}
+			
 		}
-		return number <= 0;
+		std::cout << "number is " << number << " while gnumber is " << gnumber << "\n";
+		return gnumber <= 0;
 
 	}
 }

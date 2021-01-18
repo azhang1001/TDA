@@ -436,14 +436,17 @@ void keyBoard(unsigned char key, int x, int y)
 		case 'd':
 			handler.display_all_before();
 			break;
+		case 'm':
+			handler.display_all_middle();
+			break;
 		case 'B':
 			handler.display_before(which);
 			break;
 		case 'A':
 			handler.display_after(which);
 			break;
-		case 'C':
-			handler.display_before_prune(which);
+		case 'p':
+			handler.display_all_before_prune();
 			break;
 		case 'N':
 			which += 1;

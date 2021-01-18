@@ -55,8 +55,9 @@ class CHandleTunnelLoop
 
 	void display_individual(int which_edge);
 
+	void display_all_before_prune();
 	void display_all_before();
-	
+	void display_all_middle();
 	void display_all_after();
 
 	void display_before(int which);
@@ -67,7 +68,7 @@ class CHandleTunnelLoop
 
 	void show_starting(int which);
 
-	void display_before_prune(int which);
+
 
 	void display_loop(std::vector<int> l);
 	void display_loop(std::vector<M::CVertex*> l);
@@ -143,6 +144,11 @@ class CHandleTunnelLoop
     std::set<M::CEdge*>   m_inner_edges;
     std::set<M::CFace*>   m_inner_faces;
 
+	/* exterior volume */
+	std::set<M::CVertex*> m_outer_vertices;
+	std::set<M::CEdge*>   m_outer_edges;
+	std::set<M::CFace*>   m_outer_faces;
+
     std::set<M::CEdge*>   m_generators;
 
 	std::vector<M::CVertex*> loop_vertices;
@@ -163,6 +169,7 @@ class CHandleTunnelLoop
 	std::vector<std::vector<M::CEdge*>> final_edges;
 	std::vector<std::vector<M::CEdge*>> good_final_edges;
 	std::vector<std::vector<M::CEdge*>> before_edges;
+	std::vector<std::vector<M::CEdge*>> middle_edges;
 	std::vector<int> before_edges_search_size;
 	std::vector<M::CEdge*> handletunnel_edges;
 	std::vector<M::CEdge*> search_start_edges;
