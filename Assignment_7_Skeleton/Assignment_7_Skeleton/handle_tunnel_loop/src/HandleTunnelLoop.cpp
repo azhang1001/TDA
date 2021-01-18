@@ -2387,13 +2387,12 @@ namespace DartLib
 		else if (bad_vertices.size() >= 0)
 		{
 			std::cout << "HERE IS A BROKEN LOOP-------------------\n";
-			return;
 			std::vector<M::CEdge*> visited_edges;
 			std::cout << "these are the bad vertices: ";
-			for (M::CVertex* bad_v : bad_vertices)
+			/*for (M::CVertex* bad_v : bad_vertices)
 			{
 				std::cout << bad_v->idx() << " ";
-			}
+			}*/
 			M::CVertex* current_vertex = /*bad_vertices*/ vertices_counter[0];
 			for (auto edge : vertex_edges[current_vertex])
 			{
@@ -2408,7 +2407,7 @@ namespace DartLib
 			visited_edges.push_back(current_edge);
 			while (true)
 			{
-				std::cout << "the sizes are: " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
+				//std::cout << "the sizes are: " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
 				/*std::cout << "\n";
 				for (auto ver : loop_vertices)
 				{
@@ -2434,7 +2433,7 @@ namespace DartLib
 				else if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) != loop_vertices.end())
 				{
 					// we've visited this vertex already, check if null homologous
-					std::cout << "potential loop found! We found " << next_vertex->idx();
+					//std::cout << "potential loop found! We found " << next_vertex->idx();
 					int firstOccIndex = std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) - loop_vertices.begin();
 					std::vector<M::CEdge*> edge_loop(current_loop_edges.begin() + firstOccIndex, current_loop_edges.end());
 					if (_null_homologous(edge_loop))
@@ -2453,7 +2452,7 @@ namespace DartLib
 							current_loop_edges.pop_back();
 							v = loop_vertices.back();
 							loop_vertices.pop_back();
-							std::cout << "edge, vertex removed: " << e->idx() << " " << v->idx();
+							//std::cout << "edge, vertex removed: " << e->idx() << " " << v->idx();
 							bool found = false;
 							for (M::CEdge* edge : vertex_edges[v])
 							{
@@ -2489,8 +2488,8 @@ namespace DartLib
 				}
 			}
 		}
-		std::cout << "there are  " << loop_vertices.size() << " vertices\n";
-		std::cout << "there are  " << current_loop_edges.size() << " edges\n";
+		//std::cout << "there are  " << loop_vertices.size() << " vertices\n";
+		//std::cout << "there are  " << current_loop_edges.size() << " edges\n";
 		middle_edges.push_back(current_loop_edges);
 		std::vector<int> before_v;
 		for (auto i : loop_vertices)
@@ -4176,6 +4175,12 @@ namespace DartLib
 	}
 	bool CHandleTunnelLoop::_null_homologous(std::vector<M::CEdge*> myEdges)
 	{
+		if (myEdges.size() <= 2)
+		{
+			std::cout << "Checked an empty loop. It was broken.\n";
+			return false;
+		}
+		int safety_c = 0;
 		inSet.clear();
 		inSetGens.clear();
 		int number = 0;
@@ -4207,7 +4212,7 @@ namespace DartLib
 
 			}
 		}
-		std::cout << "\nthese are the generator edges: ";
+		/*std::cout << "\nthese are the generator edges: ";
 		for (int i : inSetGens)
 		{
 			std::cout << i << " ";
@@ -4217,7 +4222,7 @@ namespace DartLib
 		{
 			std::cout << i << " ";
 		}
-		std::cout << "\n";
+		std::cout << "\n";*/
 		M::CEdge* phead = idx_edges[*inSetGens.rbegin()];
 		if (phead == NULL)
 		{
@@ -4227,6 +4232,11 @@ namespace DartLib
 		while (number > 0 && phead != NULL && phead->pair() != NULL)
 		{
 			M::CFace* pF = phead->pair();
+			if (safety_c >= 10000)
+			{
+				break;
+			}
+			safety_c += 1;
 			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
 			{
 				M::CEdge* ed = *feiter;
@@ -4272,7 +4282,12 @@ namespace DartLib
 			}
 			
 		}
-		std::cout << "number is " << number << " while gnumber is " << gnumber << "\n";
+		if (safety_c >= 10000)
+		{
+			std::cout << "we used the safety!!---------\n";
+			return false;
+		}
+		//std::cout << "number is " << number << " while gnumber is " << gnumber << "\n";
 		return gnumber <= 0;
 
 	}
