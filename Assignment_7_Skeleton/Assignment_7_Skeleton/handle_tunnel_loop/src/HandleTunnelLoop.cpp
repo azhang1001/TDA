@@ -437,7 +437,7 @@ namespace DartLib
 		
 			M::CEdge* pE = idx_edges[*inSetGens.rbegin()];
 
-			while(number > 0 /*&& pE != NULL */&& pE->pair() != NULL)
+			while(number > 0 && pE != NULL && pE->pair() != NULL)
 			{
 				M::CFace* pF2 = pE->pair();
 				for (M::FaceEdgeIterator feiter2(pF2); !feiter2.end(); ++feiter2)
@@ -4248,7 +4248,7 @@ namespace DartLib
 			std::cout << "There were no edges in the generators list\n";
 			return true;
 		}
-		while (number > 0 /*&& phead != NULL*/ && phead->pair() != NULL)
+		while (number > 0 && phead != NULL && phead->pair() != NULL)
 		{
 			M::CFace* pF = phead->pair();
 			if (safety_c >= 10000)
