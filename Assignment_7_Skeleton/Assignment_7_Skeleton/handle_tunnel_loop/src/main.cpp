@@ -37,7 +37,9 @@ CPoint ObjTrans(0, 0, 0);
 
 
 CMyTMesh mesh;
+CMyTMesh mesh2;
 CHandleTunnelLoop handler;
+
 std::set<CMyTMesh::CEdge*>* boundary_edges;
 std::vector<CMyTMesh::CFace*> boundary_surface;
 CMyMesh boundary_mesh;
@@ -402,8 +404,8 @@ void keyBoard(unsigned char key, int x, int y)
             handler.set_mesh(&mesh);
             handler.boundary_surface_pair();	
             handler.interior_volume_pair();
-            //handler.prune();
-			//handler.shorten();
+			//handler.copyMesh(&mesh, &mesh2);
+
             boundary_edges = &handler.boundary_edges();
 
             handler.exact_boundary(boundary_mesh);
@@ -616,6 +618,7 @@ int main(int argc, char* argv[])
         clock_t begin = clock();
 
         mesh.load_t(argv[1]);
+		//mesh2.load_t(argv[2]);
         
         clock_t end = clock();
         printf("Load time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);

@@ -263,8 +263,8 @@ class Cycle
         for (typename std::list<T*>::iterator viter = m_cycle.begin(); viter != m_cycle.end(); viter++)
         {
             T* pv = *viter;
-			//if (pv->idx() > max_id && pv->generator())
-            if (pv->idx() > max_id)
+			if (pv->idx() > max_id && pv->generator())
+            //if (pv->idx() > max_id)
             {
                 phead = pv;
                 max_id = pv->idx();
