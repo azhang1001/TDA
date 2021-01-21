@@ -52,6 +52,9 @@ CArcball arcball;
 
 // which loop to display
 int which = 0;
+int pIndex = 0;
+int pIndex2 = 0;
+int pIndex3 = 0;
 int which_edge = 0;
 
 /*! setup the object, transform from the world to the object coordinate system */
@@ -488,6 +491,29 @@ void keyBoard(unsigned char key, int x, int y)
 				std::cin >> inp;
 			}
 			handler.display_loop(user_dis);
+			break;
+		case '<':
+			user_dis.clear();
+			std::cin >> inp;
+			while (inp != "s")
+			{
+				int d = std::stoi(inp);
+				user_dis.push_back(d);
+				std::cin >> inp;
+			}
+			handler.display_edges(user_dis);
+			break;
+		case '.':
+			handler.display_pair(pIndex);
+			pIndex += 1;
+			break;
+		case '/':
+			handler.display_generated_loop(pIndex2);
+			pIndex2 += 1;
+			break;
+		case '>':
+			handler.display_correct_loop(pIndex3);
+			pIndex3 += 1;
 			break;
         case '?':
             help();

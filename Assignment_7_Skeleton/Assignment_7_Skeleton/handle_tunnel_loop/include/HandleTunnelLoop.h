@@ -48,6 +48,7 @@ class CHandleTunnelLoop
 
     void prune();
 
+	void remove_unconnected();
 	void shorten();
 	void next_shorten_step();
 	void go_back();
@@ -68,8 +69,10 @@ class CHandleTunnelLoop
 
 	void show_starting(int which);
 
-
-
+	void display_pair(int i);
+	void display_correct_loop(int w);
+	void display_generated_loop(int w);
+	void display_edges(std::vector<int> loop);
 	void display_loop(std::vector<int> l);
 	void display_loop(std::vector<M::CVertex*> l);
 	void display_loop(std::vector<M::CEdge*> l);
@@ -93,6 +96,7 @@ class CHandleTunnelLoop
     void _mark_loop(M::CFace* face);
 	void _mark_loop(M::CEdge* edge, M::CFace* face);
     void _mark_loop(M::CEdge* edge);
+	void _mark_loop(std::set<int> hLoop);
 
     bool _shrink_triangles();
 
@@ -118,6 +122,7 @@ class CHandleTunnelLoop
 	int _intersection(M::CEdge* e1, M::CEdge* e2);
 	bool _different_side(M::CVertex* A, M::CVertex* B, CPoint M, M::CVertex* C);
 	bool _null_homologous(std::vector<M::CEdge*> myEdges);
+	
 
     void _prune();
 
@@ -126,6 +131,7 @@ class CHandleTunnelLoop
 	std::vector<int> CHandleTunnelLoop::dijkstra(int s, int t);
     
 	std::vector<int> remove_dup(std::vector<int> v);
+	
 
 
 
@@ -194,6 +200,7 @@ class CHandleTunnelLoop
 	std::vector<M::CVertex*> idx_verts;
 	std::vector<M::CVertex*> idx_all_verts;
 	std::vector<M::CEdge*> idx_edges;
+	std::vector<M::CFace*> idx_faces;
 	std::set<int> inSet;
 	std::set<int> inSetGens;
 	int fails = 0;
@@ -236,6 +243,16 @@ class CHandleTunnelLoop
 	int time = 0;
 	int paired_generators = 0;
 	bool skip_this_one = false;
+
+	std::vector<std::pair<M::CEdge*, M::CFace*>> pairing_information;
+	std::vector<std::set<int>> pairing_loop;
+	std::vector<std::set<int>> handle_loop_edges;
+	std::vector<std::pair<M::CEdge*, std::vector<M::CEdge*>>> generated_edge_loops;
+	std::vector<std::pair<M::CEdge*, std::vector<M::CEdge*>>> unkilled_generated_edge_loops;
+	std::map<M::CEdge*, std::set<int>> edgesPair;
+	std::map<M::CFace*, std::set<int>> facesPair;
+
+
 };
 
 template <typename T>
