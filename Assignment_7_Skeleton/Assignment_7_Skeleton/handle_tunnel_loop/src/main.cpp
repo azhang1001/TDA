@@ -455,7 +455,6 @@ void keyBoard(unsigned char key, int x, int y)
 			break;
 		case 'N':
 			which += 1;
-			std::cout << "displaying " << which << "\n";
 			break;
 		case 'W':
 			handler.display_all_before();

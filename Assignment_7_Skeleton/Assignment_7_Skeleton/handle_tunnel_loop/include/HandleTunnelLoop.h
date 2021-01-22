@@ -156,6 +156,7 @@ class CHandleTunnelLoop
 	std::set<M::CFace*>   m_outer_faces;
 
     std::set<M::CEdge*>   m_generators;
+	std::set<M::CEdge*>   m_handle_gens;
 
 	std::vector<M::CVertex*> loop_vertices;
 	std::vector<int> new_loop;
@@ -185,6 +186,7 @@ class CHandleTunnelLoop
 	std::vector<std::vector<int>> before_vertices;
 	std::vector<M::CEdge*> green_edges;
 	std::vector<std::vector<M::CFace*>> edges_faces;
+	std::vector<M::CFace*> killer_faces_list;
 	
 
 	//double graph[V][V];
@@ -247,7 +249,7 @@ class CHandleTunnelLoop
 	std::vector<std::pair<M::CEdge*, M::CFace*>> pairing_information;
 	std::vector<std::set<int>> pairing_loop;
 	std::vector<std::set<int>> handle_loop_edges;
-	std::vector<std::pair<M::CEdge*, std::vector<M::CEdge*>>> generated_edge_loops;
+	std::vector<std::pair<M::CEdge*, std::set<M::CEdge*>>> generated_edge_loops;
 	std::vector<std::pair<M::CEdge*, std::vector<M::CEdge*>>> unkilled_generated_edge_loops;
 	std::map<M::CEdge*, std::set<int>> edgesPair;
 	std::map<M::CFace*, std::set<int>> facesPair;

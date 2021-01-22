@@ -244,8 +244,8 @@ namespace DartLib
 		printf("Interior pair time: %g s\n", double(e - b) / CLOCKS_PER_SEC);
 		for (size_t i = 0; i < handle_loops.size(); i++)
 		{
-			_mark_loop(handle_loop_edges[i]);
-			//_mark_loop(handle_loops[i], handle_loops[i]->pair());
+			//_mark_loop(handle_loop_edges[i]);
+			_mark_loop(handle_loops[i], handle_loops[i]->pair());
 			//_mark_loop(handle_loops[i]);
 			handletunnel_edges.push_back(handle_loops[i]);
 			//M::CFace* pF = handle_loops[i]->pair();
@@ -374,13 +374,14 @@ namespace DartLib
 		for (int edge_index : edges_indices_list)
 		{
 			M::CEdge* pE = idx_edges[edge_index];
-			std::vector<M::CEdge*> generated_loop;
+			//std::cout << edge_index << " ";
+			std::set<M::CEdge*> generated_loop;
 			counting += 1;
 			if (counting % 1000 == 0)
 			{
 				std::cout << ".";
 			}
-			generated_loop.push_back(pE);
+			generated_loop.insert(pE);
 			if (edges_used > largest_edges_used)
 			{
 				largest_edges_used = edges_used;
@@ -416,8 +417,16 @@ namespace DartLib
 						number += 1;
 					}
 				}
-				generated_loop.push_back(pE2);
-				/*M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
+				if (generated_loop.find(pE2) != generated_loop.end())
+				{
+					generated_loop.erase(pE2);
+				}
+				else
+				{
+					generated_loop.insert(pE2);
+				}
+				/*
+				M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
 				M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
 
 				if (inSet.find(pV2->idx()) != inSet.end())
@@ -491,12 +500,13 @@ namespace DartLib
 			M::CFace* pF = *fiter;
 			faces_indices_list.push_back(pF->idx());
 		}
+		
 		std::sort(faces_indices_list.begin(), faces_indices_list.end());
 		for (int face_index : faces_indices_list)
 		{
 			M::CFace* pF = idx_faces[face_index];
 			counting += 1;
-			if (counting % 1000 == 0)
+			if (counting % 10000 == 0)
 			{
 				std::cout << "-";
 			}
@@ -517,6 +527,7 @@ namespace DartLib
 					gnumber += 1;
 				}
 			}
+
 			//std::cout << "We started with " <<  number << " " << gnumber << "\n";
 			if (gnumber == 0)
 			{
@@ -524,33 +535,41 @@ namespace DartLib
 			}
 		
 			M::CEdge* pE = idx_edges[*inSetGens.rbegin()];
-
+			std::set<int> first_boundary_only;
+			bool found = false;
 			while(number > 0 && pE != NULL && pE->pair() != NULL)
 			{
 				M::CFace* pF2 = pE->pair();
-				for (int edge1 : facesPair[pF2])
+				if (false/*std::find(killer_faces_list.begin(), killer_faces_list.end(), pF2) != killer_faces_list.end()*/)
 				{
-					if (inSet.find(edge1) != inSet.end())
+					inSet.erase(pE->idx());
+				}
+				else
+				{
+					for (int edge1 : facesPair[pF2])
 					{
-						inSet.erase(edge1);
-						number -= 1;
-					}
-					else
-					{
-						inSet.insert(edge1);
-						number += 1;
-					}
-					if (idx_edges[edge1]->generator())
-					{
-						if (inSetGens.find(edge1) != inSetGens.end())
+						if (inSet.find(edge1) != inSet.end())
 						{
-							inSetGens.erase(edge1);
-							gnumber -= 1;
+							inSet.erase(edge1);
+							number -= 1;
 						}
 						else
 						{
-							inSetGens.insert(edge1);
-							gnumber += 1;
+							inSet.insert(edge1);
+							number += 1;
+						}
+						if (idx_edges[edge1]->generator())
+						{
+							if (inSetGens.find(edge1) != inSetGens.end())
+							{
+								inSetGens.erase(edge1);
+								gnumber -= 1;
+							}
+							else
+							{
+								inSetGens.insert(edge1);
+								gnumber += 1;
+							}
 						}
 					}
 				}
@@ -582,6 +601,24 @@ namespace DartLib
 						}
 					}
 				}*/
+				/*bool boundary_only = true;
+				if (found == false)
+				{
+					for (int edgeIn : inSet)
+					{
+						if (edgeIn > m_boundary_edges.size())
+						{
+							boundary_only = false;
+							break;
+						}
+					}
+				}
+				if (boundary_only)
+				{
+					first_boundary_only = inSet;
+					found = true;
+				}*/
+
 				if (gnumber > 0)
 				{
 					pE = idx_edges[*inSetGens.rbegin()];
@@ -608,8 +645,10 @@ namespace DartLib
 						if (std::find(m_generators.begin(), m_generators.end(), pE) != m_generators.end())
 						{
 							paired_generators += 1;
+							m_handle_gens.insert(pE);
 							std::cout << "we found one!\n";
-							handle_loop_edges.push_back(inSet);
+							handle_loop_edges.push_back(first_boundary_only/*inSet*/);
+							killer_faces_list.push_back(pF);
 							if (paired_generators == m_genus)
 							{
 								std::cout << "ended quicker!\n";
@@ -619,6 +658,7 @@ namespace DartLib
 
 					}
 				}
+				
 			}
 			else
 			{
@@ -631,6 +671,7 @@ namespace DartLib
 						if (std::find(m_generators.begin(), m_generators.end(), pE) != m_generators.end())
 						{
 							paired_generators += 1;
+
 							if (paired_generators == m_genus)
 							{
 								std::cout << "ended quicker2!\n";
@@ -769,7 +810,7 @@ namespace DartLib
 			section.insert(face);
 		}
 
-		/*Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
+		Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
 		for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
 		{
 			M::CEdge* pE = *feiter;
@@ -794,10 +835,10 @@ namespace DartLib
 			{
 				break;
 			}
-		}*/
+		}
 
 
-		int number = 0;
+		/*int number = 0;
 		int gnumber = 0;
 		inSet.clear();
 		inSetGens.clear();
@@ -863,7 +904,7 @@ namespace DartLib
 				break;
 				pE = NULL;
 			}
-		}
+		}*/
 
 
 
@@ -952,7 +993,7 @@ namespace DartLib
 		}
 		prune();
 		before_edges.push_back(loop_edges);
-		return;
+		return; //comment this out to get the shortened.
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
@@ -2353,7 +2394,15 @@ namespace DartLib
 		std::cout << "which is " << which << "\n";
 		//std::cout << "This loop was shortened starting with " << before_edges_search_size[which] << "\n";
 		//std::cout << before_edges[which].size() << " started with this many edges\n";
-		std::cout << "but actually, there were only " << before_edges[which].size() << " edges\n";
+		green_edges.clear();
+		for (M::CEdge* ed : m_handle_gens)
+		{
+			if (std::find(before_edges[which].begin(), before_edges[which].end(), ed) != before_edges[which].end())
+			{
+				green_edges.push_back(ed);
+			}
+		}
+		std::cout << green_edges.size();
 		display_loop(before_edges/*middle_edges*/[which]);
 		/*for (auto pE : m_boundary_edges)
 		{
