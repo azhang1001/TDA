@@ -23,6 +23,8 @@ namespace DartLib
 class CHandleTunnelLoop
 {
   public:
+
+
     using M = CMyTMesh;
     using S = CMyMesh;
 
@@ -38,7 +40,9 @@ class CHandleTunnelLoop
 
     std::set<M::CEdge*>& boundary_edges() { return m_boundary_edges; };
 
-    void write_m(const std::string& output);
+	void setExterior();
+	void write_m(const std::string& output);
+	void write_tunnels(const std::string& output);
 	void write_after_obj(const std::string& output);
 	void write_good_after_obj(const std::string& output);
 	void write_before_obj(const std::string& output);
@@ -49,6 +53,7 @@ class CHandleTunnelLoop
     void prune();
 
 	void remove_unconnected();
+	void start_shorten();
 	void shorten();
 	void next_shorten_step();
 	void go_back();
@@ -76,7 +81,7 @@ class CHandleTunnelLoop
 	void display_loop(std::vector<int> l);
 	void display_loop(std::vector<M::CVertex*> l);
 	void display_loop(std::vector<M::CEdge*> l);
-	
+	void add_tunnel(std::string line);
 
 	int gcd(int a, int b);
 	int lcm(int a, int b);
@@ -101,7 +106,6 @@ class CHandleTunnelLoop
     bool _shrink_triangles();
 
 	void _shorten2();
-
 	void _shorten();
 	bool _delete_triple();
 	double _check_double();
@@ -139,7 +143,12 @@ class CHandleTunnelLoop
     M* m_pMesh;
 
     int m_genus;
+	bool exterior_volume = false;
+	bool trickShorten = true;
 
+	bool exterior_tunnel = false;
+	bool boundary_shorten = false;
+	bool fastFacePairing = true;
     /* boundary surface */
     std::set<M::CVertex*> m_boundary_vertices;
     std::set<M::CEdge*>   m_boundary_edges;
@@ -156,8 +165,9 @@ class CHandleTunnelLoop
 	std::set<M::CFace*>   m_outer_faces;
 
     std::set<M::CEdge*>   m_generators;
-	std::set<M::CEdge*>   m_handle_gens;
+	
 
+	std::vector<std::vector<M::CVertex*>> middle_vertices;
 	std::vector<M::CVertex*> loop_vertices;
 	std::vector<int> new_loop;
 	std::vector<M::CEdge*> loop_edges;
@@ -249,10 +259,15 @@ class CHandleTunnelLoop
 	std::vector<std::pair<M::CEdge*, M::CFace*>> pairing_information;
 	std::vector<std::set<int>> pairing_loop;
 	std::vector<std::set<int>> handle_loop_edges;
+	std::vector<M::CEdge*> m_handle_gens;
+	M::CEdge* current_generator;
 	std::vector<std::pair<M::CEdge*, std::set<M::CEdge*>>> generated_edge_loops;
 	std::vector<std::pair<M::CEdge*, std::vector<M::CEdge*>>> unkilled_generated_edge_loops;
 	std::map<M::CEdge*, std::set<int>> edgesPair;
 	std::map<M::CFace*, std::set<int>> facesPair;
+
+	std::unordered_map<std::string, int> pointVertex;
+	std::unordered_map<std::string, int> pointsEdge;
 
 
 };

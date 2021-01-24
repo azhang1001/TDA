@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <sstream>
+#include <string>
 
 #ifdef MAC_OS
 #include <GLUT/glut.h>
@@ -21,6 +23,9 @@ using namespace DartLib;
 
 std::vector<int> user_dis;
 std::string inp;
+std::istringstream iss;
+std::string line;
+std::ifstream myfile;
 
 /* window width and height */
 int win_width, win_height;
@@ -46,6 +51,7 @@ CMyMesh boundary_mesh;
 std::string g_output;
 
 
+bool exterior_volume = false;
 
 /* arcball object */
 CArcball arcball;
@@ -355,11 +361,11 @@ void keyBoard(unsigned char key, int x, int y)
     switch (key)
     {
         case '+':
-            d = std::min(d + 0.05, 1.0);
+            d = std::min(d + 0.05, 2.0);
             mesh.cut(CPlane(n, d));
             break;
         case '-':
-			d = std::max(d - 0.05, -1.0);
+			d = std::max(d - 0.05, -2.0);
             mesh.cut(CPlane(n, d));
             break;
         case 'x':
@@ -403,22 +409,52 @@ void keyBoard(unsigned char key, int x, int y)
             break;
         case 'G':
             begin = clock();
+			if (exterior_volume)
+			{
+				handler.setExterior();
+			}
+			if (exterior_volume)
+			{
+				handler.boundary_surface_pair();
+				handler.interior_volume_pair();
+				if (exterior_volume)
+				{
+					handler.write_tunnels("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/tunnels.txt");
+				}
+				boundary_edges = &handler.boundary_edges();
 
-            handler.set_mesh(&mesh);
-            handler.boundary_surface_pair();	
-            handler.interior_volume_pair();
-			//handler.copyMesh(&mesh, &mesh2);
+				handler.exact_boundary(boundary_mesh);
 
-            boundary_edges = &handler.boundary_edges();
+				if (!g_output.empty())
+					handler.write_m(g_output);
 
-            handler.exact_boundary(boundary_mesh);
-        
-            if (!g_output.empty())
-                handler.write_m(g_output);
+				end = clock();
+				printf("Computing handle/tunnel loops time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
+			}
+			else
+			{
+				boundary_edges = &handler.boundary_edges();
 
-            end = clock();
-            printf("Computing handle/tunnel loops time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
-            break;
+				handler.exact_boundary(boundary_mesh);
+				myfile.open("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/tunnels.txt");
+				if (myfile.is_open())
+				{
+					while (std::getline(myfile, line))
+					{
+						handler.add_tunnel(line);
+						std::cout << "here is one line\n";
+					}
+					myfile.close();
+					handler.start_shorten();
+				}
+				else
+				{
+					std::cout << "Unable to open tunnels file";
+				}
+				end = clock();
+				printf("Shortening tunnel loops time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
+			}
+			break;
 		case 'P':
 			handler.prune();
 			break;
@@ -446,6 +482,7 @@ void keyBoard(unsigned char key, int x, int y)
 			break;
 		case 'B':
 			handler.display_before(which);
+			which += 1;
 			break;
 		case 'A':
 			handler.display_after(which);
@@ -493,12 +530,12 @@ void keyBoard(unsigned char key, int x, int y)
 			break;
 		case '<':
 			user_dis.clear();
-			std::cin >> inp;
-			while (inp != "s")
+			std::getline(std::cin, inp);
+			iss.str(inp);
+			int n;
+			while (iss >> n) 
 			{
-				int d = std::stoi(inp);
-				user_dis.push_back(d);
-				std::cin >> inp;
+				user_dis.push_back(n);
 			}
 			handler.display_edges(user_dis);
 			break;
@@ -514,6 +551,7 @@ void keyBoard(unsigned char key, int x, int y)
 			handler.display_correct_loop(pIndex3);
 			pIndex3 += 1;
 			break;
+
         case '?':
             help();
             break;
@@ -640,6 +678,10 @@ int main(int argc, char* argv[])
     
     if (strutil::endsWith(mesh_name, ".t"))
     {
+		if (strutil::endsWith(mesh_name, "O.t"))
+		{
+			exterior_volume = true;
+		}
         clock_t begin = clock();
 
         mesh.load_t(argv[1]);
@@ -665,6 +707,8 @@ int main(int argc, char* argv[])
 
     CPlane p(CPoint(0, 0, 1), 0);
     mesh.cut(p);
+
+	handler.set_mesh(&mesh);
 
     /* glut stuff */
     glutInit(&argc, argv); /* Initialize GLUT */

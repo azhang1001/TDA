@@ -411,8 +411,10 @@ void TBASEMESH::load(const std::vector<CPoint>& points, const std::vector<int>& 
     for (int i = 0; i < points.size(); ++i)
     {
         CVertex* pV = add_vertex();
+		pV->point() = points[i];
         m_vertices[i] = pV;
-        m_vertices[i]->point() = points[i];
+        //m_vertices[i]->point() = points[i];
+		//std::cout << "the point is  " << m_vertices[i]->point().print() << "\n";
     }
 
     // add volumes

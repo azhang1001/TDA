@@ -142,13 +142,14 @@ using CMyTMesh = TMyTMesh<CMyVertex, CMyEdge, CMyFace, CMyTet, CMyDart>;
 template <typename V, typename E, typename F, typename T, typename Dart>
 void TMyTMesh<V, E, F, T, Dart>::normalize()
 {
+	return;
     CPoint vmax(-1e+10, -1e+10, -1e+10);
     CPoint vmin(1e+10, 1e+10, 1e+10);
 
     for (int i = 0; i < this->m_vertices.size(); i++)
     {
         const CPoint & p = this->m_vertices[i]->point();
-
+		//std::cout << "the point was " << p.print() << "\n";
         for (int k = 0; k < 3; k++)
         {
             vmax[k] = (vmax[k] > p[k]) ? vmax[k] : p[k];
@@ -175,6 +176,7 @@ void TMyTMesh<V, E, F, T, Dart>::normalize()
     {
         CPoint & p = this->m_vertices[i]->point();
         p /= d;
+		std::cout << "the point is now " << p.print() << "\n";
     }
 }
 

@@ -14,6 +14,7 @@
 #include <string>
 #include <sstream>
 
+const double epsilon = 0.00001;
 
 namespace DartLib{
 
@@ -42,6 +43,44 @@ namespace DartLib{
 		{
 			return "(" + std::to_string(v[0]) + ", " + std::to_string(v[1]) + ", " + std::to_string(v[2]) + ")";
 		}
+		std::string print2()
+		{
+			return std::to_string(v[0]) + " " + std::to_string(v[1]) + " " + std::to_string(v[2]);
+		}
+
+		bool is_same(const CPoint& p)
+		{
+			if ((v[0] >= p[0] && v[0] - p[0] < epsilon) || (p[0] > v[0] && p[0] - v[0] < epsilon))
+			{
+				if ((v[1] >= p[1] && v[1] - p[1] < epsilon) || (p[1] > v[1] && p[1] - v[1] < epsilon))
+				{
+					if ((v[2] >= p[2] && v[2] - p[2] < epsilon) || (p[2] > v[2] && p[2] - v[2] < epsilon))
+					{
+						return true;
+					}
+				}
+			}
+			//double p0 = -1 * p[0];
+			//double p1 = -1 * p[1];
+			//double p2 = -1 * p[2];
+			//if ((v[0] >= p0 && v[0] - p0 < epsilon) || (p0 > v[0] && p0 - v[0] < epsilon))
+			//{
+			//	if ((v[1] >= p1 && v[1] - p1 < epsilon) || (p1 > v[1] && p1 - v[1] < epsilon))
+			//	{
+			//		if ((v[2] >= p2 && v[2] - p2 < epsilon) || (p2 > v[2] && p2 - v[2] < epsilon))
+			//		{
+			//			return true;
+			//		}
+			//	}
+			//}
+			return false;
+			if (v[0] == p(0) && v[1] == p(1) && v[2] == p(2))
+			{
+				return true;
+			}
+			return false;
+		}
+
 
 		/*!
 		*	reference to  \f$(x,y,z)\f$ value

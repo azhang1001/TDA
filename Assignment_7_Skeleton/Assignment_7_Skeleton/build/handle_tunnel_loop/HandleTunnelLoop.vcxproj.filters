@@ -30,4 +30,7 @@
       <UniqueIdentifier>{F319696E-F636-3461-B983-47BA5B42DA61}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="tunnels.txt" />
+  </ItemGroup>
 </Project>
