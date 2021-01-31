@@ -31,6 +31,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="tunnels.txt" />
+    <Text Include="..\..\data\tunnels.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

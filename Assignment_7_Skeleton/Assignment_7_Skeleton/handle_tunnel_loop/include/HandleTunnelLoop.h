@@ -24,6 +24,7 @@ class CHandleTunnelLoop
 {
   public:
 
+	  
 
     using M = CMyTMesh;
     using S = CMyMesh;
@@ -41,6 +42,7 @@ class CHandleTunnelLoop
     std::set<M::CEdge*>& boundary_edges() { return m_boundary_edges; };
 
 	void setExterior();
+	void write_tets(const std::string& output);
 	void write_m(const std::string& output);
 	void write_tunnels(const std::string& output);
 	void write_after_obj(const std::string& output);
@@ -54,6 +56,7 @@ class CHandleTunnelLoop
 
 	void remove_unconnected();
 	void start_shorten();
+	void start_shorten2();
 	void shorten();
 	void next_shorten_step();
 	void go_back();
@@ -86,6 +89,7 @@ class CHandleTunnelLoop
 	int gcd(int a, int b);
 	int lcm(int a, int b);
 
+	void set_name(std::string name);
 
 
   protected:
@@ -135,12 +139,13 @@ class CHandleTunnelLoop
 	std::vector<int> CHandleTunnelLoop::dijkstra(int s, int t);
     
 	std::vector<int> remove_dup(std::vector<int> v);
-	
 
 
 
   protected:
     M* m_pMesh;
+
+	std::string file_name;
 
     int m_genus;
 	bool exterior_volume = false;
@@ -166,7 +171,8 @@ class CHandleTunnelLoop
 
     std::set<M::CEdge*>   m_generators;
 	
-
+	std::vector<std::vector<CPoint>> new_tets;
+	std::vector<std::vector<CPoint>> old_tets;
 	std::vector<std::vector<M::CVertex*>> middle_vertices;
 	std::vector<M::CVertex*> loop_vertices;
 	std::vector<int> new_loop;

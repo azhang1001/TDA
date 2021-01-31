@@ -13,7 +13,10 @@ namespace DartLib
 	CHandleTunnelLoop::CHandleTunnelLoop() : m_pMesh(NULL) {}
 
 	CHandleTunnelLoop::CHandleTunnelLoop(M* pMesh) { set_mesh(pMesh); }
-
+	void CHandleTunnelLoop::set_name(std::string name)
+	{
+		file_name = name;
+	}
 	void CHandleTunnelLoop::set_mesh(M* pMesh)
 	{
 		m_pMesh = pMesh;
@@ -45,9 +48,13 @@ namespace DartLib
 	*/
 	void CHandleTunnelLoop::_extract_boundary_surface()
 	{
+		m_boundary_faces.clear();
+		m_boundary_edges.clear();
+		m_boundary_vertices.clear();
 		for (M::FaceIterator fiter(m_pMesh); !fiter.end(); fiter++)
 		{
 			M::CFace* pF = *fiter;
+			pF->idx() = NULL;
 			if (m_pMesh->boundary(pF))
 			{
 				m_boundary_faces.insert(pF);
@@ -59,6 +66,7 @@ namespace DartLib
 			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
 			{
 				M::CEdge* pE = *feiter;
+				pE->idx() = NULL;
 				m_boundary_edges.insert(pE);
 			}
 		}
@@ -67,7 +75,8 @@ namespace DartLib
 		{
 			M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
 			M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
-
+			pV->idx() = NULL;
+			pW->idx() = NULL;
 			m_boundary_vertices.insert(pV);
 			m_boundary_vertices.insert(pW);
 		}
@@ -82,10 +91,18 @@ namespace DartLib
 	 */
 	void CHandleTunnelLoop::_extract_interior_volume()
 	{
+		m_inner_faces.clear();
+		m_inner_edges.clear();
+		m_inner_vertices.clear();
 		int vid = 1;
 		std::map<int, double> m;
 		std::vector < std::pair<int, double>> m2;
+		idx_verts.clear();
 		idx_verts.push_back(NULL);
+		pointVertex.clear();
+		idx_all_verts.clear();
+		graph.clear();
+		adj.clear();
 		for (auto pV : m_boundary_vertices)
 		{
 			pV->idx() = vid++;
@@ -108,6 +125,7 @@ namespace DartLib
 
 			pV->idx() = vid++;
 			idx_verts.push_back(pV);
+			pointVertex[pV->point().print()] = pV->idx();
 			idx_all_verts.push_back(pV);
 			adj.push_back(m2);
 			m_inner_vertices.insert(pV);
@@ -115,6 +133,9 @@ namespace DartLib
 
 		int eid = 1;
 		std::vector<M::CFace*> empty_faces;
+		edges_faces.clear();
+		idx_edges.clear();
+		pointsEdge.clear();
 		edges_faces.push_back(empty_faces);
 		idx_edges.push_back(NULL);
 		for (auto pE : m_boundary_edges)
@@ -150,21 +171,24 @@ namespace DartLib
 			eid++;
 			idx_edges.push_back(pE);
 			edges_faces.push_back(empty_faces);
-			m_inner_edges.insert(pE);
 			M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
 			M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+			pointsEdge[pV->point().print() + pW->point().print()] = pE->idx();
+			pointsEdge[pW->point().print() + pV->point().print()] = pE->idx();
+			m_inner_edges.insert(pE);
 			adj[pV->idx()].push_back(std::make_pair(pW->idx(), (pW->point() - pV->point()).norm()));
 			adj[pW->idx()].push_back(std::make_pair(pV->idx(), (pV->point() - pW->point()).norm()));
 		}
 
 		int fid = 1;
+		idx_faces.clear();
 		idx_faces.push_back(NULL);
 		for (auto pF : m_boundary_faces)
 		{
 			pF->idx() = fid++;
 			idx_faces.push_back(pF);
 		}
-
+		face_exist.clear();
 		for (M::FaceIterator fiter(m_pMesh); !fiter.end(); fiter++)
 		{
 			M::CFace* pF = *fiter;
@@ -1225,6 +1249,12 @@ namespace DartLib
 			//	}
 			//}
 			middle_edge.push_back(idx_edges[pointsEdge[hV.print() + hW.print()]]);
+			if (idx_edges[pointsEdge[hV.print() + hW.print()]] == NULL)
+			{
+				std::cout << hV.print() + hW.print() << "\n";
+				std::cout << pointsEdge[hV.print() + hW.print()] << "\n";
+				std::cout << "this one was null, before we even started!!@#$%^&*()!@#$%^&*()!@#$%^&*()\n";
+			}
 			/*for (auto pE : m_boundary_edges)
 			{
 				M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
@@ -1242,6 +1272,97 @@ namespace DartLib
 		middle_edges.push_back(middle_edge);
 		return;
 	}
+
+	void CHandleTunnelLoop::write_tets(const std::string& output)
+	{
+		std::cout << "beginning to add the tets\n";
+
+
+		std::fstream is(output, std::fstream::in);
+		char buffer[MAX_LINE];
+		old_tets.clear();
+		std::unordered_map<std::string, int> verts_I;
+		int tet_index = 0;
+		int vert_index = 0;
+		std::vector<std::string> vertex_lines;
+		std::vector<std::string> tet_lines;
+		while (!is.eof())
+		{
+			is.getline(buffer, MAX_LINE);
+			std::string line(buffer);
+			line = strutil::trim(line);
+			strutil::Tokenizer stokenizer(line, " \r\n");
+
+			stokenizer.nextToken();
+			std::string token = stokenizer.getToken();
+
+			if (token == "Vertex")
+			{
+				stokenizer.nextToken();
+				int vindex = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p1 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p2 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p3 = std::stod(stokenizer.getToken());
+				CPoint mypoint(p1, p2, p3);
+				verts_I.insert({ mypoint.print2(), vindex });
+				vert_index += 1;
+				vertex_lines.push_back(line);
+			}
+			else if (token == "Tet")
+			{
+				tet_index += 1;
+				tet_lines.push_back(line);
+			}
+		}
+
+		
+		is.close();
+		std::fstream _os(output, std::fstream::out);
+
+		if (_os.fail())
+		{
+			fprintf(stderr, "Error is opening file %s\n", output);
+			return;
+		}
+		std::cout << "beginning to write the new verts and tets\n";
+		for (std::string line : vertex_lines)
+		{
+			_os << line << "\n";
+		}
+		for (auto new_tet : new_tets)
+		{
+			for (CPoint point : new_tet)
+			{
+				if (verts_I.find(point.print2()) == verts_I.end())
+				{
+					vert_index++;
+					verts_I.insert({ point.print2(), vert_index });
+					_os << "Vertex " << vert_index << " " << point[0] << " " << point[1] << " " << point[2] << "\n";
+				}
+			}
+
+		}
+		for (std::string line : tet_lines)
+		{
+			_os << line << "\n";
+		}
+		
+		for (auto new_tet : new_tets)
+		{
+			tet_index += 1;
+			_os << "Tet " << tet_index;
+			for (CPoint point : new_tet)
+			{
+				_os << " " << verts_I[point.print2()];
+			}
+			_os << "\n";
+		}
+
+		_os.close();
+	}
 	void CHandleTunnelLoop::write_tunnels(const std::string& output)
 	{
 		std::fstream _os(output, std::fstream::out);
@@ -1251,7 +1372,32 @@ namespace DartLib
 			fprintf(stderr, "Error is opening file %s\n", output);
 			return;
 		}
+		std::vector<int> traversal_order;
 		for (int i = 0; i < middle_edges.size(); i++)
+		{
+			int j = 0;
+			while (j < traversal_order.size())
+			{
+				if (middle_edges[i].size() > middle_edges[j].size())
+				{
+					j++;
+				}
+				else
+				{
+					break;
+				}
+			}
+			if (j == traversal_order.size())
+			{
+				traversal_order.push_back(i);
+			}
+			else
+			{
+				traversal_order.insert(traversal_order.begin() + j, i);
+			}
+		}
+		
+		for (int i : traversal_order)
 		{
 			std::vector<M::CEdge*> middle_edge = middle_edges[i];
 			std::vector<M::CVertex*> middle_vertex = middle_vertices[i];
@@ -2939,8 +3085,7 @@ namespace DartLib
 			}
 		}
 	}
-
-	void CHandleTunnelLoop::start_shorten()
+	void CHandleTunnelLoop::start_shorten2()
 	{
 		for (int i = 0; i < middle_edges.size(); i++)
 		{
@@ -2948,6 +3093,95 @@ namespace DartLib
 			current_loop_edges = middle_edges[i];
 			_shorten();
 		}
+	}
+	void CHandleTunnelLoop::start_shorten()
+	{
+
+		loop_vertices = middle_vertices[0];
+		std::cout << "the middle loop has size " << loop_vertices.size() << "\n";
+		current_loop_edges = middle_edges[0];
+		middle_vertices.clear();
+		middle_edges.clear();
+		_shorten();
+		double farthest_distance = 0;
+		// find farthest point from center of mass
+		for (M::CVertex* v : loop_vertices)
+		{
+			if ((v->point() - center_of_mass).norm() > farthest_distance)
+			{
+				farthest_distance = (v->point() - center_of_mass).norm();
+			}
+		}
+		farthest_distance *= 1.1;
+		std::cout << "the shortened loop has size " << loop_vertices.size() << "\n";
+		std::cout << "the farthest distance is " << farthest_distance << "\n";
+		//loop through tets in _O, add to _2_I
+		std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
+		std::cout << "the output file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
+		char buffer[MAX_LINE];
+		new_tets.clear();
+		std::map<int, CPoint> verts_O;
+		while (!is.eof())
+		{
+			is.getline(buffer, MAX_LINE);
+			std::string line(buffer);
+			line = strutil::trim(line);
+			strutil::Tokenizer stokenizer(line, " \r\n");
+
+			stokenizer.nextToken();
+			std::string token = stokenizer.getToken();
+
+			if (token == "Vertex")
+			{
+				stokenizer.nextToken();
+				int vindex = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p1 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p2 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p3 = std::stod(stokenizer.getToken());
+				CPoint mypoint(p1, p2, p3);
+				verts_O.insert({ vindex, mypoint });
+			}
+			if (token == "Tet")
+			{
+				stokenizer.nextToken();
+				int tindex = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v1 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v2 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v3 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v4 = std::stoi(stokenizer.getToken());
+				if (((verts_O[v1] - center_of_mass).norm()) <= farthest_distance &&
+					((verts_O[v2] - center_of_mass).norm()) <= farthest_distance &&
+					((verts_O[v3] - center_of_mass).norm()) <= farthest_distance &&
+					((verts_O[v4] - center_of_mass).norm()) <= farthest_distance)
+				{
+					// add the tet to the interior file;
+					std::vector<CPoint> new_tet;
+					new_tet.push_back(verts_O[v1]);
+					new_tet.push_back(verts_O[v2]);
+					new_tet.push_back(verts_O[v3]);
+					new_tet.push_back(verts_O[v4]);
+					new_tets.push_back(new_tet);
+				}
+			}
+		}
+		is.close();
+		std::cout << "we will be adding " << new_tets.size() << " new tets\n";
+		if (true)
+		{
+			write_tets(file_name);
+			good_final_vertices.clear();
+			final_vertices.clear();
+			good_final_edges.clear();
+			final_edges.clear();
+		}
+
 	}
 	void CHandleTunnelLoop::shorten()
 	{
@@ -3173,16 +3407,24 @@ namespace DartLib
 
 	void CHandleTunnelLoop::_shorten()
 	{
+		bool printS = true;
 		single_to_double.clear();
 		double_to_single.clear();
 		fall_back = current_loop_edges;
-		center_of_mass *= 0.0;
+		center_of_mass[0] = 0.0;
+		center_of_mass[1] = 0.0;
+		center_of_mass[2] = 0.0;
 		for (M::CVertex* v : loop_vertices)
 		{
 			//std::cout << v->idx() << " " << v->point().print() << " ";
+			std::cout << v->idx() << " " ;
+			std::cout << v->point().print() << "\n";
 			center_of_mass += v->point();
+			std::cout << "center of mass is " << center_of_mass.print() << "\n";
 		}
+		std::cout << "we started with " << loop_vertices.size() << "vertices\n";
 		center_of_mass /= double(loop_vertices.size());
+		std::cout << "center of mass was " << center_of_mass.print() << "\n";
 		//std::cout << center_of_mass.print() << " ";
 		int tester = 0;
 		bool failed_previously = false;
@@ -3198,6 +3440,13 @@ namespace DartLib
 			//^ allows repeating moves
 			while (true)
 			{
+				for (auto e : current_loop_edges)
+				{
+					if (e == NULL)
+					{
+						std::cout << "we just got a null edge now!\n";
+					}
+				}
 				green_edges.clear();
 				if (index >= current_loop_edges.size())
 				{
@@ -3213,6 +3462,10 @@ namespace DartLib
 				//std::cout << "\n\n";
 				if (_repeats((index + current_loop_edges.size() - 2) % current_loop_edges.size()))
 				{
+					if (printS)
+					{
+						std::cout << "removed double spike in past\n";
+					}
 					//std::cout << "we removed a double spike in previous edge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					index -= 2;
 					change_happened = true;
@@ -3220,12 +3473,20 @@ namespace DartLib
 				}
 				if (_repeats(index))
 				{
+					if (printS)
+					{
+						std::cout << "removed double spike\n";
+					}
 					//std::cout << "we removed a double spike!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
 					continue;
 				}
 				if (_repeats((index + 1) % current_loop_edges.size()))
 				{
+					if (printS)
+					{
+						std::cout << "removed double spike in future\n";
+					}
 					//std::cout << "we removed a double spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
 					continue;
@@ -3233,19 +3494,30 @@ namespace DartLib
 				if (_fill_gaps(index))
 				{
 					index += 2;
-					//std::cout << "~~~we filled a gap!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					if (printS)
+					{
+						std::cout << "we filled a gap\n";
+					}
 					change_happened = true;
 					//std::cout << "new index is " << index << ", out of " << loop_vertices.size() << "\n";
 					continue;
 				}
 				if (_repeats2((index + 1) % current_loop_edges.size()))
 				{
+					if (printS)
+					{
+						std::cout << "first spike from repeats 2\n";
+					}
 					//std::cout << "we removed a spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
 					continue;
 				}
 				if (_repeats2(index))
 				{
+					if (printS)
+					{
+						std::cout << "spike from repeats2\n";
+					}
 					//std::cout << "we removed a spike now!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 					change_happened = true;
 					continue;
@@ -3253,26 +3525,38 @@ namespace DartLib
 				if (_triple0(index))
 				{
 					change_happened = true;
-					//std::cout << "triple0 removed\n";
+					if (printS)
+					{
+						std::cout << "triple0 removed\n";
+					}
 					continue;
 				}
 				if (_triple1(index))
 				{
 					change_happened = true;
-					//std::cout << "triple0 removed\n";
+					if (printS)
+					{
+						std::cout << "triple1 removed\n";
+					}
 					index -= 1;
 					continue;
 				}
 				if (_triple2(index))
 				{
 					change_happened = true;
-					//std::cout << "triple0 removed\n";
+					if (printS)
+					{
+						std::cout << "triple2 removed\n";
+					}
 					index -= 2;
 					continue;
 				}
 				if (_double(index))
 				{
-					//std::cout << "double\n";
+					if (printS)
+					{
+						std::cout << "double\n";
+					}
 					change_happened = true;
 					_change_double();
 					continue;
@@ -3287,7 +3571,10 @@ namespace DartLib
 						skip_singles = false;
 						continue;
 					}
-					//std::cout << "single\n";
+					if (printS)
+					{
+						std::cout << "single\n";
+					}
 					
 					_change_single();
 					
@@ -3421,6 +3708,8 @@ namespace DartLib
 		{
 			lv.push_back(v->idx());
 		}
+		std::cout << "center of mass is " << center_of_mass.print() << "\n";
+
 		if (correct)
 		{
 			good_final_vertices.push_back(lv);
@@ -3466,7 +3755,6 @@ namespace DartLib
 		M::CEdge* edg1 = current_loop_edges[i % current_loop_edges.size()];
 		M::CEdge* edg2 = current_loop_edges[(i + 1) % current_loop_edges.size()];
 		M::CEdge* edg3 = current_loop_edges[(i + current_loop_edges.size() - 1) % current_loop_edges.size()];
-
 		int result = _intersection(edg1, edg2, edg3);
 		if (result == 0)
 		{
@@ -4738,6 +5026,12 @@ namespace DartLib
 		v1.push_back(m_pMesh->edge_vertex(e1, 0));
 		v1.push_back(m_pMesh->edge_vertex(e1, 1));
 		std::vector<M::CVertex*> v2;
+		if (e2 == NULL)
+		{
+			std::cout << "this edge was null!?\n";
+			return -1;
+		}
+		std::cout << e2->idx() << "\n"; // it gives a null edge?
 		v2.push_back(m_pMesh->edge_vertex(e2, 0));
 		v2.push_back(m_pMesh->edge_vertex(e2, 1));
 		std::vector<M::CVertex*> v3;
@@ -4846,7 +5140,7 @@ namespace DartLib
 	{
 		if (trickShorten)
 		{
-			if (myEdges.size() < loop_edges.size() / 6)
+			if (myEdges.size() < loop_edges.size() / 5)
 			{
 				return true;
 			}

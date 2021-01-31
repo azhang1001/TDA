@@ -20,7 +20,7 @@
 
 using namespace DartLib;
 
-
+std::string mesh_name;
 std::vector<int> user_dis;
 std::string inp;
 std::istringstream iss;
@@ -419,7 +419,7 @@ void keyBoard(unsigned char key, int x, int y)
 				handler.interior_volume_pair();
 				if (exterior_volume)
 				{
-					handler.write_tunnels("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/tunnels.txt");
+					handler.write_tunnels("../../data/tunnels.txt");
 				}
 				boundary_edges = &handler.boundary_edges();
 
@@ -436,16 +436,16 @@ void keyBoard(unsigned char key, int x, int y)
 				boundary_edges = &handler.boundary_edges();
 
 				handler.exact_boundary(boundary_mesh);
-				myfile.open("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/tunnels.txt");
+				myfile.open("../../data/tunnels.txt");
 				if (myfile.is_open())
 				{
 					while (std::getline(myfile, line))
 					{
 						handler.add_tunnel(line);
-						std::cout << "here is one line\n";
 					}
+					handler.start_shorten2();
 					myfile.close();
-					handler.start_shorten();
+					
 				}
 				else
 				{
@@ -495,21 +495,21 @@ void keyBoard(unsigned char key, int x, int y)
 			break;
 		case 'W':
 			handler.display_all_before();
-			handler.write_m("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_before_loops.txt");
+			handler.write_m("../../data/left_before_loops.txt");
 			handler.display_all_after();
-			handler.write_m("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_after_loops.txt");
+			handler.write_m("../../data/left_after_loops.txt");
 			break;
 		case 'E':
-			handler.write_after_obj("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_after_loops.obj");
+			handler.write_after_obj("../../data/left_after_loops.obj");
 			break;
 		//case 'R':
-			//handler.write_before_ply("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_before_loops.ply");
+			//handler.write_before_ply("../../data/left_before_loops.ply");
 			//break;
 		case 'R':
-			handler.write_before_obj("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_before_loops.obj");
+			handler.write_before_obj("../../data/left_before_loops.obj");
 			break;
 		case 'T':
-			handler.write_good_after_obj("C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/data/left_good_after_loops.obj");
+			handler.write_good_after_obj("../../data/left_good_after_loops.obj");
 			break;
 		case 'O':
 			handler.show_original();
@@ -674,7 +674,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    std::string mesh_name(argv[1]);
+    mesh_name = argv[1];
     
     if (strutil::endsWith(mesh_name, ".t"))
     {
@@ -682,34 +682,75 @@ int main(int argc, char* argv[])
 		{
 			exterior_volume = true;
 		}
-        clock_t begin = clock();
-
-        mesh.load_t(argv[1]);
-		//mesh2.load_t(argv[2]);
         
-        clock_t end = clock();
-        printf("Load time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
     }
     else
     {
         printf("Only support .t file now!\n");
         exit(EXIT_FAILURE);
     }
+	
+	handler.set_name(mesh_name);
+	if (strutil::endsWith(mesh_name, "_2_I.t"))
+	{
+		myfile.open("../../data/tunnels.txt");
+		
+		if (myfile.is_open())
+		{
+			while (std::getline(myfile, line))
+			{
+				mesh.load_t(argv[1]);
+				CMyTMesh::CBoundary boundary(&mesh);
+				boundary_surface = boundary.boundary_surface();
+				mesh.normalize();
+				mesh.compute_face_normal();
+				CPlane p(CPoint(0, 0, 1), 0);
+				mesh.cut(p);
+				handler.set_mesh(&mesh);
+				boundary_edges = &handler.boundary_edges();
+				handler.exact_boundary(boundary_mesh);
 
-    g_output = argc > 2 ? std ::string(argv[2]) : "";
 
-    CMyTMesh::CBoundary boundary(&mesh);
-    boundary_surface = boundary.boundary_surface();
+				std::cout << "started one shortening\n";
+				handler.add_tunnel(line);
+				handler.start_shorten();
+				std::cout << "finished one shortening\n";
+			}
+			myfile.close();
+		}
+		mesh.load_t(argv[1]);
+		CMyTMesh::CBoundary boundary(&mesh);
+		boundary_surface = boundary.boundary_surface();
+		mesh.normalize();
+		mesh.compute_face_normal();
+		CPlane p(CPoint(0, 0, 1), 0);
+		mesh.cut(p);
+		handler.set_mesh(&mesh);
+		boundary_edges = &handler.boundary_edges();
+		handler.exact_boundary(boundary_mesh);
+	}
+	else
+	{
+		clock_t begin = clock();
+
+		mesh.load_t(argv[1]);
+
+		clock_t end = clock();
+		printf("Load time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
+		g_output = argc > 2 ? std::string(argv[2]) : "";
+
+		CMyTMesh::CBoundary boundary(&mesh);
+		boundary_surface = boundary.boundary_surface();
 
 
-    mesh.normalize();
-    mesh.compute_face_normal();
+		mesh.normalize();
+		mesh.compute_face_normal();
 
-    CPlane p(CPoint(0, 0, 1), 0);
-    mesh.cut(p);
+		CPlane p(CPoint(0, 0, 1), 0);
+		mesh.cut(p);
 
-	handler.set_mesh(&mesh);
-
+		handler.set_mesh(&mesh);
+	}
     /* glut stuff */
     glutInit(&argc, argv); /* Initialize GLUT */
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
