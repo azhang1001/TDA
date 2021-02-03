@@ -693,6 +693,10 @@ int main(int argc, char* argv[])
 	handler.set_name(mesh_name);
 	if (strutil::endsWith(mesh_name, "_2_I.t"))
 	{
+		clock_t begin = clock();
+
+
+
 		myfile.open("../../data/tunnels.txt");
 		
 		if (myfile.is_open())
@@ -728,6 +732,8 @@ int main(int argc, char* argv[])
 		handler.set_mesh(&mesh);
 		boundary_edges = &handler.boundary_edges();
 		handler.exact_boundary(boundary_mesh);
+		clock_t end = clock();
+		printf("Putting in all the tets time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
 	}
 	else
 	{
