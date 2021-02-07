@@ -45,6 +45,7 @@ class CHandleTunnelLoop
 	void write_tets(const std::string& output);
 	void write_m(const std::string& output);
 	void write_tunnels(const std::string& output);
+	void write_shortened_tunnels(const std::string& output);
 	void write_after_obj(const std::string& output);
 	void write_good_after_obj(const std::string& output);
 	void write_before_obj(const std::string& output);
@@ -85,6 +86,8 @@ class CHandleTunnelLoop
 	void display_loop(std::vector<M::CVertex*> l);
 	void display_loop(std::vector<M::CEdge*> l);
 	void add_tunnel(std::string line);
+	void add_shortened_tunnel(std::string line);
+	void add_tunnel_old(std::string line);
 
 	int gcd(int a, int b);
 	int lcm(int a, int b);
@@ -194,6 +197,7 @@ class CHandleTunnelLoop
 	std::vector<std::vector<M::CEdge*>> final_edges;
 	std::vector<std::vector<M::CEdge*>> good_final_edges;
 	std::vector<std::vector<M::CEdge*>> before_edges;
+	std::vector<std::vector<M::CEdge*>> after_edges;
 	std::vector<std::vector<M::CEdge*>> tested_edges;
 	std::vector<std::vector<M::CVertex*>> tested_vertices;
 	std::vector<std::vector<M::CEdge*>> middle_edges;

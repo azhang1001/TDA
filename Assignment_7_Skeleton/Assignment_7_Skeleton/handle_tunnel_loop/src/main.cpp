@@ -436,14 +436,13 @@ void keyBoard(unsigned char key, int x, int y)
 				boundary_edges = &handler.boundary_edges();
 
 				handler.exact_boundary(boundary_mesh);
-				myfile.open("../../data/tunnels.txt");
+				myfile.open("../../data/shortened_tunnels.txt");
 				if (myfile.is_open())
 				{
 					while (std::getline(myfile, line))
 					{
-						handler.add_tunnel(line);
+						handler.add_shortened_tunnel(line);
 					}
-					handler.start_shorten2();
 					myfile.close();
 					
 				}
@@ -698,14 +697,14 @@ int main(int argc, char* argv[])
 
 
 		int reload_mesh = 0;
-
+		int period = 1;
 		myfile.open("../../data/tunnels.txt");
 		
 		if (myfile.is_open())
 		{
 			while (std::getline(myfile, line))
 			{
-				if (reload_mesh % 5 == 0)
+				if (reload_mesh % period == 0)
 				{
 					mesh.load_t(argv[1]);
 					CMyTMesh::CBoundary boundary(&mesh);
@@ -722,6 +721,7 @@ int main(int argc, char* argv[])
 				std::cout << "started one shortening\n";
 				handler.add_tunnel(line);
 				handler.start_shorten();
+				handler.write_shortened_tunnels("../../data/shortened_tunnels.txt");
 				std::cout << "finished one shortening\n";
 			}
 			myfile.close();
@@ -738,6 +738,7 @@ int main(int argc, char* argv[])
 		handler.exact_boundary(boundary_mesh);
 		clock_t end = clock();
 		printf("Putting in all the tets time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
+		
 	}
 	else
 	{

@@ -1039,7 +1039,7 @@ namespace DartLib
 		
 
 		std::cout << "begining shortening.\n";
-		shorten();
+		//shorten();
 	}
 	void CHandleTunnelLoop::_mark_loop(M::CEdge* pE)
 	{
@@ -1162,126 +1162,6 @@ namespace DartLib
 		exterior_tunnel = true;
 		boundary_shorten = true;
 	}
-
-	void CHandleTunnelLoop::write_m(const std::string& output)
-	{
-		std::fstream _os(output, std::fstream::out);
-
-		if (_os.fail())
-		{
-			fprintf(stderr, "Error is opening file %s\n", output);
-			return;
-		}
-
-		M::CBoundary boundary(m_pMesh);
-		const auto& surface = boundary.boundary_surface();
-    
-		std::set<M::CVertex*> vSet;
-		for (auto pF : surface)
-		{
-			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
-			{
-				M::CVertex* pV = *fviter;
-				vSet.insert(pV);
-			}
-		}
-
-		for (auto pV : vSet)
-		{
-			CPoint& p = pV->point();
-			_os << "Vertex " << pV->idx();
-			_os << " " << p[0] << " " << p[1] << " " << p[2] << "\n";
-		}
-
-		for (auto pF : surface)
-		{
-			_os << "Face " << pF->idx();
-			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
-			{
-				M::CVertex* pV = *fviter;
-				_os << " " << pV->idx();
-			}
-			_os << "\n";
-		}
-
-		for (auto pE : m_boundary_edges)
-		{
-			M::CVertex* pv1 = m_pMesh->edge_vertex(pE, 0);
-			M::CVertex* pv2 = m_pMesh->edge_vertex(pE, 1);
-
-			if (pE->sharp())
-			{
-				_os << "Edge " << pv1->idx() << " " << pv2->idx() << " ";
-				_os << "{sharp}" << std::endl;
-			}
-		}
-
-		_os.close();
-	}
-	void CHandleTunnelLoop::add_tunnel(std::string line)
-	{
-		int count = 0;
-		std::istringstream iss(line);
-		double u1, u2, u3;
-		double w1, w2, w3;
-		double v1, v2, v3;
-		std::vector<M::CEdge*> middle_edge;
-		std::vector<M::CVertex*> middle_vert;
-		while (iss >> u1)
-		{
-			iss >> u2;
-			iss >> u3;
-			iss >> w1;
-			iss >> w2;
-			iss >> w3;
-			iss >> v1;
-			iss >> v2;
-			iss >> v3;
-			CPoint hU(u1, u2, u3);
-			CPoint hV(v1, v2, v3);
-			CPoint hW(w1, w2, w3);
-			middle_vert.push_back(idx_verts[pointVertex[hU.print()]]);
-			//for (auto pV : m_boundary_vertices)
-			//{
-			//	if (pV->point().is_same(hU))
-			//	{
-			//		middle_vert.push_back(pV);
-			//		break;
-			//	}
-			//}
-			middle_edge.push_back(idx_edges[pointsEdge[hV.print() + hW.print()]]);
-			//std::cout << hV.print() + hW.print() << "\n";
-			//std::cout << pointsEdge[hV.print() + hW.print()] << "\n";
-			if (idx_edges[pointsEdge[hV.print() + hW.print()]] == NULL)
-			{
-				std::cout << "this one was null, before we even started!!@#$%^&*()!@#$%^&*()!@#$%^&*()\n";
-				//return;
-			}
-			else
-			{
-				count += 1;
-				//std::cout << "edge number " << count << " is " << idx_edges[pointsEdge[hV.print() + hW.print()]] << "\n";
-				
-			}
-			/*for (auto pE : m_boundary_edges)
-			{
-				M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
-				M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
-				CPoint tV = pV->point();
-				CPoint tW = pW->point();
-				if ((tV.is_same(hV) && tW.is_same(hW)) || (tV.is_same(hW) && tW.is_same(hV)))
-				{
-					middle_edge.push_back(pE);
-					break;
-				}
-			}*/
-		}
-		
-		middle_vertices.push_back(middle_vert);
-		middle_edges.push_back(middle_edge);
-		return;
-	}
-
 	void CHandleTunnelLoop::write_tets(const std::string& output)
 	{
 		std::cout << "beginning to add the tets\n";
@@ -1345,7 +1225,7 @@ namespace DartLib
 			}
 		}
 
-		
+
 		is.close();
 		std::fstream _os(output, std::fstream::out);
 
@@ -1376,7 +1256,7 @@ namespace DartLib
 		{
 			_os << line << "\n";
 		}
-		
+
 		for (auto new_tet : new_tets)
 		{
 			std::vector<int> numbers;
@@ -1400,10 +1280,193 @@ namespace DartLib
 			{
 				std::cout << "we tried to add a tet that was already in there!--------------------~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~======================\n";
 			}
-			
+
 		}
 
 		_os.close();
+	}
+	void CHandleTunnelLoop::write_m(const std::string& output)
+	{
+		std::fstream _os(output, std::fstream::out);
+
+		if (_os.fail())
+		{
+			fprintf(stderr, "Error is opening file %s\n", output);
+			return;
+		}
+
+		M::CBoundary boundary(m_pMesh);
+		const auto& surface = boundary.boundary_surface();
+    
+		std::set<M::CVertex*> vSet;
+		for (auto pF : surface)
+		{
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				vSet.insert(pV);
+			}
+		}
+
+		for (auto pV : vSet)
+		{
+			CPoint& p = pV->point();
+			_os << "Vertex " << pV->idx();
+			_os << " " << p[0] << " " << p[1] << " " << p[2] << "\n";
+		}
+
+		for (auto pF : surface)
+		{
+			_os << "Face " << pF->idx();
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				_os << " " << pV->idx();
+			}
+			_os << "\n";
+		}
+
+		for (auto pE : m_boundary_edges)
+		{
+			M::CVertex* pv1 = m_pMesh->edge_vertex(pE, 0);
+			M::CVertex* pv2 = m_pMesh->edge_vertex(pE, 1);
+
+			if (pE->sharp())
+			{
+				_os << "Edge " << pv1->idx() << " " << pv2->idx() << " ";
+				_os << "{sharp}" << std::endl;
+			}
+		}
+
+		_os.close();
+	}
+	void CHandleTunnelLoop::add_tunnel_old(std::string line)
+	{
+		int count = 0;
+		std::istringstream iss(line);
+		double u1, u2, u3;
+		double w1, w2, w3;
+		double v1, v2, v3;
+		std::vector<M::CEdge*> middle_edge;
+		std::vector<M::CVertex*> middle_vert;
+		while (iss >> u1)
+		{
+			iss >> u2;
+			iss >> u3;
+			iss >> w1;
+			iss >> w2;
+			iss >> w3;
+			iss >> v1;
+			iss >> v2;
+			iss >> v3;
+			CPoint hU(u1, u2, u3);
+			CPoint hV(v1, v2, v3);
+			CPoint hW(w1, w2, w3);
+			middle_vert.push_back(idx_verts[pointVertex[hU.print()]]);
+			//for (auto pV : m_boundary_vertices)
+			//{
+			//	if (pV->point().is_same(hU))
+			//	{
+			//		middle_vert.push_back(pV);
+			//		break;
+			//	}
+			//}
+			middle_edge.push_back(idx_edges[pointsEdge[hV.print() + hW.print()]]);
+			//std::cout << hV.print() + hW.print() << "\n";
+			//std::cout << pointsEdge[hV.print() + hW.print()] << "\n";
+			if (idx_edges[pointsEdge[hV.print() + hW.print()]] == NULL)
+			{
+				std::cout << "this one was null, before we even started!!@#$%^&*()!@#$%^&*()!@#$%^&*()\n";
+				//return;
+			}
+			else
+			{
+				count += 1;
+				//std::cout << "edge number " << count << " is " << idx_edges[pointsEdge[hV.print() + hW.print()]] << "\n";
+				
+			}
+			/*for (auto pE : m_boundary_edges)
+			{
+				M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
+				M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
+				CPoint tV = pV->point();
+				CPoint tW = pW->point();
+				if ((tV.is_same(hV) && tW.is_same(hW)) || (tV.is_same(hW) && tW.is_same(hV)))
+				{
+					middle_edge.push_back(pE);
+					break;
+				}
+			}*/
+		}
+		
+		middle_vertices.push_back(middle_vert);
+		middle_edges.push_back(middle_edge);
+		return;
+	}
+	void CHandleTunnelLoop::add_shortened_tunnel(std::string line)
+	{
+		int count = 0;
+		std::istringstream iss(line);
+		double u1, u2, u3;
+		double v1, v2, v3;
+		std::vector<M::CEdge*> middle_edge;
+		while (iss >> u1)
+		{
+			iss >> u2;
+			iss >> u3;
+			iss >> v1;
+			iss >> v2;
+			iss >> v3;
+			CPoint hU(u1, u2, u3);
+			CPoint hV(v1, v2, v3);
+			middle_edge.push_back(idx_edges[pointsEdge[hU.print() + hV.print()]]);
+			if (idx_edges[pointsEdge[hU.print() + hV.print()]] == NULL)
+			{
+				std::cout << "this one was null, before we even started!!@#$%^&*()!@#$%^&*()!@#$%^&*()\n";
+				//return;
+			}
+			else
+			{
+				count += 1;
+				//std::cout << "edge number " << count << " is " << idx_edges[pointsEdge[hV.print() + hW.print()]] << "\n";
+
+			}
+		}
+		after_edges.push_back(middle_edge);
+		std::cout << "we added the edge_loop\n";
+		return;
+	}void CHandleTunnelLoop::add_tunnel(std::string line)
+	{
+		int count = 0;
+		std::istringstream iss(line);
+		double u1, u2, u3;
+		double v1, v2, v3;
+		std::vector<M::CEdge*> middle_edge;
+		while (iss >> u1)
+		{
+			iss >> u2;
+			iss >> u3;
+			iss >> v1;
+			iss >> v2;
+			iss >> v3;
+			CPoint hU(u1, u2, u3);
+			CPoint hV(v1, v2, v3);
+			middle_edge.push_back(idx_edges[pointsEdge[hU.print() + hV.print()]]);
+			if (idx_edges[pointsEdge[hU.print() + hV.print()]] == NULL)
+			{
+				std::cout << "this one was null, before we even started!!@#$%^&*()!@#$%^&*()!@#$%^&*()\n";
+				//return;
+			}
+			else
+			{
+				count += 1;
+				//std::cout << "edge number " << count << " is " << idx_edges[pointsEdge[hV.print() + hW.print()]] << "\n";
+
+			}
+		}
+		middle_edges.push_back(middle_edge);
+		std::cout << "we added the edge_loop\n";
+		return;
 	}
 	void CHandleTunnelLoop::write_tunnels(const std::string& output)
 	{
@@ -1415,12 +1478,12 @@ namespace DartLib
 			return;
 		}
 		std::vector<int> traversal_order;
-		for (int i = 0; i < middle_edges.size(); i++)
+		for (int i = 0; i < before_edges.size(); i++)
 		{
 			int j = 0;
 			while (j < traversal_order.size())
 			{
-				if (middle_edges[i].size() > middle_edges[j].size())
+				if (before_edges[i].size() > before_edges[j].size())
 				{
 					j++;
 				}
@@ -1441,20 +1504,68 @@ namespace DartLib
 		
 		for (int i : traversal_order)
 		{
-			std::vector<M::CEdge*> middle_edge = middle_edges[i];
-			std::vector<M::CVertex*> middle_vertex = middle_vertices[i];
-			for (int j = 0; j < middle_edge.size(); j ++)
+			std::vector<M::CEdge*> before_edge = before_edges[i];
+			for (int j = 0; j < before_edge.size(); j ++)
 			{
-				M::CEdge* edge = middle_edge[j];
-				M::CVertex* vert = middle_vertex[j];
+				M::CEdge* edge = before_edge[j];
 				M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
 				M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
-				_os << vert->point().print2() << " ";
 				_os << pV->point().print2() << " " << pW->point().print2() << " ";
 				
 			}
 			_os << "\n";
 		}
+	}
+	void CHandleTunnelLoop::write_shortened_tunnels(const std::string& output)
+	{
+		std::fstream _os;
+		_os.open(output, std::fstream::app);
+
+		if (_os.fail())
+		{
+			fprintf(stderr, "Error is opening file %s\n", output);
+			return;
+		}
+		std::vector<int> traversal_order;
+		std::cout << "we have " << after_edges.size() << " shortened loops\n";
+		for (int i = 0; i < after_edges.size(); i++)
+		{
+			int j = 0;
+			while (j < traversal_order.size())
+			{
+				if (after_edges[i].size() > after_edges[j].size())
+				{
+					j++;
+				}
+				else
+				{
+					break;
+				}
+			}
+			if (j == traversal_order.size())
+			{
+				traversal_order.push_back(i);
+			}
+			else
+			{
+				traversal_order.insert(traversal_order.begin() + j, i);
+			}
+		}
+
+		for (int i : traversal_order)
+		{
+			std::vector<M::CEdge*> after_edge = after_edges[i];
+			for (int j = 0; j < after_edge.size(); j++)
+			{
+				M::CEdge* edge = after_edge[j];
+				M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
+				_os << pV->point().print2() << " " << pW->point().print2() << " ";
+
+			}
+			_os << "\n";
+		}
+		after_edges.clear();
 	}
 	void CHandleTunnelLoop::write_after_obj(const std::string& output)
 	{
@@ -2963,7 +3074,6 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::display_all_after()
 	{
-		std::cout << "I have failed you " << fails << " times :(\n";
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
@@ -2972,16 +3082,7 @@ namespace DartLib
 		{
 			pE->sharp() = false;
 		}
-		std::cout << "there are " << final_edges.size() << " bad final loops\n";
-		for (auto f_edges : final_edges)
-		{
-			for (auto pE : f_edges)
-			{
-				pE->sharp() = true;
-			}
-		}
-		std::cout << "there are " << good_final_edges.size() << " good final loops\n";
-		for (auto f_edges : good_final_edges)
+		for (auto f_edges : after_edges)
 		{
 			for (auto pE : f_edges)
 			{
@@ -3036,7 +3137,7 @@ namespace DartLib
 		{
 			pE->sharp() = false;
 		}
-		for (auto pE : good_final_edges[which])
+		for (auto pE : after_edges[which])
 		{
 			pE->sharp() = true;
 		}
@@ -3458,11 +3559,10 @@ namespace DartLib
 	void CHandleTunnelLoop::start_shorten()
 	{
 
-		loop_vertices = middle_vertices[0];
-		std::cout << "the middle loop has size " << loop_vertices.size() << "\n";
+		
 		loop_edges = middle_edges[0];
+		std::cout << "the middle loop has size " << loop_edges.size() << "\n";
 		current_loop_edges = middle_edges[0];
-		middle_vertices.clear();
 		middle_edges.clear();
 		shorten();
 		loop_vertices = good_final_vertices[0];
@@ -3507,14 +3607,27 @@ namespace DartLib
 				CPoint mypoint(p1, p2, p3);
 				verts_O.insert({ vindex, mypoint });
 				bool al = false;
+				double distance;
 				for (M::CVertex* v : loop_vertices)
 				{
-					double distance = (v->point() - center_of_mass).norm() * 0.8;
+					distance = (v->point() - center_of_mass).norm();
+					if (loop_vertices.size() < 5)
+					{
+						distance *= 1.5;
+					}
+					else if (loop_vertices.size() < 10)
+					{
+						distance *= 1.1;
+					}
 					if ((v->point() - mypoint).norm() < distance)
 					{
 						al = true;
 						break;
 					}
+				}
+				if ((mypoint - center_of_mass).norm() < (distance * 2.0) / 3.0)
+				{
+					al = true;
 				}
 				allowed.insert({ vindex, al });
 			}
@@ -3620,7 +3733,6 @@ namespace DartLib
 		bool notDone = true;
 		tested_edges.clear();
 		tested_vertices.clear();
-		std::cout << "HERE IS A BROKEN LOOP---------------------------------------------------\n";
 		std::vector<M::CEdge*> visited_edges;
 		//std::cout << "these are the bad vertices: ";
 		/*for (M::CVertex* bad_v : bad_vertices)
@@ -3637,7 +3749,7 @@ namespace DartLib
 		int badIdx1 = 0;
 			
 		//M::CEdge* current_edge = vertex_edges[current_vertex][0];
-		M::CEdge* current_edge = current_generator;
+		M::CEdge* current_edge = loop_edges[0];
 		current_loop_edges.push_back(current_edge);
 		visited_edges.push_back(current_edge);
 		std::cout << "We started with edge " << current_edge->idx() << "\n";
@@ -3916,6 +4028,7 @@ namespace DartLib
 		std::cout << "final center of mass is " << center_of_mass.print() << "\n";
 		good_final_vertices.push_back(loop_vertices);
 		good_final_edges.push_back(current_loop_edges);
+		after_edges.push_back(current_loop_edges);
 	
 		return false;
 	}
