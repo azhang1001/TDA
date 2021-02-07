@@ -1278,7 +1278,7 @@ namespace DartLib
 			}
 			else
 			{
-				std::cout << "we tried to add a tet that was already in there!--------------------~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~======================\n";
+				//std::cout << "we tried to add a tet that was already in there!--------------------~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~======================\n";
 			}
 
 		}
@@ -1362,7 +1362,7 @@ namespace DartLib
 			CPoint hU(u1, u2, u3);
 			CPoint hV(v1, v2, v3);
 			CPoint hW(w1, w2, w3);
-			middle_vert.push_back(idx_verts[pointVertex[hU.print()]]);
+			//middle_vert.push_back(idx_verts[pointVertex[hU.print()]]);
 			//for (auto pV : m_boundary_vertices)
 			//{
 			//	if (pV->point().is_same(hU))
@@ -1371,7 +1371,7 @@ namespace DartLib
 			//		break;
 			//	}
 			//}
-			middle_edge.push_back(idx_edges[pointsEdge[hV.print() + hW.print()]]);
+			
 			//std::cout << hV.print() + hW.print() << "\n";
 			//std::cout << pointsEdge[hV.print() + hW.print()] << "\n";
 			if (idx_edges[pointsEdge[hV.print() + hW.print()]] == NULL)
@@ -1381,6 +1381,7 @@ namespace DartLib
 			}
 			else
 			{
+				middle_edge.push_back(idx_edges[pointsEdge[hV.print() + hW.print()]]);
 				count += 1;
 				//std::cout << "edge number " << count << " is " << idx_edges[pointsEdge[hV.print() + hW.print()]] << "\n";
 				
@@ -1419,7 +1420,6 @@ namespace DartLib
 			iss >> v3;
 			CPoint hU(u1, u2, u3);
 			CPoint hV(v1, v2, v3);
-			middle_edge.push_back(idx_edges[pointsEdge[hU.print() + hV.print()]]);
 			if (idx_edges[pointsEdge[hU.print() + hV.print()]] == NULL)
 			{
 				std::cout << "this one was null, before we even started!!@#$%^&*()!@#$%^&*()!@#$%^&*()\n";
@@ -1427,6 +1427,7 @@ namespace DartLib
 			}
 			else
 			{
+				middle_edge.push_back(idx_edges[pointsEdge[hU.print() + hV.print()]]);
 				count += 1;
 				//std::cout << "edge number " << count << " is " << idx_edges[pointsEdge[hV.print() + hW.print()]] << "\n";
 
@@ -3127,8 +3128,8 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::display_after(int which)
 	{
-		which = which % good_final_edges.size();
-		std::cout << good_final_edges[which].size() << " ended with this many edges\n";
+		which = which % after_edges.size();
+		std::cout << after_edges[which].size() << " ended with this many edges\n";
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
@@ -3619,6 +3620,18 @@ namespace DartLib
 					{
 						distance *= 1.1;
 					}
+					else if (loop_vertices.size() > 200)
+					{
+						distance *= 0.02;
+					}
+					else if (loop_vertices.size() > 100)
+					{
+						distance *= 0.5;
+					}
+					else if (loop_vertices.size() > 50)
+					{
+						distance *= 0.7;
+					}
 					if ((v->point() - mypoint).norm() < distance)
 					{
 						al = true;
@@ -3803,12 +3816,12 @@ namespace DartLib
 						if (current_loop_edges.size() == 0)
 						{
 							notDone = false;
-							std::cout << "current loop edges has size 0============================================================================================\n";
+							//std::cout << "current loop edges has size 0============================================================================================\n";
 							for (M::CEdge* edge : loop_edges)
 							{
 								if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
 								{
-									std::cout << "trying again with a different starting edge.\n";
+									//std::cout << "trying again with a different starting edge.\n";
 									current_edge = edge;
 									current_loop_edges.push_back(current_edge);
 									visited_edges.push_back(current_edge);
@@ -3918,10 +3931,18 @@ namespace DartLib
 				std::cout << "we had one edge twice!\n";
 			}
 		}
-		std::cout << "edge loop size" << current_loop_edges.size() << " " << loop.size() << "\n";
+		//std::cout << "edge loop size" << current_loop_edges.size() << " " << loop.size() << "\n";
 		center_of_mass = total_mass / double(loop.size());
-		std::cout << "center of mass was " << center_of_mass.print() << "\n";
+		//std::cout << "center of mass was " << center_of_mass.print() << "\n";
 		int iterations = 500;
+		if (ed_loop.size() > 50)
+		{
+			iterations = 2500;
+		}
+		if (ed_loop.size() > 200)
+		{
+			iterations *= 5;
+		}
 		std::set<M::CFace*> insertFaces;
 		while (iterations > 0)
 		{

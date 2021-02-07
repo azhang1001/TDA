@@ -484,7 +484,7 @@ void keyBoard(unsigned char key, int x, int y)
 			which += 1;
 			break;
 		case 'A':
-			handler.display_tested(which);
+			handler.display_after(which);
 			which += 1;
 			break;
 		case 'p':
