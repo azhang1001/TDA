@@ -485,7 +485,8 @@ void keyBoard(unsigned char key, int x, int y)
 			which += 1;
 			break;
 		case 'A':
-			handler.display_after(which);
+			handler.display_tested(which);
+			which += 1;
 			break;
 		case 'p':
 			handler.display_all_before_prune();
@@ -696,6 +697,7 @@ int main(int argc, char* argv[])
 		clock_t begin = clock();
 
 
+		int reload_mesh = 0;
 
 		myfile.open("../../data/tunnels.txt");
 		
@@ -703,18 +705,20 @@ int main(int argc, char* argv[])
 		{
 			while (std::getline(myfile, line))
 			{
-				mesh.load_t(argv[1]);
-				CMyTMesh::CBoundary boundary(&mesh);
-				boundary_surface = boundary.boundary_surface();
-				mesh.normalize();
-				mesh.compute_face_normal();
-				CPlane p(CPoint(0, 0, 1), 0);
-				mesh.cut(p);
-				handler.set_mesh(&mesh);
-				boundary_edges = &handler.boundary_edges();
-				handler.exact_boundary(boundary_mesh);
-
-
+				if (reload_mesh % 5 == 0)
+				{
+					mesh.load_t(argv[1]);
+					CMyTMesh::CBoundary boundary(&mesh);
+					boundary_surface = boundary.boundary_surface();
+					mesh.normalize();
+					mesh.compute_face_normal();
+					CPlane p(CPoint(0, 0, 1), 0);
+					mesh.cut(p);
+					handler.set_mesh(&mesh);
+					boundary_edges = &handler.boundary_edges();
+					handler.exact_boundary(boundary_mesh);
+				}
+				reload_mesh += 1;
 				std::cout << "started one shortening\n";
 				handler.add_tunnel(line);
 				handler.start_shorten();

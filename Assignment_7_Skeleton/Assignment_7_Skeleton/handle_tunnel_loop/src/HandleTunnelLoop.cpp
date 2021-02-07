@@ -1250,8 +1250,8 @@ namespace DartLib
 			//	}
 			//}
 			middle_edge.push_back(idx_edges[pointsEdge[hV.print() + hW.print()]]);
-			std::cout << hV.print() + hW.print() << "\n";
-			std::cout << pointsEdge[hV.print() + hW.print()] << "\n";
+			//std::cout << hV.print() + hW.print() << "\n";
+			//std::cout << pointsEdge[hV.print() + hW.print()] << "\n";
 			if (idx_edges[pointsEdge[hV.print() + hW.print()]] == NULL)
 			{
 				std::cout << "this one was null, before we even started!!@#$%^&*()!@#$%^&*()!@#$%^&*()\n";
@@ -1750,7 +1750,7 @@ namespace DartLib
 
 
 
-	void CHandleTunnelLoop::_shorten2()
+	void CHandleTunnelLoop::_shorten3()
 	{
 		/*std::vector<M::CVertex*> old_loop_vertices = loop_vertices;
 		int start_vertices = 3 * loop_vertices.size() / 4 + 1;
@@ -2251,11 +2251,327 @@ namespace DartLib
 		}
 		else
 		{
-			good_final_vertices.push_back(new_loop);
+			//good_final_vertices.push_back(new_loop);
 			good_final_edges.push_back(f_edges);
 		}
 
 
+	}
+	void CHandleTunnelLoop::_shorten2()
+	{
+		bool printS = false;
+		single_to_double.clear();
+		double_to_single.clear();
+		fall_back = current_loop_edges;
+		center_of_mass[0] = 0.0;
+		center_of_mass[1] = 0.0;
+		center_of_mass[2] = 0.0;
+		for (M::CVertex* v : loop_vertices)
+		{
+			//std::cout << v->idx() << " " << v->point().print() << " ";
+			//std::cout << v->idx() << " " ;
+			//std::cout << v->point().print() << "\n";
+			center_of_mass += v->point();
+			//std::cout << "center of mass is " << center_of_mass.print() << "\n";
+		}
+		std::cout << "we started with " << loop_vertices.size() << "vertices\n";
+		center_of_mass /= double(loop_vertices.size());
+		std::cout << "center of mass was " << center_of_mass.print() << "\n";
+		//std::cout << center_of_mass.print() << " ";
+		int tester = 0;
+		bool failed_previously = false;
+		bool correct = false;
+		bool change_happened = false;
+
+		while (tester < 100) //50000
+		{
+			change_happened = false;
+			tester += 1;
+			//std::cout << "the index is " << index;
+			//std::cout << " vert size, edge size " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
+			//^ allows repeating moves
+			while (true)
+			{
+				for (auto e : current_loop_edges)
+				{
+					if (e == NULL)
+					{
+						std::cout << "we just got a null edge now!====================================================================\n";
+					}
+				}
+				green_edges.clear();
+				if (index >= current_loop_edges.size())
+				{
+					index = 0;
+					break;
+				}
+				if (index < 0)
+				{
+					index = (index + current_loop_edges.size()) % current_loop_edges.size();
+				}
+				current_edge_to_green = current_loop_edges[index];
+				green_edges.push_back(current_edge_to_green);
+				//std::cout << "\n\n";
+				if (_repeats((index + current_loop_edges.size() - 2) % current_loop_edges.size()))
+				{
+					if (printS)
+					{
+						std::cout << "removed double spike in past\n";
+					}
+					//std::cout << "we removed a double spike in previous edge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					index -= 2;
+					change_happened = true;
+					continue;
+				}
+				if (_repeats(index))
+				{
+					if (printS)
+					{
+						std::cout << "removed double spike\n";
+					}
+					//std::cout << "we removed a double spike!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					change_happened = true;
+					continue;
+				}
+				if (_repeats((index + 1) % current_loop_edges.size()))
+				{
+					if (printS)
+					{
+						std::cout << "removed double spike in future\n";
+					}
+					//std::cout << "we removed a double spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					change_happened = true;
+					continue;
+				}
+				if (_fill_gaps(index))
+				{
+					index += 2;
+					if (printS)
+					{
+						std::cout << "we filled a gap\n";
+					}
+					change_happened = true;
+					//std::cout << "new index is " << index << ", out of " << loop_vertices.size() << "\n";
+					continue;
+				}
+				if (_repeats2((index + 1) % current_loop_edges.size()))
+				{
+					if (printS)
+					{
+						std::cout << "first spike from repeats 2\n";
+					}
+					//std::cout << "we removed a spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					change_happened = true;
+					continue;
+				}
+				if (_repeats2(index))
+				{
+					if (printS)
+					{
+						std::cout << "spike from repeats2\n";
+					}
+					//std::cout << "we removed a spike now!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+					change_happened = true;
+					continue;
+				}
+				if (_triple0(index))
+				{
+					change_happened = true;
+					if (printS)
+					{
+						std::cout << "triple0 removed\n";
+					}
+					continue;
+				}
+				if (_triple1(index))
+				{
+					change_happened = true;
+					if (printS)
+					{
+						std::cout << "triple1 removed\n";
+					}
+					index -= 1;
+					continue;
+				}
+				if (_triple2(index))
+				{
+					change_happened = true;
+					if (printS)
+					{
+						std::cout << "triple2 removed\n";
+					}
+					index -= 2;
+					continue;
+				}
+				if (_double(index))
+				{
+					if (printS)
+					{
+						std::cout << "double\n";
+					}
+					change_happened = true;
+					_change_double();
+					continue;
+				}
+				if (_single(index))
+				{
+					change_happened = true;
+					index += 1;
+					if (skip_singles)
+					{
+						//std::cout << "single got skipped\n";
+						skip_singles = false;
+						continue;
+					}
+					if (printS)
+					{
+						std::cout << "single\n";
+					}
+
+					_change_single();
+
+					skip_singles = true;
+					continue;
+				}
+				index += 1;
+			}
+			if (change_happened == false)
+			{
+				correct = true;
+				//std::cout << "ended naturally, after " << tester << " tries.\n";
+				break;
+			}
+
+			/*best_edge_o1s.clear();
+			best_edge_o2s.clear();
+			best_face_os.clear();
+			idx_best_edge_o1s.clear();
+			idx_best_edge_o2s.clear();
+			best_edge_os.clear();
+			idx_best_edge_os.clear();
+			tester++;
+			//check all pairs of consecutive edges if they share a face.
+			// check doubles;
+			//std::cout << "the center of mass is1 " << center_of_mass.print() << "\n";
+			bool keep_go = _delete_triple();
+
+			if (keep_go)
+			{
+				//std::cout << "deleted a face\n";
+				display_loop(current_loop_edges);
+				continue;
+			}
+
+			//std::cout << "the center of mass is2 " << center_of_mass.print() << "\n";
+			double best_doub = _check_double();
+
+			//change one single
+			double best_sing = _check_single();
+			//std::cout << "the distances are: " << best_doub << " and " << best_sing << "\n";
+			//std::cout << "the center of mass is3 " << center_of_mass.print() << "\n\n";
+			// choose the worse that still helps!???
+
+			/*if ((best_doub <= 0.0 && best_sing <= 0.0) != (best_face_os.size() == 0))
+			{
+				std::cout << "SOMETHING TERRIBLY WRONG HAS HAPPENED WITH THE FACES!===========================================\n";
+			}*/
+			/*
+			if (best_doub <= 0.0 && best_sing <= 0.0)
+			{
+				correct = true;
+				std::cout << "done right";
+				break;
+				std::cout << "we were here--------------------------------------------------------------------------------------------------------------------\n";
+				// TRY SHORTENING ALL THE DOUBLES, AND TRY AGAIN.
+				// FAIL TWICE = EXIT!
+				// first try to use a double to shorten the loop, if that doesn't work, then break;
+				std::cout << "gave it some help! THIS SERVES AS A JUMP START\n";
+				single_to_double.clear();
+				double_to_single.clear();
+				failed_previously = true;
+				bool go_on = _shorten_double();
+				// shorten all the doubles
+				/*while (go_on)
+				{
+					go_on = _shorten_double();
+					std::cout << "shortened the loop as needed.||";
+				}*/
+				/*
+				continue;
+			}
+			if (best_doub > 0 /*= best_sing || (best_sing - best_doub) < best_doub / 10.0/*best_sing*//*)
+			{
+				//std::cout << "d";
+				_change_double();
+			}
+			else if (best_sing > 0 /*best_doub*//*)
+			{
+				//std::cout << "s";
+				_change_single();
+			}
+			*/
+			//std::cout << "center of mass is, after changing: " << center_of_mass.print() << "\n";
+			//testing
+			/*else if (best_doub < best_sing && best_doub > 0.0)
+			{
+				_change_double();
+			}
+			else if (best_sing < best_doub && best_sing > 0.0)
+			{
+				_change_single();
+			}
+			else if (best_doub > 0.0)
+			{
+				_change_double();
+			}
+			else if (best_sing > 0.0)
+			{
+				_change_single();
+			}
+			//end testing
+
+
+
+			int chosen_one = rand() % best_face_os.size();
+			if (chosen_one >= best_edge_o1s.size())
+			{
+				best_edge_o = best_edge_os[chosen_one - best_edge_o1s.size()];
+				best_face_o = best_face_os[chosen_one];
+				idx_best_edge_o = idx_best_edge_os[chosen_one - best_edge_o1s.size()];
+				_change_single();
+			}
+			else
+			{
+				best_edge_o1 = best_edge_o1s[chosen_one];
+				best_edge_o2 = best_edge_o2s[chosen_one];
+				best_face_o = best_face_os[chosen_one];
+				idx_best_edge_o1 = idx_best_edge_o1s[chosen_one];
+				idx_best_edge_o2 = idx_best_edge_o2s[chosen_one];
+				_change_double();
+			}
+			*/
+
+		}
+		//std::cout << "new center of mass is: " << center_of_mass.print() << "\n";
+		//display_loop(current_loop_edges);
+
+		std::vector<int> lv;
+		for (M::CVertex* v : loop_vertices)
+		{
+			lv.push_back(v->idx());
+		}
+		std::cout << "center of mass is " << center_of_mass.print() << "\n";
+
+		if (correct)
+		{
+			good_final_vertices.push_back(loop_vertices);
+			good_final_edges.push_back(current_loop_edges);
+		}
+		else
+		{
+			final_vertices.push_back(lv);
+			final_edges.push_back(current_loop_edges);
+		}
 	}
 	bool CHandleTunnelLoop::_shrink_triangles()
 	{
@@ -2676,18 +2992,18 @@ namespace DartLib
 	void CHandleTunnelLoop::display_before(int which)
 	{
 		which = which % before_edges.size();
-		std::cout << "which is " << which << "\n";
+		std::cout << "displaying " << which << " of " << before_edges.size() << " before loops. It has size " << before_edges[which].size() << "\n";
 		//std::cout << "This loop was shortened starting with " << before_edges_search_size[which] << "\n";
 		//std::cout << before_edges[which].size() << " started with this many edges\n";
-		green_edges.clear();
-		for (M::CEdge* ed : m_handle_gens)
-		{
-			if (std::find(before_edges[which].begin(), before_edges[which].end(), ed) != before_edges[which].end())
-			{
-				green_edges.push_back(ed);
-			}
-		}
-		std::cout << green_edges.size();
+		//green_edges.clear();
+		//for (M::CEdge* ed : m_handle_gens)
+		//{
+		//	if (std::find(before_edges[which].begin(), before_edges[which].end(), ed) != before_edges[which].end())
+		//	{
+		//		green_edges.push_back(ed);
+		//	}
+		//}
+		//std::cout << green_edges.size();
 		display_loop(before_edges/*middle_edges*/[which]);
 		/*for (auto pE : m_boundary_edges)
 		{
@@ -2701,6 +3017,12 @@ namespace DartLib
 		{
 			pE->sharp() = true;
 		}*/
+	}
+	void CHandleTunnelLoop::display_tested(int which)
+	{
+		which = which % tested_edges.size();
+		std::cout << "displaying " << which << " of " << tested_edges.size() << " tested loops. It has size " << tested_edges[which].size() << "\n";
+		display_loop(tested_edges[which]);
 	}
 	void CHandleTunnelLoop::display_after(int which)
 	{
@@ -2717,10 +3039,6 @@ namespace DartLib
 		for (auto pE : good_final_edges[which])
 		{
 			pE->sharp() = true;
-		}
-		for (int i : good_final_vertices[which])
-		{
-			std::cout << i << " ";
 		}
 		std::cout << "\n";
 	}
@@ -3142,43 +3460,30 @@ namespace DartLib
 
 		loop_vertices = middle_vertices[0];
 		std::cout << "the middle loop has size " << loop_vertices.size() << "\n";
+		loop_edges = middle_edges[0];
 		current_loop_edges = middle_edges[0];
 		middle_vertices.clear();
 		middle_edges.clear();
-		_shorten();
-		double farthest_distance = 0;
-		// find farthest point from center of mass
-		for (M::CVertex* v : loop_vertices)
+		shorten();
+		loop_vertices = good_final_vertices[0];
+		center_of_mass[0] = 0.0;
+		center_of_mass[1] = 0.0;
+		center_of_mass[2] = 0.0;
+		for (M::CVertex* vertex : loop_vertices)
 		{
-			if ((v->point() - center_of_mass).norm() > farthest_distance)
-			{
-				farthest_distance = (v->point() - center_of_mass).norm();
-			}
+		
+			center_of_mass += vertex->point();
 		}
-		if (loop_vertices.size() <= 5)
-		{
-			farthest_distance *= 3;
-		}
-		else if (loop_vertices.size() <= 25)
-		{
-			farthest_distance *= 1.3;
-		}
-		else if (loop_vertices.size() <= 40)
-		{
-			farthest_distance *= 1.2;
-		}
-		else
-		{
-			farthest_distance *= 1.1;
-		}
+		center_of_mass = center_of_mass / double(loop_vertices.size());
+		
 		std::cout << "the shortened loop has size " << loop_vertices.size() << "\n";
-		std::cout << "the farthest distance is " << farthest_distance << "\n";
 		//loop through tets in _O, add to _2_I
 		std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
 		std::cout << "the output file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
 		char buffer[MAX_LINE];
 		new_tets.clear();
 		std::map<int, CPoint> verts_O;
+		std::map<int, bool> allowed;
 		while (!is.eof())
 		{
 			is.getline(buffer, MAX_LINE);
@@ -3201,6 +3506,17 @@ namespace DartLib
 				double p3 = std::stod(stokenizer.getToken());
 				CPoint mypoint(p1, p2, p3);
 				verts_O.insert({ vindex, mypoint });
+				bool al = false;
+				for (M::CVertex* v : loop_vertices)
+				{
+					double distance = (v->point() - center_of_mass).norm() * 0.8;
+					if ((v->point() - mypoint).norm() < distance)
+					{
+						al = true;
+						break;
+					}
+				}
+				allowed.insert({ vindex, al });
 			}
 			if (token == "Tet")
 			{
@@ -3214,12 +3530,8 @@ namespace DartLib
 				int v3 = std::stoi(stokenizer.getToken());
 				stokenizer.nextToken();
 				int v4 = std::stoi(stokenizer.getToken());
-				if (((verts_O[v1] - center_of_mass).norm()) <= farthest_distance &&
-					((verts_O[v2] - center_of_mass).norm()) <= farthest_distance &&
-					((verts_O[v3] - center_of_mass).norm()) <= farthest_distance &&
-					((verts_O[v4] - center_of_mass).norm()) <= farthest_distance)
+				if (allowed[v1] && allowed[v2] && allowed[v3] && allowed[v4])
 				{
-					// add the tet to the interior file;
 					std::vector<CPoint> new_tet;
 					new_tet.push_back(verts_O[v1]);
 					new_tet.push_back(verts_O[v2]);
@@ -3227,6 +3539,24 @@ namespace DartLib
 					new_tet.push_back(verts_O[v4]);
 					new_tets.push_back(new_tet);
 				}
+				/*for (M::CVertex* v : loop_vertices)
+				{
+					farthest_distance = (v->point() - center_of_mass).norm() * 1.01;
+					if (((verts_O[v1] - v->point()).norm()) <= farthest_distance &&
+						((verts_O[v2] - v->point()).norm()) <= farthest_distance &&
+						((verts_O[v3] - v->point()).norm()) <= farthest_distance &&
+						((verts_O[v4] - v->point()).norm()) <= farthest_distance)
+					{
+						// add the tet to the interior file;
+						std::vector<CPoint> new_tet;
+						new_tet.push_back(verts_O[v1]);
+						new_tet.push_back(verts_O[v2]);
+						new_tet.push_back(verts_O[v3]);
+						new_tet.push_back(verts_O[v4]);
+						new_tets.push_back(new_tet);
+						break;
+					}
+				}*/
 			}
 		}
 		is.close();
@@ -3287,175 +3617,153 @@ namespace DartLib
 		}
 		loop_vertices.clear();
 		current_loop_edges.clear();
-		if (bad_vertices.size() == 0)
+		bool notDone = true;
+		tested_edges.clear();
+		tested_vertices.clear();
+		std::cout << "HERE IS A BROKEN LOOP---------------------------------------------------\n";
+		std::vector<M::CEdge*> visited_edges;
+		//std::cout << "these are the bad vertices: ";
+		/*for (M::CVertex* bad_v : bad_vertices)
 		{
-			std::cout << "HERE IS A NORMAL LOOP---------------------------------------------------\n";
-			M::CEdge* pE = loop_edges[0];
-			M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
-			M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
-			loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE), loop_edges.end());
-			loop_vertices.push_back(pW);
-			current_loop_edges.push_back(pE);
-			while (pV != pW)
+			std::cout << bad_v->idx() << " ";
+		}*/
+		//M::CVertex* current_vertex = /*bad_vertices*/ vertices_counter[0];
+		/*
+		std::cout << "\n";
+		for (auto edge : vertex_edges[current_vertex])
+		{
+			std::cout << "edge: " << edge->idx() << "\n";
+		}*/
+		int badIdx1 = 0;
+			
+		//M::CEdge* current_edge = vertex_edges[current_vertex][0];
+		M::CEdge* current_edge = current_generator;
+		current_loop_edges.push_back(current_edge);
+		visited_edges.push_back(current_edge);
+		std::cout << "We started with edge " << current_edge->idx() << "\n";
+		M::CVertex* current_vertex = m_pMesh->edge_vertex(current_edge, 0);
+		loop_vertices.push_back(current_vertex);
+		M::CVertex* next_vertex = m_pMesh->edge_vertex(current_edge, 1);
+		//M::CVertex* next_vertex = current_vertex == m_pMesh->edge_vertex(current_edge, 0) ? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
+			
+			
+		while (notDone)
+		{
+			//std::cout << "the sizes are: " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
+			/*std::cout << "\n";
+			for (auto ver : loop_vertices)
 			{
-				loop_vertices.push_back(pV);
-				for (M::VertexEdgeIterator veiter(m_pMesh, pV); !veiter.end(); ++veiter)
+				std::cout << " " << ver->idx();
+			}
+			std::cout << "\n";*/
+			if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) == loop_vertices.end())
+			{
+				loop_vertices.push_back(next_vertex);
+				for (M::CEdge* edge : vertex_edges[next_vertex])
 				{
-
-					M::CEdge* pE2 = *veiter;
-					if (std::find(loop_edges.begin(), loop_edges.end(), pE2) != loop_edges.end())
+					if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
 					{
-						current_loop_edges.push_back(pE2);
-						loop_edges.erase(std::remove(loop_edges.begin(), loop_edges.end(), pE2), loop_edges.end());
-						if (pV == m_pMesh->edge_vertex(pE2, 0))
-						{
-							pV = m_pMesh->edge_vertex(pE2, 1);
-						}
-						else if (pV == m_pMesh->edge_vertex(pE2, 1))
-						{
-							pV = m_pMesh->edge_vertex(pE2, 0);
-						}
-						else
-						{
-							std::cout << "something wrong happened with finding the vertices of the loop";
-						}
+						current_edge = edge;
+						visited_edges.push_back(current_edge);
+						current_loop_edges.push_back(current_edge);
+						next_vertex = next_vertex == m_pMesh->edge_vertex(current_edge, 0)
+							? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
 						break;
 					}
 				}
 			}
-		}
-		else if (bad_vertices.size() >= 0)
-		{
-			std::cout << "HERE IS A BROKEN LOOP---------------------------------------------------\n";
-			std::vector<M::CEdge*> visited_edges;
-			//std::cout << "these are the bad vertices: ";
-			/*for (M::CVertex* bad_v : bad_vertices)
+			else if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) != loop_vertices.end())
 			{
-				std::cout << bad_v->idx() << " ";
-			}*/
-			//M::CVertex* current_vertex = /*bad_vertices*/ vertices_counter[0];
-			/*
-			std::cout << "\n";
-			for (auto edge : vertex_edges[current_vertex])
-			{
-				std::cout << "edge: " << edge->idx() << "\n";
-			}*/
-			int badIdx1 = 0;
-			
-			//M::CEdge* current_edge = vertex_edges[current_vertex][0];
-			M::CEdge* current_edge = current_generator;
-			current_loop_edges.push_back(current_edge);
-			visited_edges.push_back(current_edge);
-			std::cout << "We started with edge " << current_edge->idx() << "\n";
-			M::CVertex* current_vertex = m_pMesh->edge_vertex(current_edge, 0);
-			loop_vertices.push_back(current_vertex);
-			M::CVertex* next_vertex = m_pMesh->edge_vertex(current_edge, 1);
-			//M::CVertex* next_vertex = current_vertex == m_pMesh->edge_vertex(current_edge, 0) ? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
-			
-			
-			while (true)
-			{
-				//std::cout << "the sizes are: " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
-				/*std::cout << "\n";
-				for (auto ver : loop_vertices)
+				// we've visited this vertex already, check if null homologous
+				//std::cout << "potential loop found! We found " << next_vertex->idx();
+				int firstOccIndex = std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) - loop_vertices.begin();
+				std::vector<M::CEdge*> edge_loop(current_loop_edges.begin() + firstOccIndex, current_loop_edges.end());
+				//tested_edges.push_back(edge_loop);
+				std::vector<M::CVertex*> vertices_loop(loop_vertices.begin() + firstOccIndex, loop_vertices.end());
+				//tested_vertices.push_back(vertices_loop);
+				if (_shorten(edge_loop))//_null_homologous(edge_loop)
 				{
-					std::cout << " " << ver->idx();
-				}
-				std::cout << "\n";*/
-				if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) == loop_vertices.end())
-				{
-					loop_vertices.push_back(next_vertex);
-					for (M::CEdge* edge : vertex_edges[next_vertex])
+					// delete the edges up to the last triple that still has unvisited edges;
+					M::CEdge* e;
+					M::CVertex* v;
+					while (true)
 					{
-						if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
+						if (current_loop_edges.size() == 0)
 						{
-							current_edge = edge;
-							visited_edges.push_back(current_edge);
-							current_loop_edges.push_back(current_edge);
-							next_vertex = next_vertex == m_pMesh->edge_vertex(current_edge, 0)
-								? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
-							break;
-						}
-					}
-				}
-				else if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) != loop_vertices.end())
-				{
-					// we've visited this vertex already, check if null homologous
-					//std::cout << "potential loop found! We found " << next_vertex->idx();
-					int firstOccIndex = std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) - loop_vertices.begin();
-					std::vector<M::CEdge*> edge_loop(current_loop_edges.begin() + firstOccIndex, current_loop_edges.end());
-					/*for (M::CEdge* pEdge : edge_loop)
-					{
-						std::cout << pEdge->idx() << " ";
-					}
-					std::cout << "\n";*/
-					if (_null_homologous(edge_loop))
-					{
-						// delete the edges up to the last triple that still has unvisited edges;
-						M::CEdge* e;
-						M::CVertex* v;
-						while (true)
-						{
-							if (current_loop_edges.size() == 0)
-							{
-								std::cout << "current loop edges has size 0============================================================================================\n";
-								for (M::CEdge* edge : loop_edges)
-								{
-									if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
-									{
-										std::cout << "trying again with a different starting edge.\n";
-										current_edge = edge;
-										current_loop_edges.push_back(current_edge);
-										visited_edges.push_back(current_edge);
-										current_vertex = m_pMesh->edge_vertex(current_edge, 0);
-										loop_vertices.push_back(current_vertex);
-										next_vertex = m_pMesh->edge_vertex(current_edge, 1);
-										break;
-									}
-								}
-								std::cout << "unable to find a new start.\n";
-								return;
-							}
-							e = current_loop_edges.back();
-							current_loop_edges.pop_back();
-							v = loop_vertices.back();
-							loop_vertices.pop_back();
-							//std::cout << "edge, vertex removed: " << e->idx() << " " << v->idx();
-							bool found = false;
-							for (M::CEdge* edge : vertex_edges[v])
+							notDone = false;
+							std::cout << "current loop edges has size 0============================================================================================\n";
+							for (M::CEdge* edge : loop_edges)
 							{
 								if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
 								{
-									loop_vertices.push_back(v);
+									std::cout << "trying again with a different starting edge.\n";
 									current_edge = edge;
-									visited_edges.push_back(current_edge);
 									current_loop_edges.push_back(current_edge);
-									next_vertex = v == m_pMesh->edge_vertex(current_edge, 0)
-										? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
-									found = true;
+									visited_edges.push_back(current_edge);
+									current_vertex = m_pMesh->edge_vertex(current_edge, 0);
+									loop_vertices.push_back(current_vertex);
+									next_vertex = m_pMesh->edge_vertex(current_edge, 1);
+									std::cout << "found a new start.\n";
+									notDone = true;
 									break;
 								}
 							}
-							if (found)
+								
+								
+							break;
+						}
+						e = current_loop_edges.back();
+						current_loop_edges.pop_back();
+						v = loop_vertices.back();
+						loop_vertices.pop_back();
+						//std::cout << "edge, vertex removed: " << e->idx() << " " << v->idx();
+						bool found = false;
+						for (M::CEdge* edge : vertex_edges[v])
+						{
+							if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
 							{
+								loop_vertices.push_back(v);
+								current_edge = edge;
+								visited_edges.push_back(current_edge);
+								current_loop_edges.push_back(current_edge);
+								next_vertex = v == m_pMesh->edge_vertex(current_edge, 0)
+									? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
+								found = true;
 								break;
 							}
-
 						}
+						if (found)
+						{
+							break;
+						}
+
 					}
-					else
-					{
-						// this is correct!
-						std::cout << "_________________________________________________________----this is correct! The size is " << edge_loop.size() << "\n";
-						current_loop_edges = edge_loop;
-						std::vector<M::CVertex*> vertices_loop(loop_vertices.begin() + firstOccIndex, loop_vertices.end());
-						loop_vertices = vertices_loop;
-						break;
+				}
+				else
+				{
+					// this is correct!
+					std::cout << "_________________________________________________________----this is correct! The size is " << edge_loop.size() << "\n";
+					current_loop_edges = edge_loop;
+					std::vector<M::CVertex*> vertices_loop(loop_vertices.begin() + firstOccIndex, loop_vertices.end());
+					loop_vertices = vertices_loop;
+					break;
 						
-					}
 				}
 			}
 		}
+		/*// get the actual correct loop
+		int longestLoop = 0;
+		for (int i = 0; i < tested_edges.size(); i++)
+		{
+			if (tested_edges[i].size() > longestLoop)
+			{
+				longestLoop = tested_edges[i].size();
+				current_loop_edges = tested_edges[i];
+				loop_vertices = tested_vertices[i];
+			}
+		}
+		std::cout << "we tried " << tested_edges.size() << " loops\n";
+		std::cout << "we tried " << tested_vertices.size() << " loops\n";*/
 		std::cout << "there are  " << loop_vertices.size() << " vertices and ";
 		std::cout << "there are  " << current_loop_edges.size() << " edges\n";
 		if (exterior_volume == false)
@@ -3470,9 +3778,6 @@ namespace DartLib
 			before_v.push_back(i->idx());
 		}
 		before_vertices.push_back(before_v);
-		
-		single_to_double.clear();
-		double_to_single.clear();
 		return;
 		_shorten();
 		//display_loop(current_loop_edges);
@@ -3480,321 +3785,273 @@ namespace DartLib
 		std::cout << "\nshorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
 	}
 
-	void CHandleTunnelLoop::_shorten()
+	bool CHandleTunnelLoop::_shorten(std::vector<M::CEdge*> ed_loop)
 	{
-		bool printS = false;
-		single_to_double.clear();
-		double_to_single.clear();
-		fall_back = current_loop_edges;
+		CPoint total_mass(0, 0, 0);
 		center_of_mass[0] = 0.0;
 		center_of_mass[1] = 0.0;
 		center_of_mass[2] = 0.0;
-		for (M::CVertex* v : loop_vertices)
+		std::set<M::CEdge*> loop;
+		for (M::CEdge* edge : ed_loop)
 		{
-			//std::cout << v->idx() << " " << v->point().print() << " ";
-			//std::cout << v->idx() << " " ;
-			//std::cout << v->point().print() << "\n";
-			center_of_mass += v->point();
-			//std::cout << "center of mass is " << center_of_mass.print() << "\n";
-		}
-		std::cout << "we started with " << loop_vertices.size() << "vertices\n";
-		center_of_mass /= double(loop_vertices.size());
-		std::cout << "center of mass was " << center_of_mass.print() << "\n";
-		//std::cout << center_of_mass.print() << " ";
-		int tester = 0;
-		bool failed_previously = false;
-		bool correct = false;
-		bool change_happened = false;
-		
-		while (tester < 100) //50000
-		{
-			change_happened = false;
-			tester += 1;
-			//std::cout << "the index is " << index;
-			//std::cout << " vert size, edge size " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
-			//^ allows repeating moves
-			while (true)
+			if (loop.find(edge) == loop.end())
 			{
-				for (auto e : current_loop_edges)
-				{
-					if (e == NULL)
-					{
-						std::cout << "we just got a null edge now!====================================================================\n";
-					}
-				}
-				green_edges.clear();
-				if (index >= current_loop_edges.size())
-				{
-					index = 0;
-					break;
-				}
-				if (index < 0)
-				{
-					index = (index + current_loop_edges.size()) % current_loop_edges.size();
-				}
-				current_edge_to_green = current_loop_edges[index];
-				green_edges.push_back(current_edge_to_green);
-				//std::cout << "\n\n";
-				if (_repeats((index + current_loop_edges.size() - 2) % current_loop_edges.size()))
-				{
-					if (printS)
-					{
-						std::cout << "removed double spike in past\n";
-					}
-					//std::cout << "we removed a double spike in previous edge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-					index -= 2;
-					change_happened = true;
-					continue;
-				}
-				if (_repeats(index))
-				{
-					if (printS)
-					{
-						std::cout << "removed double spike\n";
-					}
-					//std::cout << "we removed a double spike!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-					change_happened = true;
-					continue;
-				}
-				if (_repeats((index + 1) % current_loop_edges.size()))
-				{
-					if (printS)
-					{
-						std::cout << "removed double spike in future\n";
-					}
-					//std::cout << "we removed a double spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-					change_happened = true;
-					continue;
-				}
-				if (_fill_gaps(index))
-				{
-					index += 2;
-					if (printS)
-					{
-						std::cout << "we filled a gap\n";
-					}
-					change_happened = true;
-					//std::cout << "new index is " << index << ", out of " << loop_vertices.size() << "\n";
-					continue;
-				}
-				if (_repeats2((index + 1) % current_loop_edges.size()))
-				{
-					if (printS)
-					{
-						std::cout << "first spike from repeats 2\n";
-					}
-					//std::cout << "we removed a spike in the future!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-					change_happened = true;
-					continue;
-				}
-				if (_repeats2(index))
-				{
-					if (printS)
-					{
-						std::cout << "spike from repeats2\n";
-					}
-					//std::cout << "we removed a spike now!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-					change_happened = true;
-					continue;
-				}
-				if (_triple0(index))
-				{
-					change_happened = true;
-					if (printS)
-					{
-						std::cout << "triple0 removed\n";
-					}
-					continue;
-				}
-				if (_triple1(index))
-				{
-					change_happened = true;
-					if (printS)
-					{
-						std::cout << "triple1 removed\n";
-					}
-					index -= 1;
-					continue;
-				}
-				if (_triple2(index))
-				{
-					change_happened = true;
-					if (printS)
-					{
-						std::cout << "triple2 removed\n";
-					}
-					index -= 2;
-					continue;
-				}
-				if (_double(index))
-				{
-					if (printS)
-					{
-						std::cout << "double\n";
-					}
-					change_happened = true;
-					_change_double();
-					continue;
-				}
-				if (_single(index))
-				{
-					change_happened = true;
-					index += 1;
-					if (skip_singles)
-					{
-						//std::cout << "single got skipped\n";
-						skip_singles = false;
-						continue;
-					}
-					if (printS)
-					{
-						std::cout << "single\n";
-					}
-					
-					_change_single();
-					
-					skip_singles = true;
-					continue;
-				}
-				index += 1;
-			}
-			if (change_happened == false)
-			{
-				correct = true;
-				//std::cout << "ended naturally, after " << tester << " tries.\n";
-				break;
-			}
-
-			/*best_edge_o1s.clear();
-			best_edge_o2s.clear();
-			best_face_os.clear();
-			idx_best_edge_o1s.clear();
-			idx_best_edge_o2s.clear();
-			best_edge_os.clear();
-			idx_best_edge_os.clear();
-			tester++;
-			//check all pairs of consecutive edges if they share a face.
-			// check doubles;
-			//std::cout << "the center of mass is1 " << center_of_mass.print() << "\n";
-			bool keep_go = _delete_triple();
-			
-			if (keep_go)
-			{
-				//std::cout << "deleted a face\n";
-				display_loop(current_loop_edges);
-				continue;
-			}
-
-			//std::cout << "the center of mass is2 " << center_of_mass.print() << "\n";
-			double best_doub = _check_double();
-
-			//change one single
-			double best_sing = _check_single();
-			//std::cout << "the distances are: " << best_doub << " and " << best_sing << "\n";
-			//std::cout << "the center of mass is3 " << center_of_mass.print() << "\n\n";
-			// choose the worse that still helps!???
-
-			/*if ((best_doub <= 0.0 && best_sing <= 0.0) != (best_face_os.size() == 0))
-			{
-				std::cout << "SOMETHING TERRIBLY WRONG HAS HAPPENED WITH THE FACES!===========================================\n";
-			}*/
-			/*
-			if (best_doub <= 0.0 && best_sing <= 0.0)
-			{
-				correct = true;
-				std::cout << "done right";
-				break;
-				std::cout << "we were here--------------------------------------------------------------------------------------------------------------------\n";
-				// TRY SHORTENING ALL THE DOUBLES, AND TRY AGAIN.
-				// FAIL TWICE = EXIT!
-				// first try to use a double to shorten the loop, if that doesn't work, then break;
-				std::cout << "gave it some help! THIS SERVES AS A JUMP START\n";
-				single_to_double.clear();
-				double_to_single.clear();
-				failed_previously = true;
-				bool go_on = _shorten_double();
-				// shorten all the doubles
-				/*while (go_on)
-				{
-					go_on = _shorten_double();
-					std::cout << "shortened the loop as needed.||";
-				}*/
-				/*
-				continue;
-			}
-			if (best_doub > 0 /*= best_sing || (best_sing - best_doub) < best_doub / 10.0/*best_sing*//*)
-			{
-				//std::cout << "d";
-				_change_double();
-			}
-			else if (best_sing > 0 /*best_doub*//*)
-			{
-				//std::cout << "s";
-				_change_single();
-			}
-			*/
-			//std::cout << "center of mass is, after changing: " << center_of_mass.print() << "\n";
-			//testing
-			/*else if (best_doub < best_sing && best_doub > 0.0)
-			{
-				_change_double();
-			}
-			else if (best_sing < best_doub && best_sing > 0.0)
-			{
-				_change_single();
-			}
-			else if (best_doub > 0.0)
-			{
-				_change_double();
-			}
-			else if (best_sing > 0.0)
-			{
-				_change_single();
-			}
-			//end testing
-
-			
-
-			int chosen_one = rand() % best_face_os.size();
-			if (chosen_one >= best_edge_o1s.size())
-			{
-				best_edge_o = best_edge_os[chosen_one - best_edge_o1s.size()];
-				best_face_o = best_face_os[chosen_one];
-				idx_best_edge_o = idx_best_edge_os[chosen_one - best_edge_o1s.size()];
-				_change_single();
+				loop.insert(edge);
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				total_mass += (v1->point() + v2->point()) / 2.0;
 			}
 			else
 			{
-				best_edge_o1 = best_edge_o1s[chosen_one];
-				best_edge_o2 = best_edge_o2s[chosen_one];
-				best_face_o = best_face_os[chosen_one];
-				idx_best_edge_o1 = idx_best_edge_o1s[chosen_one];
-				idx_best_edge_o2 = idx_best_edge_o2s[chosen_one];
-				_change_double();
+				std::cout << "we had one edge twice!\n";
 			}
-			*/
-			
 		}
-		//std::cout << "new center of mass is: " << center_of_mass.print() << "\n";
-		//display_loop(current_loop_edges);
-		
-		std::vector<int> lv;
-		for (M::CVertex* v : loop_vertices)
+		std::cout << "edge loop size" << current_loop_edges.size() << " " << loop.size() << "\n";
+		center_of_mass = total_mass / double(loop.size());
+		std::cout << "center of mass was " << center_of_mass.print() << "\n";
+		int iterations = 500;
+		std::set<M::CFace*> insertFaces;
+		while (iterations > 0)
 		{
-			lv.push_back(v->idx());
-		}
-		std::cout << "center of mass is " << center_of_mass.print() << "\n";
+			iterations -= 1;
+			insertFaces.clear();
+			for (M::CEdge* edge : loop)
+			{
+				double closestDist = 9999;
+				M::CFace* bestFace = NULL;
+				//std::cout << "\n\n";
+				for (M::CFace* face : edges_faces[edge->idx()])
+				{
+					CPoint faceCOM(0,0,0);
+					for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
+					{
+						M::CVertex* vertex = *fviter;
+						faceCOM += vertex->point();
+					}
+					faceCOM /= 3.0;
+					//std::cout << "the face's center of mass is " << faceCOM.print() << "\n";
 
-		if (correct)
-		{
-			good_final_vertices.push_back(lv);
-			good_final_edges.push_back(current_loop_edges);
+					if ((faceCOM - center_of_mass).norm() < closestDist)
+					{
+						closestDist = (faceCOM - center_of_mass).norm();
+						//std::cout << "we got a new distance, it is " << closestDist << "\n";
+						bestFace = face;
+					}
+				}
+				if (insertFaces.find(bestFace) == insertFaces.end())
+				{
+					
+					insertFaces.insert(bestFace);
+					if (m_inner_faces.find(bestFace) != m_inner_faces.end())
+					{
+						//std::cout << "new interior face\n";
+					}
+					else if (m_boundary_faces.find(bestFace) != m_boundary_faces.end())
+					{
+						//std::cout << "new boundary face\n";
+					}
+					else
+					{
+						std::cout << "an error occured\n";
+					}
+				}
+				else
+				{
+					//insertFaces.insert(bestFace);
+					//std::cout << "we tried to insert the same face\n";
+				}
+			}
+			//std::cout << "the size of the loop and insertFaces are " << loop.size() << " " << insertFaces.size() << "\n";
+			for (M::CFace* face : insertFaces)
+			{
+				//std::cout << "|";
+				for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+				{
+					M::CEdge* edge = *feiter;
+					if (loop.find(edge) == loop.end())
+					{
+						loop.insert(edge);
+						//std::cout << "insert";
+						M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+						M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+						total_mass += (v1->point() + v2->point()) / 2.0;
+					}
+					else
+					{
+						loop.erase(edge);
+						//std::cout << "remove";
+						M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+						M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+						total_mass -= (v1->point() + v2->point()) / 2.0;
+					}
+				}
+			}
+			if (loop.size() == 0)
+			{
+				return true;
+			}
+			//std::cout << "the new size of the loop is now " << loop.size() << "\n";
+			center_of_mass = total_mass / double(loop.size());
+			//std::cout << "---------------------------------------------------------the new center of mass is: " << center_of_mass.print() << "\n";
 		}
-		else
+		std::vector<int> lv;
+		current_loop_edges.clear();
+		loop_vertices.clear();
+		for (M::CEdge* edge : loop)
 		{
-			final_vertices.push_back(lv);
-			final_edges.push_back(current_loop_edges);
+			current_loop_edges.push_back(edge);
+			M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+			M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+			if (std::find(lv.begin(), lv.end(), v1->idx()) == lv.end())
+			{
+				lv.push_back(v1->idx());
+				loop_vertices.push_back(v1);
+			}
+			if (std::find(lv.begin(), lv.end(), v2->idx()) == lv.end())
+			{
+				lv.push_back(v2->idx());
+				loop_vertices.push_back(v2);
+			}
 		}
+		std::cout << "final center of mass is " << center_of_mass.print() << "\n";
+		good_final_vertices.push_back(loop_vertices);
+		good_final_edges.push_back(current_loop_edges);
+	
+		return false;
+	}
+	bool CHandleTunnelLoop::_shorten()
+	{
+		CPoint total_mass(0, 0, 0);
+		center_of_mass[0] = 0.0;
+		center_of_mass[1] = 0.0;
+		center_of_mass[2] = 0.0;
+		std::set<M::CEdge*> loop;
+		for (M::CEdge* edge : current_loop_edges)
+		{
+			if (loop.find(edge) == loop.end())
+			{
+				loop.insert(edge);
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				total_mass += (v1->point() + v2->point()) / 2.0;
+			}
+			else
+			{
+				std::cout << "we had one edge twice!\n";
+			}
+		}
+		std::cout << "edge loop size" << current_loop_edges.size() << " " << loop.size() << "\n";
+		center_of_mass = total_mass / double(loop.size());
+		std::cout << "center of mass was " << center_of_mass.print() << "\n";
+		int iterations = 500;
+		std::set<M::CFace*> insertFaces;
+		while (iterations > 0)
+		{
+			iterations -= 1;
+			insertFaces.clear();
+			for (M::CEdge* edge : loop)
+			{
+				double closestDist = 9999;
+				M::CFace* bestFace = NULL;
+				//std::cout << "\n\n";
+				for (M::CFace* face : edges_faces[edge->idx()])
+				{
+					CPoint faceCOM(0, 0, 0);
+					for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
+					{
+						M::CVertex* vertex = *fviter;
+						faceCOM += vertex->point();
+					}
+					faceCOM /= 3.0;
+					//std::cout << "the face's center of mass is " << faceCOM.print() << "\n";
+
+					if ((faceCOM - center_of_mass).norm() < closestDist)
+					{
+						closestDist = (faceCOM - center_of_mass).norm();
+						//std::cout << "we got a new distance, it is " << closestDist << "\n";
+						bestFace = face;
+					}
+				}
+				if (insertFaces.find(bestFace) == insertFaces.end())
+				{
+
+					insertFaces.insert(bestFace);
+					if (m_inner_faces.find(bestFace) != m_inner_faces.end())
+					{
+						//std::cout << "new interior face\n";
+					}
+					else if (m_boundary_faces.find(bestFace) != m_boundary_faces.end())
+					{
+						//std::cout << "new boundary face\n";
+					}
+					else
+					{
+						std::cout << "an error occured\n";
+					}
+				}
+				else
+				{
+					//insertFaces.insert(bestFace);
+					//std::cout << "we tried to insert the same face\n";
+				}
+			}
+			//std::cout << "the size of the loop and insertFaces are " << loop.size() << " " << insertFaces.size() << "\n";
+			for (M::CFace* face : insertFaces)
+			{
+				//std::cout << "|";
+				for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+				{
+					M::CEdge* edge = *feiter;
+					if (loop.find(edge) == loop.end())
+					{
+						loop.insert(edge);
+						//std::cout << "insert";
+						M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+						M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+						total_mass += (v1->point() + v2->point()) / 2.0;
+					}
+					else
+					{
+						loop.erase(edge);
+						//std::cout << "remove";
+						M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+						M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+						total_mass -= (v1->point() + v2->point()) / 2.0;
+					}
+				}
+			}
+			if (loop.size() == 0)
+			{
+				return true;
+			}
+			//std::cout << "the new size of the loop is now " << loop.size() << "\n";
+			center_of_mass = total_mass / double(loop.size());
+			//std::cout << "---------------------------------------------------------the new center of mass is: " << center_of_mass.print() << "\n";
+		}
+		std::vector<int> lv;
+		current_loop_edges.clear();
+		loop_vertices.clear();
+		for (M::CEdge* edge : loop)
+		{
+			current_loop_edges.push_back(edge);
+			M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+			M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+			if (std::find(lv.begin(), lv.end(), v1->idx()) == lv.end())
+			{
+				lv.push_back(v1->idx());
+				loop_vertices.push_back(v1);
+			}
+			if (std::find(lv.begin(), lv.end(), v2->idx()) == lv.end())
+			{
+				lv.push_back(v2->idx());
+				loop_vertices.push_back(v2);
+			}
+		}
+		std::cout << "final center of mass is " << center_of_mass.print() << "\n";
+		good_final_vertices.push_back(loop_vertices);
+		good_final_edges.push_back(current_loop_edges);
+
+		return false;
 	}
 	bool CHandleTunnelLoop::_repeats(int i)
 	{
@@ -5213,6 +5470,7 @@ namespace DartLib
 	}
 	bool CHandleTunnelLoop::_null_homologous(std::vector<M::CEdge*> myEdges)
 	{
+		return true; // just pick the largest one at the end
 		if (trickShorten)
 		{
 			if (myEdges.size() < 4)
@@ -5262,7 +5520,12 @@ namespace DartLib
 		if (myEdges.size() <= 2)
 		{
 			std::cout << "Checked an empty loop. It was broken.\n";
-			return false;
+			return true;
+		}
+		else if (myEdges.size() == 3)
+		{
+			std::cout << "This loop has 3 edges, so it is null-homologous\n";
+			return true;
 		}
 		int safety_c = 0;
 		inSet.clear();
@@ -5285,7 +5548,7 @@ namespace DartLib
 			std::cout << "There were no edges in the generators list\n";
 			return true;
 		}
-		/*while (number > 0 && phead != NULL && phead->pair() != NULL)
+		while (number > 0 /*&& phead != NULL*/ && phead->pair() != NULL)
 		{
 			M::CFace* pF = phead->pair();
 			if (safety_c >= 10000)
@@ -5323,17 +5586,18 @@ namespace DartLib
 
 
 			}
-			if (number > 0)
+			if (gnumber > 0)
 			{
-				phead = idx_edges[*inSet.rbegin()];
+				phead = idx_edges[*inSetGens.rbegin()];
 			}
 			else
 			{
+				std::cout << "ran out of generators\n";
 				phead = NULL;
 			}
 			
-		}*/
-		while (number > 0 && phead != NULL && phead->pair() != NULL)
+		}
+		/*while (number > 0 && phead != NULL && phead->pair() != NULL)
 		{
 			M::CFace* pF2 = phead->pair();
 			for (int edge1 : facesPair[pF2])
@@ -5372,9 +5636,7 @@ namespace DartLib
 			{
 				phead = NULL;
 			}
-
-
-		}
+		}*/
 		if (safety_c >= 10000)
 		{
 			std::cout << "we used the safety!!---------\n";

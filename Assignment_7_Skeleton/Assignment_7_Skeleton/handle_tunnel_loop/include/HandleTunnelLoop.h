@@ -70,7 +70,7 @@ class CHandleTunnelLoop
 	void display_all_after();
 
 	void display_before(int which);
-
+	void display_tested(int which);
 	void display_after(int which);
 
 	void show_original();
@@ -109,8 +109,10 @@ class CHandleTunnelLoop
 
     bool _shrink_triangles();
 
+	void _shorten3();
 	void _shorten2();
-	void _shorten();
+	bool _shorten(std::vector<M::CEdge*> ed_loop);
+	bool _shorten();
 	bool _delete_triple();
 	double _check_double();
 	bool _shorten_double();
@@ -149,7 +151,7 @@ class CHandleTunnelLoop
 
     int m_genus;
 	bool exterior_volume = false;
-	bool trickShorten = true;
+	bool trickShorten = false;
 
 	bool exterior_tunnel = false;
 	bool boundary_shorten = false;
@@ -192,13 +194,15 @@ class CHandleTunnelLoop
 	std::vector<std::vector<M::CEdge*>> final_edges;
 	std::vector<std::vector<M::CEdge*>> good_final_edges;
 	std::vector<std::vector<M::CEdge*>> before_edges;
+	std::vector<std::vector<M::CEdge*>> tested_edges;
+	std::vector<std::vector<M::CVertex*>> tested_vertices;
 	std::vector<std::vector<M::CEdge*>> middle_edges;
 	std::vector<int> before_edges_search_size;
 	std::vector<M::CEdge*> handletunnel_edges;
 	std::vector<M::CEdge*> search_start_edges;
 	std::vector<std::vector<int>> search_start_verts;
 	std::vector<std::vector<int>> final_vertices;
-	std::vector<std::vector<int>> good_final_vertices;
+	std::vector<std::vector<M::CVertex*>> good_final_vertices;
 	std::vector<std::vector<int>> before_vertices;
 	std::vector<M::CEdge*> green_edges;
 	std::vector<std::vector<M::CFace*>> edges_faces;
