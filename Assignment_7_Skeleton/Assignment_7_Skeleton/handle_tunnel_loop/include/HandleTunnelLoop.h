@@ -284,6 +284,8 @@ class CHandleTunnelLoop
 	std::unordered_map<std::string, int> pointsEdge;
 	bool first_time = true;
 
+	std::unordered_map<M::CVertex*, M::CVertex*> oppositeVertex;
+
 };
 
 template <typename T>

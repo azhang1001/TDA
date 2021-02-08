@@ -1538,7 +1538,6 @@ namespace DartLib
 				return;
 			}
 			std::vector<int> traversal_order;
-			std::cout << "we have " << after_edges.size() << " shortened loops\n";
 			for (int i = 0; i < after_edges.size(); i++)
 			{
 				int j = 0;
@@ -1588,7 +1587,6 @@ namespace DartLib
 				return;
 			}
 			std::vector<int> traversal_order;
-			std::cout << "we have " << after_edges.size() << " shortened loops\n";
 			for (int i = 0; i < after_edges.size(); i++)
 			{
 				int j = 0;
@@ -3641,14 +3639,28 @@ namespace DartLib
 		}
 		center_of_mass = center_of_mass / double(loop_vertices.size());
 		
-		std::cout << "the shortened loop has size " << loop_vertices.size() << "\n";
 		//loop through tets in _O, add to _2_I
 		std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
-		std::cout << "the output file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
+		//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
 		char buffer[MAX_LINE];
 		new_tets.clear();
 		std::map<int, CPoint> verts_O;
 		std::map<int, bool> allowed;
+		for (M::CVertex* v1 : loop_vertices)
+		{
+			double fD = 0;
+			M::CVertex* oV = NULL;
+			for (M::CVertex* v2 : loop_vertices)
+			{
+				double D = (v1->point() - v2->point()).norm();
+				if (D > fD)
+				{
+					fD = D;
+					oV = v2;
+				}
+			}
+			oppositeVertex.insert({ v1, oV });
+		}
 		double distance;
 		double average_distance = 0;
 		
@@ -3670,7 +3682,7 @@ namespace DartLib
 		}
 		average_distance /= loop_vertices.size();
 		average_distance = average_distance * (-0.087 * (pow(1.0 / loop_vertices.size(), -0.28) - 12.99)); // curve of best fit.
-
+		/*
 		double best_guess = 999.9;
 		double worst_distance = 0;
 		for (M::CVertex* v1 : loop_vertices)
@@ -3718,7 +3730,7 @@ namespace DartLib
 			}
 		}
 		double minor = (f3 - f4).norm() * 1.4;
-		std::cout << "minor and major are " << minor << " " << major << " while the average distance is " << average_distance << "\n";
+		std::cout << "minor and major are " << minor << " " << major << " while the average distance is " << average_distance << "\n";*/
 		while (!is.eof())
 		{
 			is.getline(buffer, MAX_LINE);
@@ -3742,7 +3754,53 @@ namespace DartLib
 				CPoint mypoint(p1, p2, p3);
 				verts_O.insert({ vindex, mypoint });
 				bool al = false;
-				double dist = 0;
+				// check whether the angle requirement is met
+				for (M::CVertex* v : loop_vertices)
+				{
+					
+					CPoint poi1 = v->point();
+					CPoint poi2 = oppositeVertex[v]->point();
+					CPoint vec1 = poi1 - mypoint;
+					CPoint vec2 = poi2 - mypoint;
+					/*if (mypoint.print2() == v->point().print2())
+					{
+						std::cout << "------------------------------------------------------------------------------ see these points are equal!\n";
+					}*/
+					double ratio = 0;
+
+					if (vec1.norm() > vec2.norm())
+					{
+						ratio = vec2.norm() / vec1.norm();
+					}
+					else
+					{
+						ratio = vec1.norm() / vec2.norm();
+					}
+					CPoint vec1n = vec1 / vec1.norm();
+					CPoint vec2n = vec2 / vec2.norm();
+					double dotProduct = vec1n * vec2n;
+					double angle = acos(dotProduct) * 180.0 / 3.14159265;
+					double score = (180 - angle) * ratio * ratio;
+					/*if (vec1.norm() < 0.0001 || vec2.norm() < 0.0001)
+					{
+						std::cout << "so it's possible to equal!\n";
+						std::cout << "the two distances are " << vec1.norm() << " " << vec2.norm() << "\n";
+						std::cout << "the ratio, angle, and score are " << ratio << " " << angle << " " << score << "\n";
+						std::cout << "--\n";
+					}*/
+					/*if (score < 90)
+					{
+						std::cout << "the two distances are " << vec1.norm() << " " << vec2.norm() << "\n";
+						std::cout << "the ratio, angle, and score are " << ratio << " " << angle << " " << score << "\n";
+					}*/
+					if (score < 5 || ratio < 0.00001)
+					{
+						//std::cout << "this one fits inside!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+						al = true;
+						break;
+					}
+				}
+				/*double dist = 0;
 				for (M::CVertex* v : loop_vertices)
 				{
 					dist += cbrt((v->point() - mypoint).norm());
@@ -3751,7 +3809,7 @@ namespace DartLib
 				{
 					al = true;
 				}
-				/*if ((f1 - mypoint).norm()+(f2-mypoint).norm() <= major)
+				if ((f1 - mypoint).norm()+(f2-mypoint).norm() <= major)
 				{
 					al = true;
 				}
@@ -3794,7 +3852,7 @@ namespace DartLib
 				{
 					inside += 1;
 				}
-				if (inside >= 3)
+				if (inside >= 2)
 				{
 					std::vector<CPoint> new_tet;
 					new_tet.push_back(verts_O[v1]);
@@ -4056,11 +4114,19 @@ namespace DartLib
 		}
 		//std::cout << "edge loop size" << current_loop_edges.size() << " " << loop.size() << "\n";
 		center_of_mass = total_mass / double(loop.size());
+		double total_distance = 0;
+		for (M::CEdge* edge : loop)
+		{
+			M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+			M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+			total_distance += ((v1->point() + v2->point()) / 2.0 - center_of_mass).norm();
+		}
+		double average_distance = total_distance / loop.size();
 		//std::cout << "center of mass was " << center_of_mass.print() << "\n";
-		int iterations = 1000;
+		int iterations = ed_loop.size() * ed_loop.size() / 4;
 		if (ed_loop.size() > 50)
 		{
-			iterations = 3000;
+			iterations *= 2;
 		}
 		if (ed_loop.size() > 100)
 		{
@@ -4072,7 +4138,7 @@ namespace DartLib
 		}
 		if (ed_loop.size() > 500)
 		{
-			iterations *= 7;
+			iterations *= 8;
 		}
 		int init_iters = iterations;
 		std::set<M::CFace*> insertFaces;
@@ -4080,6 +4146,7 @@ namespace DartLib
 		{
 			iterations -= 1;
 			insertFaces.clear();
+			std::set<M::CEdge*> prev_loop = loop;
 			for (M::CEdge* edge : loop)
 			{
 				double closestDist = 9999;
@@ -4157,6 +4224,22 @@ namespace DartLib
 			}
 			//std::cout << "the new size of the loop is now " << loop.size() << "\n";
 			center_of_mass = total_mass / double(loop.size());
+			// get the average distance
+			double total_distance = 0;
+			for (M::CEdge* edge : loop)
+			{
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				total_distance += ((v1->point() + v2->point()) / 2.0 -  center_of_mass).norm();
+			}
+			double new_average_distance = total_distance / loop.size();
+			if (new_average_distance > 1.05 * average_distance)
+			{
+				loop = prev_loop;
+				std::cout << "ended with " << iterations << " iterations left, when ";
+				break;
+			}
+
 			//std::cout << "---------------------------------------------------------the new center of mass is: " << center_of_mass.print() << "\n";
 		}
 		std::vector<int> lv;
