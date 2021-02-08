@@ -282,7 +282,7 @@ class CHandleTunnelLoop
 
 	std::unordered_map<std::string, int> pointVertex;
 	std::unordered_map<std::string, int> pointsEdge;
-
+	bool first_time = true;
 
 };
 

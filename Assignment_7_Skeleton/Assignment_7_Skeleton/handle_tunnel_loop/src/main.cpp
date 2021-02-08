@@ -361,11 +361,11 @@ void keyBoard(unsigned char key, int x, int y)
     switch (key)
     {
         case '+':
-            d = std::min(d + 0.05, 2.0);
+            d = std::min(d + 0.1, 2.0);
             mesh.cut(CPlane(n, d));
             break;
         case '-':
-			d = std::max(d - 0.05, -2.0);
+			d = std::max(d - 0.1, -2.0);
             mesh.cut(CPlane(n, d));
             break;
         case 'x':
@@ -445,6 +445,20 @@ void keyBoard(unsigned char key, int x, int y)
 					}
 					myfile.close();
 					
+				}
+				else
+				{
+					std::cout << "Unable to open shortened tunnels file";
+				}
+				myfile.open("../../data/tunnels.txt");
+				if (myfile.is_open())
+				{
+					while (std::getline(myfile, line))
+					{
+						handler.add_tunnel(line);
+					}
+					myfile.close();
+
 				}
 				else
 				{

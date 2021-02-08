@@ -1165,7 +1165,7 @@ namespace DartLib
 	void CHandleTunnelLoop::write_tets(const std::string& output)
 	{
 		std::cout << "beginning to add the tets\n";
-
+		
 
 		std::fstream is(output, std::fstream::in);
 		char buffer[MAX_LINE];
@@ -1436,7 +1436,8 @@ namespace DartLib
 		after_edges.push_back(middle_edge);
 		std::cout << "we added the edge_loop\n";
 		return;
-	}void CHandleTunnelLoop::add_tunnel(std::string line)
+	}
+	void CHandleTunnelLoop::add_tunnel(std::string line)
 	{
 		int count = 0;
 		std::istringstream iss(line);
@@ -1506,9 +1507,16 @@ namespace DartLib
 		for (int i : traversal_order)
 		{
 			std::vector<M::CEdge*> before_edge = before_edges[i];
+			M::CVertex* pV = m_pMesh->edge_vertex(m_handle_gens[i], 0);
+			M::CVertex* pW = m_pMesh->edge_vertex(m_handle_gens[i], 1);
+			_os << pV->point().print2() << " " << pW->point().print2() << " ";
 			for (int j = 0; j < before_edge.size(); j ++)
 			{
 				M::CEdge* edge = before_edge[j];
+				if (edge->idx() == m_handle_gens[i]->idx())
+				{
+					continue;
+				}
 				M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
 				M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
 				_os << pV->point().print2() << " " << pW->point().print2() << " ";
@@ -1519,54 +1527,110 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::write_shortened_tunnels(const std::string& output)
 	{
-		std::fstream _os;
-		_os.open(output, std::fstream::app);
-
-		if (_os.fail())
+	
+		if (first_time == true)
 		{
-			fprintf(stderr, "Error is opening file %s\n", output);
-			return;
-		}
-		std::vector<int> traversal_order;
-		std::cout << "we have " << after_edges.size() << " shortened loops\n";
-		for (int i = 0; i < after_edges.size(); i++)
-		{
-			int j = 0;
-			while (j < traversal_order.size())
+			first_time = false;
+			std::ofstream _os(output, std::ofstream::trunc);
+			if (_os.fail())
 			{
-				if (after_edges[i].size() > after_edges[j].size())
+				fprintf(stderr, "Error is opening file %s\n", output);
+				return;
+			}
+			std::vector<int> traversal_order;
+			std::cout << "we have " << after_edges.size() << " shortened loops\n";
+			for (int i = 0; i < after_edges.size(); i++)
+			{
+				int j = 0;
+				while (j < traversal_order.size())
 				{
-					j++;
+					if (after_edges[i].size() > after_edges[j].size())
+					{
+						j++;
+					}
+					else
+					{
+						break;
+					}
+				}
+				if (j == traversal_order.size())
+				{
+					traversal_order.push_back(i);
 				}
 				else
 				{
-					break;
+					traversal_order.insert(traversal_order.begin() + j, i);
 				}
 			}
-			if (j == traversal_order.size())
-			{
-				traversal_order.push_back(i);
-			}
-			else
-			{
-				traversal_order.insert(traversal_order.begin() + j, i);
-			}
-		}
 
-		for (int i : traversal_order)
+			for (int i : traversal_order)
+			{
+				std::vector<M::CEdge*> after_edge = after_edges[i];
+				for (int j = 0; j < after_edge.size(); j++)
+				{
+					M::CEdge* edge = after_edge[j];
+					M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
+					M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
+					_os << pV->point().print2() << " " << pW->point().print2() << " ";
+
+				}
+				_os << "\n";
+			}
+			_os.close();
+			after_edges.clear();
+		}
+		else
 		{
-			std::vector<M::CEdge*> after_edge = after_edges[i];
-			for (int j = 0; j < after_edge.size(); j++)
+			std::ofstream _os(output, std::ofstream::app);
+			if (_os.fail())
 			{
-				M::CEdge* edge = after_edge[j];
-				M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
-				M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
-				_os << pV->point().print2() << " " << pW->point().print2() << " ";
-
+				fprintf(stderr, "Error is opening file %s\n", output);
+				return;
 			}
-			_os << "\n";
+			std::vector<int> traversal_order;
+			std::cout << "we have " << after_edges.size() << " shortened loops\n";
+			for (int i = 0; i < after_edges.size(); i++)
+			{
+				int j = 0;
+				while (j < traversal_order.size())
+				{
+					if (after_edges[i].size() > after_edges[j].size())
+					{
+						j++;
+					}
+					else
+					{
+						break;
+					}
+				}
+				if (j == traversal_order.size())
+				{
+					traversal_order.push_back(i);
+				}
+				else
+				{
+					traversal_order.insert(traversal_order.begin() + j, i);
+				}
+			}
+
+			for (int i : traversal_order)
+			{
+				std::vector<M::CEdge*> after_edge = after_edges[i];
+				for (int j = 0; j < after_edge.size(); j++)
+				{
+					M::CEdge* edge = after_edge[j];
+					M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
+					M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
+					_os << pV->point().print2() << " " << pW->point().print2() << " ";
+
+				}
+				_os << "\n";
+			}
+			_os.close();
+			after_edges.clear();
 		}
-		after_edges.clear();
+
+
 	}
 	void CHandleTunnelLoop::write_after_obj(const std::string& output)
 	{
@@ -3585,6 +3649,76 @@ namespace DartLib
 		new_tets.clear();
 		std::map<int, CPoint> verts_O;
 		std::map<int, bool> allowed;
+		double distance;
+		double average_distance = 0;
+		
+		CPoint f1;
+		CPoint f2;
+		CPoint f3;
+		CPoint f4;
+		double largest_distance = 0;
+		for (M::CVertex* v : loop_vertices)
+		{
+			distance = (v->point() - center_of_mass).norm();
+			average_distance += distance;
+			if (distance > largest_distance)
+			{
+				largest_distance = distance;
+				f1 = v->point();
+			}
+			
+		}
+		average_distance /= loop_vertices.size();
+		average_distance = average_distance * (-0.087 * (pow(1.0 / loop_vertices.size(), -0.28) - 12.99)); // curve of best fit.
+
+		double best_guess = 999.9;
+		double worst_distance = 0;
+		for (M::CVertex* v1 : loop_vertices)
+		{
+			double current_distance = 0;
+			for (M::CVertex* v2 : loop_vertices)
+			{
+				current_distance += cbrt((v2->point() - v1->point()).norm());
+			}
+			if (current_distance > worst_distance)
+			{
+				worst_distance = current_distance;
+			}
+		}
+		std::cout << "worst is " << worst_distance << "\n";
+		for (M::CVertex* v : loop_vertices)
+		{
+			distance = ((v->point() + f1) / 2.0 - center_of_mass).norm();
+			if (distance < best_guess)
+			{
+				best_guess = distance;
+				f2 = v->point();
+			}
+		}
+		double major = (f1 - f2).norm() * 1.5;
+		largest_distance = 0;
+		for (M::CVertex* v : loop_vertices)
+		{
+			distance = sqrt((v->point() - f1).norm()) + sqrt((v->point() - f2).norm());
+			if (distance > largest_distance)
+			{
+				largest_distance = distance;
+				f3 = v->point();
+			}
+		}
+		
+		best_guess = 999.9;
+		for (M::CVertex* v : loop_vertices)
+		{
+			distance = ((v->point() + f3)/2.0 - center_of_mass).norm();
+			if (distance < best_guess)
+			{
+				best_guess = distance;
+				f4 = v->point();
+			}
+		}
+		double minor = (f3 - f4).norm() * 1.4;
+		std::cout << "minor and major are " << minor << " " << major << " while the average distance is " << average_distance << "\n";
 		while (!is.eof())
 		{
 			is.getline(buffer, MAX_LINE);
@@ -3608,40 +3742,27 @@ namespace DartLib
 				CPoint mypoint(p1, p2, p3);
 				verts_O.insert({ vindex, mypoint });
 				bool al = false;
-				double distance;
+				double dist = 0;
 				for (M::CVertex* v : loop_vertices)
 				{
-					distance = (v->point() - center_of_mass).norm();
-					if (loop_vertices.size() < 5)
-					{
-						distance *= 1.5;
-					}
-					else if (loop_vertices.size() < 10)
-					{
-						distance *= 1.1;
-					}
-					else if (loop_vertices.size() > 200)
-					{
-						distance *= 0.02;
-					}
-					else if (loop_vertices.size() > 100)
-					{
-						distance *= 0.5;
-					}
-					else if (loop_vertices.size() > 50)
-					{
-						distance *= 0.7;
-					}
-					if ((v->point() - mypoint).norm() < distance)
-					{
-						al = true;
-						break;
-					}
+					dist += cbrt((v->point() - mypoint).norm());
 				}
-				if ((mypoint - center_of_mass).norm() < (distance * 2.0) / 3.0)
+				if (dist < worst_distance)
 				{
 					al = true;
 				}
+				/*if ((f1 - mypoint).norm()+(f2-mypoint).norm() <= major)
+				{
+					al = true;
+				}
+				if ((f3 - mypoint).norm() + (f4 - mypoint).norm() <= minor)
+				{
+					al = true;
+				}
+				if ((mypoint - center_of_mass).norm() < average_distance)
+				{
+					al = true;
+				}*/
 				allowed.insert({ vindex, al });
 			}
 			if (token == "Tet")
@@ -3656,7 +3777,24 @@ namespace DartLib
 				int v3 = std::stoi(stokenizer.getToken());
 				stokenizer.nextToken();
 				int v4 = std::stoi(stokenizer.getToken());
-				if (allowed[v1] && allowed[v2] && allowed[v3] && allowed[v4])
+				int inside = 0;
+				if (allowed[v1])
+				{
+					inside += 1;
+				}
+				if (allowed[v2])
+				{
+					inside += 1;
+				}
+				if (allowed[v3])
+				{
+					inside += 1;
+				}
+				if (allowed[v4])
+				{
+					inside += 1;
+				}
+				if (inside >= 3)
 				{
 					std::vector<CPoint> new_tet;
 					new_tet.push_back(verts_O[v1]);
@@ -3867,32 +4005,17 @@ namespace DartLib
 				else
 				{
 					// this is correct!
-					std::cout << "_________________________________________________________----this is correct! The size is " << edge_loop.size() << "\n";
+					std::cout << "_________________________________________________________----this is correct! The cleaned loop had size " << edge_loop.size() << "\n";
 					current_loop_edges = edge_loop;
-					std::vector<M::CVertex*> vertices_loop(loop_vertices.begin() + firstOccIndex, loop_vertices.end());
-					loop_vertices = vertices_loop;
 					break;
 						
 				}
 			}
 		}
-		/*// get the actual correct loop
-		int longestLoop = 0;
-		for (int i = 0; i < tested_edges.size(); i++)
-		{
-			if (tested_edges[i].size() > longestLoop)
-			{
-				longestLoop = tested_edges[i].size();
-				current_loop_edges = tested_edges[i];
-				loop_vertices = tested_vertices[i];
-			}
-		}
-		std::cout << "we tried " << tested_edges.size() << " loops\n";
-		std::cout << "we tried " << tested_vertices.size() << " loops\n";*/
-		std::cout << "there are  " << loop_vertices.size() << " vertices and ";
-		std::cout << "there are  " << current_loop_edges.size() << " edges\n";
+		
 		if (exterior_volume == false)
 		{
+			std::cout << "finished one cleaning.\n";
 			return;
 		}
 		middle_edges.push_back(current_loop_edges);
@@ -3934,15 +4057,24 @@ namespace DartLib
 		//std::cout << "edge loop size" << current_loop_edges.size() << " " << loop.size() << "\n";
 		center_of_mass = total_mass / double(loop.size());
 		//std::cout << "center of mass was " << center_of_mass.print() << "\n";
-		int iterations = 500;
+		int iterations = 1000;
 		if (ed_loop.size() > 50)
 		{
-			iterations = 2500;
+			iterations = 3000;
+		}
+		if (ed_loop.size() > 100)
+		{
+			iterations *= 3;
 		}
 		if (ed_loop.size() > 200)
 		{
 			iterations *= 5;
 		}
+		if (ed_loop.size() > 500)
+		{
+			iterations *= 7;
+		}
+		int init_iters = iterations;
 		std::set<M::CFace*> insertFaces;
 		while (iterations > 0)
 		{
@@ -4046,6 +4178,8 @@ namespace DartLib
 				loop_vertices.push_back(v2);
 			}
 		}
+		std::cout << "we tried with " << init_iters << " iterations\n";
+		std::cout << "the loop shortened from " << ed_loop.size() << " edges to " << current_loop_edges.size() << " edges\n";
 		std::cout << "final center of mass is " << center_of_mass.print() << "\n";
 		good_final_vertices.push_back(loop_vertices);
 		good_final_edges.push_back(current_loop_edges);
