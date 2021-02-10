@@ -1340,6 +1340,40 @@ namespace DartLib
 
 		_os.close();
 	}
+	void CHandleTunnelLoop::write_boundary()
+	{
+		std::fstream _os(file_name.substr(0, file_name.size() - 6) + ".obj", std::fstream::out);
+		M::CBoundary boundary(m_pMesh);
+		const auto& surface = boundary.boundary_surface();
+
+		std::set<M::CVertex*> vSet;
+		for (auto pF : surface)
+		{
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				vSet.insert(pV);
+			}
+		}
+
+		for (auto pV : vSet)
+		{
+			CPoint& p = pV->point();
+			_os << "v " << p[0] << " " << p[1] << " " << p[2] << "\n";
+		}
+
+		for (auto pF : surface)
+		{
+			_os << "f";
+			for (M::FaceVertexIterator fviter(pF); !fviter.end(); ++fviter)
+			{
+				M::CVertex* pV = *fviter;
+				_os << " " << pV->idx();
+			}
+			_os << "\n";
+		}
+		_os.close();
+	}
 	void CHandleTunnelLoop::add_tunnel_old(std::string line)
 	{
 		int count = 0;
@@ -3478,6 +3512,21 @@ namespace DartLib
 		}
 		//current_edge_to_green->green() = true;
 	}
+	void CHandleTunnelLoop::display_single_loop()
+	{
+		for (auto pE : m_boundary_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto pE : m_inner_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (M::CEdge* ed : single_loop)
+		{
+			ed->sharp() = true;
+		}
+	}
 	void CHandleTunnelLoop::next_shorten_step()
 	{
 		_shorten();
@@ -4090,6 +4139,86 @@ namespace DartLib
 		clock_t end = clock();
 		std::cout << "\nshorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
 	}
+
+	void CHandleTunnelLoop::_shorten_single()
+	{
+		CPoint total_mass(0, 0, 0);
+		center_of_mass[0] = 0.0;
+		center_of_mass[1] = 0.0;
+		center_of_mass[2] = 0.0;
+		std::set<M::CEdge*> loop;
+		for (M::CEdge* edge : single_loop)
+		{
+			if (loop.find(edge) == loop.end())
+			{
+				loop.insert(edge);
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				total_mass += (v1->point() + v2->point()) / 2.0;
+			}
+			else
+			{
+				std::cout << "we had one edge twice!\n";
+			}
+		}
+		center_of_mass = total_mass / double(loop.size());
+
+		std::set<M::CFace*> insertFaces;
+		std::set<M::CEdge*> prev_loop = loop;
+
+		// pick the best face for each edge
+		for (M::CEdge* edge : loop)
+		{
+			double closestDist = 9999;
+			M::CFace* bestFace = NULL;
+			for (M::CFace* face : edges_faces[edge->idx()])
+			{
+				CPoint faceCOM(0, 0, 0);
+				for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
+				{
+					M::CVertex* vertex = *fviter;
+					faceCOM += vertex->point();
+				}
+				faceCOM /= 3.0;
+
+				if ((faceCOM - center_of_mass).norm() < closestDist)
+				{
+					closestDist = (faceCOM - center_of_mass).norm();
+					bestFace = face;
+				}
+			}
+			if (insertFaces.find(bestFace) == insertFaces.end())
+			{
+				insertFaces.insert(bestFace);
+			}
+		}
+
+		// insert each of the faces, adding and removing edges
+		for (M::CFace* face : insertFaces)
+		{
+			for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+			{
+				M::CEdge* edge = *feiter;
+				if (loop.find(edge) == loop.end())
+				{
+					loop.insert(edge);
+					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+					total_mass += (v1->point() + v2->point()) / 2.0;
+				}
+				else
+				{
+					loop.erase(edge);
+					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+					total_mass -= (v1->point() + v2->point()) / 2.0;
+				}
+			}
+		}
+		single_loop = loop;
+		display_single_loop;
+	}
+
 
 	bool CHandleTunnelLoop::_shorten(std::vector<M::CEdge*> ed_loop)
 	{

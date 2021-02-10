@@ -44,6 +44,7 @@ class CHandleTunnelLoop
 	void setExterior();
 	void write_tets(const std::string& output);
 	void write_m(const std::string& output);
+	void write_boundary();
 	void write_tunnels(const std::string& output);
 	void write_shortened_tunnels(const std::string& output);
 	void write_after_obj(const std::string& output);
@@ -69,6 +70,7 @@ class CHandleTunnelLoop
 	void display_all_before();
 	void display_all_middle();
 	void display_all_after();
+	void display_single_loop();
 
 	void display_before(int which);
 	void display_tested(int which);
@@ -111,7 +113,7 @@ class CHandleTunnelLoop
 	void _mark_loop(std::set<int> hLoop);
 
     bool _shrink_triangles();
-
+	void _shorten_single();
 	void _shorten3();
 	void _shorten2();
 	bool _shorten(std::vector<M::CEdge*> ed_loop);
@@ -192,6 +194,7 @@ class CHandleTunnelLoop
 	std::vector<std::pair<M::CFace*, std::pair<M::CEdge*, CPoint>>> single_to_double;
 	std::vector<std::pair<M::CFace*, std::vector<M::CEdge*>>> double_to_single;
 
+	std::set<M::CEdge*> single_loop;
 
 	std::vector<std::vector<M::CEdge*>> before_prune_edges;
 	std::vector<std::vector<M::CEdge*>> final_edges;

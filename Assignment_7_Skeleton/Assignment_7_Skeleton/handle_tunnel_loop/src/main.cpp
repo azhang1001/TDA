@@ -752,6 +752,7 @@ int main(int argc, char* argv[])
 		handler.exact_boundary(boundary_mesh);
 		clock_t end = clock();
 		printf("Putting in all the tets time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
+		handler.write_boundary();
 		
 	}
 	else
@@ -766,7 +767,6 @@ int main(int argc, char* argv[])
 
 		CMyTMesh::CBoundary boundary(&mesh);
 		boundary_surface = boundary.boundary_surface();
-
 
 		mesh.normalize();
 		mesh.compute_face_normal();
