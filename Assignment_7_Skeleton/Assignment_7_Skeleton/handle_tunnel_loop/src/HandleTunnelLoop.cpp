@@ -1516,31 +1516,25 @@ namespace DartLib
 		std::vector<int> traversal_order;
 		for (int i = 0; i < before_edges.size(); i++)
 		{
-			int j = 0;
-			while (j < traversal_order.size())
+			traversal_order.push_back(0);
+		}
+		for (int i = 0; i < before_edges.size(); i++)
+		{
+			int rank = 0;
+			for (int j = 0; j <before_edges.size(); j++)
 			{
-				if (before_edges[i].size() > before_edges[j].size())
+				if (before_edges[i].size() > before_edges[j].size() || (before_edges[i].size() == before_edges[j].size() && i > j))
 				{
-					j++;
-				}
-				else
-				{
-					break;
+					rank++;
 				}
 			}
-			if (j == traversal_order.size())
-			{
-				traversal_order.push_back(i);
-			}
-			else
-			{
-				traversal_order.insert(traversal_order.begin() + j, i);
-			}
+			traversal_order[rank] = i;
 		}
 		
 		for (int i : traversal_order)
 		{
 			std::vector<M::CEdge*> before_edge = before_edges[i];
+			std::cout << "writing unshortened tunnel loop, size is " << before_edge.size() << "\n";
 			M::CVertex* pV = m_pMesh->edge_vertex(m_handle_gens[i], 0);
 			M::CVertex* pW = m_pMesh->edge_vertex(m_handle_gens[i], 1);
 			_os << pV->point().print2() << " " << pW->point().print2() << " ";
@@ -3216,6 +3210,13 @@ namespace DartLib
 			pE->sharp() = true;
 		}*/
 	}
+	void CHandleTunnelLoop::display_middle(int which)
+	{
+		which = which % middle_edges.size();
+		std::cout << "displaying " << which << " of " << middle_edges.size() << " middle loops. It has size " << middle_edges[which].size() << "\n";
+		
+		display_loop(middle_edges[which]);
+	}
 	void CHandleTunnelLoop::display_tested(int which)
 	{
 		which = which % tested_edges.size();
@@ -3677,262 +3678,265 @@ namespace DartLib
 		current_loop_edges = middle_edges[0];
 		middle_edges.clear();
 		shorten();
-		loop_vertices = good_final_vertices[0];
-		center_of_mass[0] = 0.0;
-		center_of_mass[1] = 0.0;
-		center_of_mass[2] = 0.0;
-		for (M::CVertex* vertex : loop_vertices)
+		for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
 		{
-		
-			center_of_mass += vertex->point();
-		}
-		center_of_mass = center_of_mass / double(loop_vertices.size());
-		
-		//loop through tets in _O, add to _2_I
-		std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
-		//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
-		char buffer[MAX_LINE];
-		new_tets.clear();
-		std::map<int, CPoint> verts_O;
-		std::map<int, bool> allowed;
-		for (M::CVertex* v1 : loop_vertices)
-		{
-			double fD = 0;
-			M::CVertex* oV = NULL;
-			for (M::CVertex* v2 : loop_vertices)
+			loop_vertices = good_final_vertices[good_final_index];
+			center_of_mass[0] = 0.0;
+			center_of_mass[1] = 0.0;
+			center_of_mass[2] = 0.0;
+			for (M::CVertex* vertex : loop_vertices)
 			{
-				double D = (v1->point() - v2->point()).norm();
-				if (D > fD)
+
+				center_of_mass += vertex->point();
+			}
+			center_of_mass = center_of_mass / double(loop_vertices.size());
+			//loop through tets in _O, add to _2_I
+			std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
+			//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
+			char buffer[MAX_LINE];
+			new_tets.clear();
+			std::map<int, CPoint> verts_O;
+			std::map<int, bool> allowed;
+			for (M::CVertex* v1 : loop_vertices)
+			{
+				double fD = 0;
+				M::CVertex* oV = NULL;
+				for (M::CVertex* v2 : loop_vertices)
 				{
-					fD = D;
-					oV = v2;
+					double D = (v1->point() - v2->point()).norm();
+					if (D > fD)
+					{
+						fD = D;
+						oV = v2;
+					}
+				}
+				oppositeVertex.insert({ v1, oV });
+			}
+			double distance;
+			double average_distance = 0;
+
+			CPoint f1;
+			CPoint f2;
+			CPoint f3;
+			CPoint f4;
+			double largest_distance = 0;
+			for (M::CVertex* v : loop_vertices)
+			{
+				distance = (v->point() - center_of_mass).norm();
+				average_distance += distance;
+				if (distance > largest_distance)
+				{
+					largest_distance = distance;
+					f1 = v->point();
+				}
+
+			}
+			average_distance /= loop_vertices.size();
+			double actual_average = average_distance;
+			average_distance = average_distance * (-0.087 * (pow(1.0 / loop_vertices.size(), -0.28) - 12.99)); // curve of best fit.
+			/*
+			double best_guess = 999.9;
+			double worst_distance = 0;
+			for (M::CVertex* v1 : loop_vertices)
+			{
+				double current_distance = 0;
+				for (M::CVertex* v2 : loop_vertices)
+				{
+					current_distance += cbrt((v2->point() - v1->point()).norm());
+				}
+				if (current_distance > worst_distance)
+				{
+					worst_distance = current_distance;
 				}
 			}
-			oppositeVertex.insert({ v1, oV });
-		}
-		double distance;
-		double average_distance = 0;
-		
-		CPoint f1;
-		CPoint f2;
-		CPoint f3;
-		CPoint f4;
-		double largest_distance = 0;
-		for (M::CVertex* v : loop_vertices)
-		{
-			distance = (v->point() - center_of_mass).norm();
-			average_distance += distance;
-			if (distance > largest_distance)
+			std::cout << "worst is " << worst_distance << "\n";
+			for (M::CVertex* v : loop_vertices)
 			{
-				largest_distance = distance;
-				f1 = v->point();
-			}
-			
-		}
-		average_distance /= loop_vertices.size();
-		average_distance = average_distance * (-0.087 * (pow(1.0 / loop_vertices.size(), -0.28) - 12.99)); // curve of best fit.
-		/*
-		double best_guess = 999.9;
-		double worst_distance = 0;
-		for (M::CVertex* v1 : loop_vertices)
-		{
-			double current_distance = 0;
-			for (M::CVertex* v2 : loop_vertices)
-			{
-				current_distance += cbrt((v2->point() - v1->point()).norm());
-			}
-			if (current_distance > worst_distance)
-			{
-				worst_distance = current_distance;
-			}
-		}
-		std::cout << "worst is " << worst_distance << "\n";
-		for (M::CVertex* v : loop_vertices)
-		{
-			distance = ((v->point() + f1) / 2.0 - center_of_mass).norm();
-			if (distance < best_guess)
-			{
-				best_guess = distance;
-				f2 = v->point();
-			}
-		}
-		double major = (f1 - f2).norm() * 1.5;
-		largest_distance = 0;
-		for (M::CVertex* v : loop_vertices)
-		{
-			distance = sqrt((v->point() - f1).norm()) + sqrt((v->point() - f2).norm());
-			if (distance > largest_distance)
-			{
-				largest_distance = distance;
-				f3 = v->point();
-			}
-		}
-		
-		best_guess = 999.9;
-		for (M::CVertex* v : loop_vertices)
-		{
-			distance = ((v->point() + f3)/2.0 - center_of_mass).norm();
-			if (distance < best_guess)
-			{
-				best_guess = distance;
-				f4 = v->point();
-			}
-		}
-		double minor = (f3 - f4).norm() * 1.4;
-		std::cout << "minor and major are " << minor << " " << major << " while the average distance is " << average_distance << "\n";*/
-		while (!is.eof())
-		{
-			is.getline(buffer, MAX_LINE);
-			std::string line(buffer);
-			line = strutil::trim(line);
-			strutil::Tokenizer stokenizer(line, " \r\n");
-
-			stokenizer.nextToken();
-			std::string token = stokenizer.getToken();
-
-			if (token == "Vertex")
-			{
-				stokenizer.nextToken();
-				int vindex = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				double p1 = std::stod(stokenizer.getToken());
-				stokenizer.nextToken();
-				double p2 = std::stod(stokenizer.getToken());
-				stokenizer.nextToken();
-				double p3 = std::stod(stokenizer.getToken());
-				CPoint mypoint(p1, p2, p3);
-				verts_O.insert({ vindex, mypoint });
-				bool al = false;
-				// check whether the angle requirement is met
-				for (M::CVertex* v : loop_vertices)
+				distance = ((v->point() + f1) / 2.0 - center_of_mass).norm();
+				if (distance < best_guess)
 				{
-					
-					CPoint poi1 = v->point();
-					CPoint poi2 = oppositeVertex[v]->point();
-					CPoint vec1 = poi1 - mypoint;
-					CPoint vec2 = poi2 - mypoint;
-					/*if (mypoint.print2() == v->point().print2())
-					{
-						std::cout << "------------------------------------------------------------------------------ see these points are equal!\n";
-					}*/
-					double ratio = 0;
+					best_guess = distance;
+					f2 = v->point();
+				}
+			}
+			double major = (f1 - f2).norm() * 1.5;
+			largest_distance = 0;
+			for (M::CVertex* v : loop_vertices)
+			{
+				distance = sqrt((v->point() - f1).norm()) + sqrt((v->point() - f2).norm());
+				if (distance > largest_distance)
+				{
+					largest_distance = distance;
+					f3 = v->point();
+				}
+			}
 
-					if (vec1.norm() > vec2.norm())
+			best_guess = 999.9;
+			for (M::CVertex* v : loop_vertices)
+			{
+				distance = ((v->point() + f3)/2.0 - center_of_mass).norm();
+				if (distance < best_guess)
+				{
+					best_guess = distance;
+					f4 = v->point();
+				}
+			}
+			double minor = (f3 - f4).norm() * 1.4;
+			std::cout << "minor and major are " << minor << " " << major << " while the average distance is " << average_distance << "\n";*/
+			while (!is.eof())
+			{
+				is.getline(buffer, MAX_LINE);
+				std::string line(buffer);
+				line = strutil::trim(line);
+				strutil::Tokenizer stokenizer(line, " \r\n");
+
+				stokenizer.nextToken();
+				std::string token = stokenizer.getToken();
+
+				if (token == "Vertex")
+				{
+					stokenizer.nextToken();
+					int vindex = std::stoi(stokenizer.getToken());
+					stokenizer.nextToken();
+					double p1 = std::stod(stokenizer.getToken());
+					stokenizer.nextToken();
+					double p2 = std::stod(stokenizer.getToken());
+					stokenizer.nextToken();
+					double p3 = std::stod(stokenizer.getToken());
+					CPoint mypoint(p1, p2, p3);
+					verts_O.insert({ vindex, mypoint });
+					bool al = false;
+					// check whether the angle requirement is met
+					std::vector<double> half_distances;
+					for (M::CVertex* v : loop_vertices)
 					{
-						ratio = vec2.norm() / vec1.norm();
+						half_distances.push_back((v->point() - mypoint).norm());
+
+						/*CPoint poi1 = v->point();
+						CPoint poi2 = oppositeVertex[v]->point();
+						CPoint vec1 = poi1 - mypoint;
+						CPoint vec2 = poi2 - mypoint;
+						double ratio = 0;
+
+						if (vec1.norm() > vec2.norm())
+						{
+							ratio = vec2.norm() / vec1.norm();
+						}
+						else
+						{
+							ratio = vec1.norm() / vec2.norm();
+						}
+						CPoint vec1n = vec1 / vec1.norm();
+						CPoint vec2n = vec2 / vec2.norm();
+						double dotProduct = vec1n * vec2n;
+						double angle = acos(dotProduct) * 180.0 / 3.14159265;
+						double score = (180 - angle) * ratio * ratio;
+
+						if (score < 5 || ratio < 0.00001)
+						{
+							//std::cout << "this one fits inside!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+							al = true;
+							break;
+						}*/
 					}
-					else
+					double half_total = 0;
+					std::sort(half_distances.begin(), half_distances.end());
+					int number_checked = half_distances.size() * 0.6;
+					for (int ind = 0; ind < number_checked; ind++)
 					{
-						ratio = vec1.norm() / vec2.norm();
+						half_total += half_distances[ind];
 					}
-					CPoint vec1n = vec1 / vec1.norm();
-					CPoint vec2n = vec2 / vec2.norm();
-					double dotProduct = vec1n * vec2n;
-					double angle = acos(dotProduct) * 180.0 / 3.14159265;
-					double score = (180 - angle) * ratio * ratio;
-					/*if (vec1.norm() < 0.0001 || vec2.norm() < 0.0001)
+					if (half_total / number_checked < actual_average)
 					{
-						std::cout << "so it's possible to equal!\n";
-						std::cout << "the two distances are " << vec1.norm() << " " << vec2.norm() << "\n";
-						std::cout << "the ratio, angle, and score are " << ratio << " " << angle << " " << score << "\n";
-						std::cout << "--\n";
-					}*/
-					/*if (score < 90)
-					{
-						std::cout << "the two distances are " << vec1.norm() << " " << vec2.norm() << "\n";
-						std::cout << "the ratio, angle, and score are " << ratio << " " << angle << " " << score << "\n";
-					}*/
-					if (score < 5 || ratio < 0.00001)
-					{
-						//std::cout << "this one fits inside!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+						//std::cout << mypoint.print() << "\n";
 						al = true;
-						break;
 					}
-				}
-				/*double dist = 0;
-				for (M::CVertex* v : loop_vertices)
-				{
-					dist += cbrt((v->point() - mypoint).norm());
-				}
-				if (dist < worst_distance)
-				{
-					al = true;
-				}
-				if ((f1 - mypoint).norm()+(f2-mypoint).norm() <= major)
-				{
-					al = true;
-				}
-				if ((f3 - mypoint).norm() + (f4 - mypoint).norm() <= minor)
-				{
-					al = true;
-				}
-				if ((mypoint - center_of_mass).norm() < average_distance)
-				{
-					al = true;
-				}*/
-				allowed.insert({ vindex, al });
-			}
-			if (token == "Tet")
-			{
-				stokenizer.nextToken();
-				int tindex = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v1 = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v2 = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v3 = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v4 = std::stoi(stokenizer.getToken());
-				int inside = 0;
-				if (allowed[v1])
-				{
-					inside += 1;
-				}
-				if (allowed[v2])
-				{
-					inside += 1;
-				}
-				if (allowed[v3])
-				{
-					inside += 1;
-				}
-				if (allowed[v4])
-				{
-					inside += 1;
-				}
-				if (inside >= 2)
-				{
-					std::vector<CPoint> new_tet;
-					new_tet.push_back(verts_O[v1]);
-					new_tet.push_back(verts_O[v2]);
-					new_tet.push_back(verts_O[v3]);
-					new_tet.push_back(verts_O[v4]);
-					new_tets.push_back(new_tet);
-				}
-				/*for (M::CVertex* v : loop_vertices)
-				{
-					farthest_distance = (v->point() - center_of_mass).norm() * 1.01;
-					if (((verts_O[v1] - v->point()).norm()) <= farthest_distance &&
-						((verts_O[v2] - v->point()).norm()) <= farthest_distance &&
-						((verts_O[v3] - v->point()).norm()) <= farthest_distance &&
-						((verts_O[v4] - v->point()).norm()) <= farthest_distance)
+					/*double dist = 0;
+					for (M::CVertex* v : loop_vertices)
 					{
-						// add the tet to the interior file;
+						dist += cbrt((v->point() - mypoint).norm());
+					}
+					if (dist < worst_distance)
+					{
+						al = true;
+					}
+					if ((f1 - mypoint).norm()+(f2-mypoint).norm() <= major)
+					{
+						al = true;
+					}
+					if ((f3 - mypoint).norm() + (f4 - mypoint).norm() <= minor)
+					{
+						al = true;
+					}
+					if ((mypoint - center_of_mass).norm() < average_distance)
+					{
+						al = true;
+					}*/
+					allowed.insert({ vindex, al });
+				}
+				if (token == "Tet")
+				{
+					stokenizer.nextToken();
+					int tindex = std::stoi(stokenizer.getToken());
+					stokenizer.nextToken();
+					int v1 = std::stoi(stokenizer.getToken());
+					stokenizer.nextToken();
+					int v2 = std::stoi(stokenizer.getToken());
+					stokenizer.nextToken();
+					int v3 = std::stoi(stokenizer.getToken());
+					stokenizer.nextToken();
+					int v4 = std::stoi(stokenizer.getToken());
+					int inside = 0;
+					if (allowed[v1])
+					{
+						inside += 1;
+					}
+					if (allowed[v2])
+					{
+						inside += 1;
+					}
+					if (allowed[v3])
+					{
+						inside += 1;
+					}
+					if (allowed[v4])
+					{
+						inside += 1;
+					}
+					if (inside >= 1)
+					{
 						std::vector<CPoint> new_tet;
 						new_tet.push_back(verts_O[v1]);
 						new_tet.push_back(verts_O[v2]);
 						new_tet.push_back(verts_O[v3]);
 						new_tet.push_back(verts_O[v4]);
 						new_tets.push_back(new_tet);
-						break;
 					}
-				}*/
+					/*for (M::CVertex* v : loop_vertices)
+					{
+						farthest_distance = (v->point() - center_of_mass).norm() * 1.01;
+						if (((verts_O[v1] - v->point()).norm()) <= farthest_distance &&
+							((verts_O[v2] - v->point()).norm()) <= farthest_distance &&
+							((verts_O[v3] - v->point()).norm()) <= farthest_distance &&
+							((verts_O[v4] - v->point()).norm()) <= farthest_distance)
+						{
+							// add the tet to the interior file;
+							std::vector<CPoint> new_tet;
+							new_tet.push_back(verts_O[v1]);
+							new_tet.push_back(verts_O[v2]);
+							new_tet.push_back(verts_O[v3]);
+							new_tet.push_back(verts_O[v4]);
+							new_tets.push_back(new_tet);
+							break;
+						}
+					}*/
+				}
 			}
+			is.close();
+			// remove all new_tets from exterior volume
 		}
-		is.close();
+		
 		std::cout << "we will be adding " << new_tets.size() << " new tets\n";
-		// remove all new_tets from exterior volume
 		if (true)
 		{
 			write_tets(file_name);
@@ -3945,254 +3949,429 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::shorten()
 	{
-		clock_t start = clock();
-		bool cont = true;
-		std::map<M::CVertex*, std::vector<M::CEdge*>> vertex_edges;
-		vertex_edges.clear();
-		std::vector<M::CVertex*> vertices_counter;
-		vertices_counter.clear();
-		for (auto edge : loop_edges)
+		single_loop.clear();
+		for (M::CEdge* edge : loop_edges)
 		{
-			M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
-			M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
-			vertices_counter.push_back(pV);
-			vertices_counter.push_back(pW);
-			if (vertex_edges.find(pV) == vertex_edges.end())
-			{
-				vertex_edges.insert({ pV, {edge} });
-			}
-			else
-			{
-				vertex_edges[pV].push_back(edge);
-			}
-			if (vertex_edges.find(pW) == vertex_edges.end())
-			{
-				vertex_edges.insert({ pW, {edge} });
-			}
-			else
-			{
-				vertex_edges[pW].push_back(edge);
-			}
+			single_loop.insert(edge);
 		}
-		std::vector<M::CVertex*> bad_vertices;
-		bad_vertices.clear();
-		for (M::CVertex* v : vertices_counter)
+		int num_components = -1;
+		int num_iterations = 500;
+		trip = false;
+		if (loop_edges.size() > 200)
 		{
-			if (std::count(vertices_counter.begin(), vertices_counter.end(), v) >= 3)
-			{
-				if (std::find(bad_vertices.begin(), bad_vertices.end(), v) == bad_vertices.end())
-				{
-					bad_vertices.push_back(v);
-				}
-			}
+			num_iterations = 1000;
 		}
-		loop_vertices.clear();
+		for (int iterations = 0; iterations < num_iterations; iterations++)
+		{
+			 _shorten_single();
+		}
+		trip = false;
+		num_components = _shorten_single_final();
+		/*std::vector<int> lv;
 		current_loop_edges.clear();
-		bool notDone = true;
-		tested_edges.clear();
-		tested_vertices.clear();
-		std::vector<M::CEdge*> visited_edges;
-		//std::cout << "these are the bad vertices: ";
-		/*for (M::CVertex* bad_v : bad_vertices)
+		loop_vertices.clear();
+		for (M::CEdge* edge : single_loop)
 		{
-			std::cout << bad_v->idx() << " ";
-		}*/
-		//M::CVertex* current_vertex = /*bad_vertices*/ vertices_counter[0];
-		/*
-		std::cout << "\n";
-		for (auto edge : vertex_edges[current_vertex])
-		{
-			std::cout << "edge: " << edge->idx() << "\n";
-		}*/
-		int badIdx1 = 0;
-			
-		//M::CEdge* current_edge = vertex_edges[current_vertex][0];
-		M::CEdge* current_edge = loop_edges[0];
-		current_loop_edges.push_back(current_edge);
-		visited_edges.push_back(current_edge);
-		std::cout << "We started with edge " << current_edge->idx() << "\n";
-		M::CVertex* current_vertex = m_pMesh->edge_vertex(current_edge, 0);
-		loop_vertices.push_back(current_vertex);
-		M::CVertex* next_vertex = m_pMesh->edge_vertex(current_edge, 1);
-		//M::CVertex* next_vertex = current_vertex == m_pMesh->edge_vertex(current_edge, 0) ? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
-			
-			
-		while (notDone)
-		{
-			//std::cout << "the sizes are: " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
-			/*std::cout << "\n";
-			for (auto ver : loop_vertices)
+			current_loop_edges.push_back(edge);
+			M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+			M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+			if (std::find(lv.begin(), lv.end(), v1->idx()) == lv.end())
 			{
-				std::cout << " " << ver->idx();
+				lv.push_back(v1->idx());
+				loop_vertices.push_back(v1);
 			}
-			std::cout << "\n";*/
-			if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) == loop_vertices.end())
+			if (std::find(lv.begin(), lv.end(), v2->idx()) == lv.end())
 			{
-				loop_vertices.push_back(next_vertex);
-				for (M::CEdge* edge : vertex_edges[next_vertex])
-				{
-					if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
-					{
-						current_edge = edge;
-						visited_edges.push_back(current_edge);
-						current_loop_edges.push_back(current_edge);
-						next_vertex = next_vertex == m_pMesh->edge_vertex(current_edge, 0)
-							? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
-						break;
-					}
-				}
+				lv.push_back(v2->idx());
+				loop_vertices.push_back(v2);
 			}
-			else if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) != loop_vertices.end())
-			{
-				// we've visited this vertex already, check if null homologous
-				//std::cout << "potential loop found! We found " << next_vertex->idx();
-				int firstOccIndex = std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) - loop_vertices.begin();
-				std::vector<M::CEdge*> edge_loop(current_loop_edges.begin() + firstOccIndex, current_loop_edges.end());
-				//tested_edges.push_back(edge_loop);
-				std::vector<M::CVertex*> vertices_loop(loop_vertices.begin() + firstOccIndex, loop_vertices.end());
-				//tested_vertices.push_back(vertices_loop);
-				if (_shorten(edge_loop))//_null_homologous(edge_loop)
-				{
-					// delete the edges up to the last triple that still has unvisited edges;
-					M::CEdge* e;
-					M::CVertex* v;
-					while (true)
-					{
-						if (current_loop_edges.size() == 0)
-						{
-							notDone = false;
-							//std::cout << "current loop edges has size 0============================================================================================\n";
-							for (M::CEdge* edge : loop_edges)
-							{
-								if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
-								{
-									//std::cout << "trying again with a different starting edge.\n";
-									current_edge = edge;
-									current_loop_edges.push_back(current_edge);
-									visited_edges.push_back(current_edge);
-									current_vertex = m_pMesh->edge_vertex(current_edge, 0);
-									loop_vertices.push_back(current_vertex);
-									next_vertex = m_pMesh->edge_vertex(current_edge, 1);
-									std::cout << "found a new start.\n";
-									notDone = true;
-									break;
-								}
-							}
-								
-								
-							break;
-						}
-						e = current_loop_edges.back();
-						current_loop_edges.pop_back();
-						v = loop_vertices.back();
-						loop_vertices.pop_back();
-						//std::cout << "edge, vertex removed: " << e->idx() << " " << v->idx();
-						bool found = false;
-						for (M::CEdge* edge : vertex_edges[v])
-						{
-							if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
-							{
-								loop_vertices.push_back(v);
-								current_edge = edge;
-								visited_edges.push_back(current_edge);
-								current_loop_edges.push_back(current_edge);
-								next_vertex = v == m_pMesh->edge_vertex(current_edge, 0)
-									? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
-								found = true;
-								break;
-							}
-						}
-						if (found)
-						{
-							break;
-						}
+		}*/
+		if (num_components > 1)
+		{
+			std::cout << "========================================we accidentally ended with: " << num_components << " components\n";
+		}
 
-					}
+		good_final_vertices.push_back(loop_vertices);
+		good_final_edges.push_back(current_loop_edges);
+		after_edges.push_back(current_loop_edges);
+		if (false)
+		{
+			clock_t start = clock();
+			bool cont = true;
+			std::map<M::CVertex*, std::vector<M::CEdge*>> vertex_edges;
+			vertex_edges.clear();
+			std::vector<M::CVertex*> vertices_counter;
+			vertices_counter.clear();
+			for (auto edge : loop_edges)
+			{
+				M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
+				vertices_counter.push_back(pV);
+				vertices_counter.push_back(pW);
+				if (vertex_edges.find(pV) == vertex_edges.end())
+				{
+					vertex_edges.insert({ pV, {edge} });
 				}
 				else
 				{
-					// this is correct!
-					std::cout << "_________________________________________________________----this is correct! The cleaned loop had size " << edge_loop.size() << "\n";
-					current_loop_edges = edge_loop;
-					break;
-						
+					vertex_edges[pV].push_back(edge);
+				}
+				if (vertex_edges.find(pW) == vertex_edges.end())
+				{
+					vertex_edges.insert({ pW, {edge} });
+				}
+				else
+				{
+					vertex_edges[pW].push_back(edge);
 				}
 			}
-		}
-		
-		if (exterior_volume == false)
-		{
-			std::cout << "finished one cleaning.\n";
-			return;
-		}
-		middle_edges.push_back(current_loop_edges);
-		middle_vertices.push_back(loop_vertices);
-		std::vector<int> before_v;
-		for (auto i : loop_vertices)
-		{
-			before_v.push_back(i->idx());
-		}
-		before_vertices.push_back(before_v);
-		return;
-		_shorten();
-		//display_loop(current_loop_edges);
-		clock_t end = clock();
-		std::cout << "\nshorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
-	}
+			std::vector<M::CVertex*> bad_vertices;
+			bad_vertices.clear();
+			for (M::CVertex* v : vertices_counter)
+			{
+				if (std::count(vertices_counter.begin(), vertices_counter.end(), v) >= 3)
+				{
+					if (std::find(bad_vertices.begin(), bad_vertices.end(), v) == bad_vertices.end())
+					{
+						bad_vertices.push_back(v);
+					}
+				}
+			}
+			loop_vertices.clear();
+			current_loop_edges.clear();
+			bool notDone = true;
+			tested_edges.clear();
+			tested_vertices.clear();
+			std::vector<M::CEdge*> visited_edges;
+			//std::cout << "these are the bad vertices: ";
+			/*for (M::CVertex* bad_v : bad_vertices)
+			{
+				std::cout << bad_v->idx() << " ";
+			}*/
+			//M::CVertex* current_vertex = /*bad_vertices*/ vertices_counter[0];
+			/*
+			std::cout << "\n";
+			for (auto edge : vertex_edges[current_vertex])
+			{
+				std::cout << "edge: " << edge->idx() << "\n";
+			}*/
+			int badIdx1 = 0;
 
-	void CHandleTunnelLoop::_shorten_single()
+			//M::CEdge* current_edge = vertex_edges[current_vertex][0];
+			M::CEdge* current_edge = loop_edges[0];
+			current_loop_edges.push_back(current_edge);
+			visited_edges.push_back(current_edge);
+			std::cout << "We started with edge " << current_edge->idx() << "\n";
+			M::CVertex* current_vertex = m_pMesh->edge_vertex(current_edge, 0);
+			loop_vertices.push_back(current_vertex);
+			M::CVertex* next_vertex = m_pMesh->edge_vertex(current_edge, 1);
+			//M::CVertex* next_vertex = current_vertex == m_pMesh->edge_vertex(current_edge, 0) ? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
+
+
+			while (notDone)
+			{
+				//std::cout << "the sizes are: " << loop_vertices.size() << " " << current_loop_edges.size() << "\n";
+				/*std::cout << "\n";
+				for (auto ver : loop_vertices)
+				{
+					std::cout << " " << ver->idx();
+				}
+				std::cout << "\n";*/
+				if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) == loop_vertices.end())
+				{
+					loop_vertices.push_back(next_vertex);
+					for (M::CEdge* edge : vertex_edges[next_vertex])
+					{
+						if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
+						{
+							current_edge = edge;
+							visited_edges.push_back(current_edge);
+							current_loop_edges.push_back(current_edge);
+							next_vertex = next_vertex == m_pMesh->edge_vertex(current_edge, 0)
+								? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
+							break;
+						}
+					}
+				}
+				else if (std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) != loop_vertices.end())
+				{
+					// we've visited this vertex already, check if null homologous
+					//std::cout << "potential loop found! We found " << next_vertex->idx();
+					int firstOccIndex = std::find(loop_vertices.begin(), loop_vertices.end(), next_vertex) - loop_vertices.begin();
+					std::vector<M::CEdge*> edge_loop(current_loop_edges.begin() + firstOccIndex, current_loop_edges.end());
+					//tested_edges.push_back(edge_loop);
+					std::vector<M::CVertex*> vertices_loop(loop_vertices.begin() + firstOccIndex, loop_vertices.end());
+					//tested_vertices.push_back(vertices_loop);
+					if (_shorten(edge_loop))//_null_homologous(edge_loop)
+					{
+						// delete the edges up to the last triple that still has unvisited edges;
+						M::CEdge* e;
+						M::CVertex* v;
+						while (true)
+						{
+							if (current_loop_edges.size() == 0)
+							{
+								notDone = false;
+								//std::cout << "current loop edges has size 0============================================================================================\n";
+								for (M::CEdge* edge : loop_edges)
+								{
+									if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
+									{
+										//std::cout << "trying again with a different starting edge.\n";
+										current_edge = edge;
+										current_loop_edges.push_back(current_edge);
+										visited_edges.push_back(current_edge);
+										current_vertex = m_pMesh->edge_vertex(current_edge, 0);
+										loop_vertices.push_back(current_vertex);
+										next_vertex = m_pMesh->edge_vertex(current_edge, 1);
+										std::cout << "found a new start.\n";
+										notDone = true;
+										break;
+									}
+								}
+
+
+								break;
+							}
+							e = current_loop_edges.back();
+							current_loop_edges.pop_back();
+							v = loop_vertices.back();
+							loop_vertices.pop_back();
+							//std::cout << "edge, vertex removed: " << e->idx() << " " << v->idx();
+							bool found = false;
+							for (M::CEdge* edge : vertex_edges[v])
+							{
+								if (std::find(visited_edges.begin(), visited_edges.end(), edge) == visited_edges.end())
+								{
+									loop_vertices.push_back(v);
+									current_edge = edge;
+									visited_edges.push_back(current_edge);
+									current_loop_edges.push_back(current_edge);
+									next_vertex = v == m_pMesh->edge_vertex(current_edge, 0)
+										? m_pMesh->edge_vertex(current_edge, 1) : m_pMesh->edge_vertex(current_edge, 0);
+									found = true;
+									break;
+								}
+							}
+							if (found)
+							{
+								break;
+							}
+
+						}
+					}
+					else
+					{
+						// this is correct!
+						std::cout << "_________________________________________________________----this is correct! The cleaned loop had size " << edge_loop.size() << "\n";
+						current_loop_edges = edge_loop;
+						break;
+
+					}
+				}
+			}
+
+			if (exterior_volume == false)
+			{
+				std::cout << "finished one cleaning.\n";
+				return;
+			}
+			middle_edges.push_back(current_loop_edges);
+			middle_vertices.push_back(loop_vertices);
+			std::vector<int> before_v;
+			for (auto i : loop_vertices)
+			{
+				before_v.push_back(i->idx());
+			}
+			before_vertices.push_back(before_v);
+			return;
+			_shorten();
+			//display_loop(current_loop_edges);
+			clock_t end = clock();
+			std::cout << "\nshorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
+		}
+	}
+	void CHandleTunnelLoop::shorten_demo(int which)
 	{
-		CPoint total_mass(0, 0, 0);
-		center_of_mass[0] = 0.0;
-		center_of_mass[1] = 0.0;
-		center_of_mass[2] = 0.0;
+		which = which % middle_edges.size();
+		if (which != shortening_index)
+		{
+			shortening_index = which;
+			single_loop.clear();
+			for (auto edge : middle_edges[which])
+			{
+				single_loop.insert(edge);
+			}
+		}
+		_shorten_single();
+		display_single_loop();
+	}
+	int CHandleTunnelLoop::_shorten_single()
+	{
 		std::set<M::CEdge*> loop;
 		for (M::CEdge* edge : single_loop)
 		{
 			if (loop.find(edge) == loop.end())
 			{
 				loop.insert(edge);
-				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
-				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
-				total_mass += (v1->point() + v2->point()) / 2.0;
-			}
-			else
-			{
-				std::cout << "we had one edge twice!\n";
 			}
 		}
-		center_of_mass = total_mass / double(loop.size());
 
 		std::set<M::CFace*> insertFaces;
 		std::set<M::CEdge*> prev_loop = loop;
-
+		std::vector<std::set<M::CEdge*>> components;
 		// pick the best face for each edge
-		for (M::CEdge* edge : loop)
+		if (trip == false)
 		{
-			double closestDist = 9999;
-			M::CFace* bestFace = NULL;
-			for (M::CFace* face : edges_faces[edge->idx()])
+			// find individual connected components, and have each  component shorten towards it's own center of mass.
+			
+			
+			std::unordered_map<int, std::vector<std::pair<M::CVertex*, M::CEdge*>>> gr;
+			std::vector<std::pair<M::CVertex*, M::CEdge*>> empty_vect;
+			std::set<M::CEdge*> visited_edges;
+			std::set<M::CVertex*> visited_vertices;
+			for (M::CEdge* edge : loop)
 			{
-				CPoint faceCOM(0, 0, 0);
-				for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				std::pair<M::CVertex*, M::CEdge*> p1(v1, edge);
+				std::pair<M::CVertex*, M::CEdge*> p2(v2, edge);
+				if (gr.find(v1->idx()) == gr.end())
 				{
-					M::CVertex* vertex = *fviter;
-					faceCOM += vertex->point();
+					gr[v1->idx()] = empty_vect;
 				}
-				faceCOM /= 3.0;
+				if (gr.find(v2->idx()) == gr.end())
+				{
+					gr[v2->idx()] = empty_vect;
+				}
+				gr[v1->idx()].push_back( p2 );
+				gr[v2->idx()].push_back( p1 );
+			}
+			for (M::CEdge* edge : loop)
+			{
+				if (visited_edges.find(edge) != visited_edges.end())
+				{
+					continue;
+				}
+				
+				std::set<M::CEdge*> component;
+				std::queue<M::CVertex*> q;
+				q.push(m_pMesh->edge_vertex(edge, 0));
+				while (!q.empty())
+				{
+					M::CVertex* vert = q.front();
+					q.pop();
+					visited_vertices.insert(vert);
+					for (std::pair<M::CVertex*, M::CEdge*> p : gr[vert->idx()])
+					{
+						if (visited_edges.find(p.second) == visited_edges.end())
+						{
+							visited_edges.insert(p.second);
+							component.insert(p.second);
+							if (visited_vertices.find(p.first) == visited_vertices.end())
+							{
+								q.push(p.first);
+							}
+						}
+					}
+				}
+				components.push_back(component);
 
-				if ((faceCOM - center_of_mass).norm() < closestDist)
+			}
+			//std::cout << "we have " << components.size() << " components\n";
+			for (std::set<M::CEdge*> component : components)
+			{
+				CPoint total_mass(0, 0, 0);
+				center_of_mass[0] = 0.0;
+				center_of_mass[1] = 0.0;
+				center_of_mass[2] = 0.0;
+
+				for (M::CEdge* edge : component)
 				{
-					closestDist = (faceCOM - center_of_mass).norm();
-					bestFace = face;
+
+					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+					total_mass += (v1->point() + v2->point()) / 2.0;
+
+				}
+
+				center_of_mass = total_mass / double(component.size());
+				//std::cout << component.size() << " has a center of mass of " <<  center_of_mass.print() << "\n";
+				std::set<M::CEdge*> skip_edges;
+				for (M::CEdge* edge : component)
+				{
+					/*if (skip_edges.find(edge) != skip_edges.end())
+					{
+						continue;
+					}*/
+					double closestDist = 9999;
+					M::CFace* bestFace = NULL;
+					for (M::CFace* face : edges_faces[edge->idx()])
+					{
+						//std::cout << "checking if we recently used the face\n";
+						/*if (recently_used.find(face) != recently_used.end())
+						{
+							std::cout << "we did recently use the face\n";
+							continue;
+						}*/
+						CPoint faceCOM(0, 0, 0);
+						for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
+						{
+							M::CVertex* vertex = *fviter;
+							faceCOM += vertex->point();
+						}
+						faceCOM /= 3.0;
+
+						if ((faceCOM - center_of_mass).norm() < closestDist)
+						{
+							closestDist = (faceCOM - center_of_mass).norm();
+							bestFace = face;
+						}
+					}
+					if (insertFaces.find(bestFace) == insertFaces.end())
+					{
+						insertFaces.insert(bestFace);
+						for (M::FaceEdgeIterator feiter(bestFace); !feiter.end(); ++feiter)
+						{
+							M::CEdge* e = *feiter;
+							/*if (skip_edges.find(e) == skip_edges.end())
+							{
+								skip_edges.insert(e);
+							}*/
+						}
+					}
 				}
 			}
-			if (insertFaces.find(bestFace) == insertFaces.end())
-			{
-				insertFaces.insert(bestFace);
-			}
+			trip = true;
 		}
-
+		else if (trip == true)
+		{
+			for (M::CEdge* edge : loop)
+			{
+				for (M::CFace* face : edges_faces[edge->idx()])
+				{
+					bool all_in = true;
+					for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+					{
+						M::CEdge* face_edge = *feiter;
+						if (loop.find(face_edge) == loop.end())
+						{
+							all_in = false;
+							break;
+						}
+					}
+					if (all_in)
+					{
+						if (insertFaces.find(face) == insertFaces.end())
+						{
+							insertFaces.insert(face);
+						}
+					}
+				}
+			}
+			trip = false;
+		}
+		recently_used = insertFaces;
 		// insert each of the faces, adding and removing edges
 		for (M::CFace* face : insertFaces)
 		{
@@ -4204,19 +4383,294 @@ namespace DartLib
 					loop.insert(edge);
 					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
 					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
-					total_mass += (v1->point() + v2->point()) / 2.0;
+					//total_mass += (v1->point() + v2->point()) / 2.0;
 				}
 				else
 				{
 					loop.erase(edge);
 					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
 					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
-					total_mass -= (v1->point() + v2->point()) / 2.0;
+					//total_mass -= (v1->point() + v2->point()) / 2.0;
 				}
 			}
 		}
+		// before finishing, choose the best that is the lowest average distance to center of mass.
 		single_loop = loop;
-		display_single_loop;
+		return components.size();
+		
+	}
+	int CHandleTunnelLoop::_shorten_single_final()
+	{
+		std::set<M::CEdge*> loop;
+		for (M::CEdge* edge : single_loop)
+		{
+			if (loop.find(edge) == loop.end())
+			{
+				loop.insert(edge);
+			}
+		}
+
+		std::set<M::CFace*> insertFaces;
+		std::set<M::CEdge*> prev_loop = loop;
+		std::vector<std::set<M::CEdge*>> components;
+		// pick the best face for each edge
+
+
+		std::unordered_map<int, std::vector<std::pair<M::CVertex*, M::CEdge*>>> gr;
+		std::vector<std::pair<M::CVertex*, M::CEdge*>> empty_vect;
+		std::set<M::CEdge*> visited_edges;
+		std::set<M::CVertex*> visited_vertices;
+		for (M::CEdge* edge : loop)
+		{
+			M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+			M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+			std::pair<M::CVertex*, M::CEdge*> p1(v1, edge);
+			std::pair<M::CVertex*, M::CEdge*> p2(v2, edge);
+			if (gr.find(v1->idx()) == gr.end())
+			{
+				gr[v1->idx()] = empty_vect;
+			}
+			if (gr.find(v2->idx()) == gr.end())
+			{
+				gr[v2->idx()] = empty_vect;
+			}
+			gr[v1->idx()].push_back(p2);
+			gr[v2->idx()].push_back(p1);
+		}
+		for (M::CEdge* edge : loop)
+		{
+			if (visited_edges.find(edge) != visited_edges.end())
+			{
+				continue;
+			}
+
+			std::set<M::CEdge*> component;
+			std::queue<M::CVertex*> q;
+			q.push(m_pMesh->edge_vertex(edge, 0));
+			while (!q.empty())
+			{
+				M::CVertex* vert = q.front();
+				q.pop();
+				visited_vertices.insert(vert);
+				for (std::pair<M::CVertex*, M::CEdge*> p : gr[vert->idx()])
+				{
+					if (visited_edges.find(p.second) == visited_edges.end())
+					{
+						visited_edges.insert(p.second);
+						component.insert(p.second);
+						if (visited_vertices.find(p.first) == visited_vertices.end())
+						{
+							q.push(p.first);
+						}
+					}
+				}
+			}
+			components.push_back(component);
+
+		}
+		//std::cout << "we have " << components.size() << " components\n";
+		for (std::set<M::CEdge*> component : components)
+		{
+			CPoint total_mass(0, 0, 0);
+			center_of_mass[0] = 0.0;
+			center_of_mass[1] = 0.0;
+			center_of_mass[2] = 0.0;
+
+			for (M::CEdge* edge : component)
+			{
+
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				total_mass += (v1->point() + v2->point()) / 2.0;
+
+			}
+
+			center_of_mass = total_mass / double(component.size());
+			//std::cout << component.size() << " has a center of mass of " <<  center_of_mass.print() << "\n";
+			for (M::CEdge* edge : component)
+			{
+				double closestDist = 9999;
+				M::CFace* bestFace = NULL;
+				for (M::CFace* face : edges_faces[edge->idx()])
+				{
+					CPoint faceCOM(0, 0, 0);
+					for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
+					{
+						M::CVertex* vertex = *fviter;
+						faceCOM += vertex->point();
+					}
+					faceCOM /= 3.0;
+
+					if ((faceCOM - center_of_mass).norm() < closestDist)
+					{
+						closestDist = (faceCOM - center_of_mass).norm();
+						bestFace = face;
+					}
+				}
+				if (insertFaces.find(bestFace) == insertFaces.end())
+				{
+					insertFaces.insert(bestFace);
+				}
+			}
+		}
+
+		for (M::CFace* face : insertFaces)
+		{
+			for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+			{
+				M::CEdge* edge = *feiter;
+				if (loop.find(edge) == loop.end())
+				{
+					loop.insert(edge);
+					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+					//total_mass += (v1->point() + v2->point()) / 2.0;
+				}
+				else
+				{
+					loop.erase(edge);
+					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+					//total_mass -= (v1->point() + v2->point()) / 2.0;
+				}
+			}
+		}
+		insertFaces.clear();
+		for (M::CEdge* edge : loop)
+		{
+			for (M::CFace* face : edges_faces[edge->idx()])
+			{
+				bool all_in = true;
+				for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+				{
+					M::CEdge* face_edge = *feiter;
+					if (loop.find(face_edge) == loop.end())
+					{
+						all_in = false;
+						break;
+					}
+				}
+				if (all_in)
+				{
+					if (insertFaces.find(face) == insertFaces.end())
+					{
+						insertFaces.insert(face);
+					}
+				}
+			}
+		}
+		for (M::CFace* face : insertFaces)
+		{
+			for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+			{
+				M::CEdge* edge = *feiter;
+				if (loop.find(edge) == loop.end())
+				{
+					loop.insert(edge);
+					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+					//total_mass += (v1->point() + v2->point()) / 2.0;
+				}
+				else
+				{
+					loop.erase(edge);
+					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+					//total_mass -= (v1->point() + v2->point()) / 2.0;
+				}
+			}
+		}
+		gr.clear();
+		empty_vect.clear();
+		visited_edges.clear();
+		visited_vertices.clear();
+		components.clear();
+		for (M::CEdge* edge : loop)
+		{
+			M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+			M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+			std::pair<M::CVertex*, M::CEdge*> p1(v1, edge);
+			std::pair<M::CVertex*, M::CEdge*> p2(v2, edge);
+			if (gr.find(v1->idx()) == gr.end())
+			{
+				gr[v1->idx()] = empty_vect;
+			}
+			if (gr.find(v2->idx()) == gr.end())
+			{
+				gr[v2->idx()] = empty_vect;
+			}
+			gr[v1->idx()].push_back(p2);
+			gr[v2->idx()].push_back(p1);
+		}
+		for (M::CEdge* edge : loop)
+		{
+			if (visited_edges.find(edge) != visited_edges.end())
+			{
+				continue;
+			}
+
+			std::set<M::CEdge*> component;
+			std::queue<M::CVertex*> q;
+			q.push(m_pMesh->edge_vertex(edge, 0));
+			while (!q.empty())
+			{
+				M::CVertex* vert = q.front();
+				q.pop();
+				visited_vertices.insert(vert);
+				for (std::pair<M::CVertex*, M::CEdge*> p : gr[vert->idx()])
+				{
+					if (visited_edges.find(p.second) == visited_edges.end())
+					{
+						visited_edges.insert(p.second);
+						component.insert(p.second);
+						if (visited_vertices.find(p.first) == visited_vertices.end())
+						{
+							q.push(p.first);
+						}
+					}
+				}
+			}
+			components.push_back(component);
+
+		}
+
+		// insert each of the faces, adding and removing edges
+
+		// before finishing, choose the best that is the lowest average distance to center of mass.
+		single_loop = loop;
+		if (components.size() >= 2)
+		{
+			single_loop = components[0];
+		}
+		std::vector<int> lv;
+		for (auto component : components)
+		{
+			lv.clear();
+			current_loop_edges.clear();
+			loop_vertices.clear();
+			for (M::CEdge* edge : single_loop)
+			{
+				current_loop_edges.push_back(edge);
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				if (std::find(lv.begin(), lv.end(), v1->idx()) == lv.end())
+				{
+					lv.push_back(v1->idx());
+					loop_vertices.push_back(v1);
+				}
+				if (std::find(lv.begin(), lv.end(), v2->idx()) == lv.end())
+				{
+					lv.push_back(v2->idx());
+					loop_vertices.push_back(v2);
+				}
+			}
+
+			good_final_vertices.push_back(loop_vertices);
+			good_final_edges.push_back(current_loop_edges);
+			after_edges.push_back(current_loop_edges);
+		}
+		return components.size();
+
 	}
 
 
@@ -4511,6 +4965,7 @@ namespace DartLib
 		std::vector<int> lv;
 		current_loop_edges.clear();
 		loop_vertices.clear();
+		// TODO: pick the shortest loop(by average distance to center of mass)
 		for (M::CEdge* edge : loop)
 		{
 			current_loop_edges.push_back(edge);

@@ -73,6 +73,7 @@ class CHandleTunnelLoop
 	void display_single_loop();
 
 	void display_before(int which);
+	void display_middle(int which);
 	void display_tested(int which);
 	void display_after(int which);
 
@@ -95,7 +96,7 @@ class CHandleTunnelLoop
 	int lcm(int a, int b);
 
 	void set_name(std::string name);
-
+	void shorten_demo(int which);
 
   protected:
 	
@@ -113,7 +114,8 @@ class CHandleTunnelLoop
 	void _mark_loop(std::set<int> hLoop);
 
     bool _shrink_triangles();
-	void _shorten_single();
+	int _shorten_single();
+	int _shorten_single_final();
 	void _shorten3();
 	void _shorten2();
 	bool _shorten(std::vector<M::CEdge*> ed_loop);
@@ -146,7 +148,7 @@ class CHandleTunnelLoop
 	std::vector<int> CHandleTunnelLoop::dijkstra(int s, int t);
     
 	std::vector<int> remove_dup(std::vector<int> v);
-
+	bool trip = false;
 
 
   protected:
@@ -195,7 +197,7 @@ class CHandleTunnelLoop
 	std::vector<std::pair<M::CFace*, std::vector<M::CEdge*>>> double_to_single;
 
 	std::set<M::CEdge*> single_loop;
-
+	std::set<M::CFace*> recently_used; 
 	std::vector<std::vector<M::CEdge*>> before_prune_edges;
 	std::vector<std::vector<M::CEdge*>> final_edges;
 	std::vector<std::vector<M::CEdge*>> good_final_edges;
@@ -288,7 +290,7 @@ class CHandleTunnelLoop
 	bool first_time = true;
 
 	std::unordered_map<M::CVertex*, M::CVertex*> oppositeVertex;
-
+	int shortening_index = -1;
 };
 
 template <typename T>

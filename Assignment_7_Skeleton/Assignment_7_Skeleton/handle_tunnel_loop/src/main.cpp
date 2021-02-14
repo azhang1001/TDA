@@ -58,6 +58,7 @@ CArcball arcball;
 
 // which loop to display
 int which = 0;
+int times_called = 0;
 int pIndex = 0;
 int pIndex2 = 0;
 int pIndex3 = 0;
@@ -472,7 +473,12 @@ void keyBoard(unsigned char key, int x, int y)
 			handler.prune();
 			break;
 		case 'S':
-			handler.next_shorten_step();
+			handler.shorten_demo(which);
+			times_called += 1;
+			if (times_called % 10 == 0)
+			{
+				std::cout << "we called the function " << times_called << " times\n ";
+			}
 			break;
 		case 'X':
 			handler.display_individual(which_edge);
@@ -506,6 +512,7 @@ void keyBoard(unsigned char key, int x, int y)
 			break;
 		case 'N':
 			which += 1;
+			handler.display_middle(which);
 			break;
 		case 'W':
 			handler.display_all_before();
