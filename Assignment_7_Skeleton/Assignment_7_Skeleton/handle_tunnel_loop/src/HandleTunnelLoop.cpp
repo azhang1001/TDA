@@ -3678,8 +3678,11 @@ namespace DartLib
 		current_loop_edges = middle_edges[0];
 		middle_edges.clear();
 		shorten();
+		new_tets.clear();
 		for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
 		{
+			std::vector<std::vector<CPoint>> new_tets2;
+			new_tets2.clear();
 			loop_vertices = good_final_vertices[good_final_index];
 			center_of_mass[0] = 0.0;
 			center_of_mass[1] = 0.0;
@@ -3694,9 +3697,10 @@ namespace DartLib
 			std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
 			//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
 			char buffer[MAX_LINE];
-			new_tets.clear();
+			
 			std::map<int, CPoint> verts_O;
 			std::map<int, bool> allowed;
+			std::map<int, bool> vertex_used;
 			for (M::CVertex* v1 : loop_vertices)
 			{
 				double fD = 0;
@@ -3903,15 +3907,23 @@ namespace DartLib
 					{
 						inside += 1;
 					}
-					if (inside >= 1)
+
+					if (inside >= 3)
 					{
 						std::vector<CPoint> new_tet;
 						new_tet.push_back(verts_O[v1]);
 						new_tet.push_back(verts_O[v2]);
 						new_tet.push_back(verts_O[v3]);
 						new_tet.push_back(verts_O[v4]);
-						new_tets.push_back(new_tet);
+						new_tets2.push_back(new_tet);
+						vertex_used[v1] = true;
+						vertex_used[v2] = true;
+						vertex_used[v3] = true;
+						vertex_used[v4] = true;
 					}
+					all_tets.push_back({ v1, v2, v3, v4 });
+					
+
 					/*for (M::CVertex* v : loop_vertices)
 					{
 						farthest_distance = (v->point() - center_of_mass).norm() * 1.01;
@@ -3931,15 +3943,32 @@ namespace DartLib
 						}
 					}*/
 				}
+
 			}
 			is.close();
-			// remove all new_tets from exterior volume
+			std::cout << "there were " << new_tets2.size() << " new tets in this component\n";
+			if (new_tets2.size() < 500)
+			{
+				for (auto te : new_tets2)
+				{
+					new_tets.push_back(te);
+				}
+			}
+			else
+			{
+				std::cout << "we didn't add the new tets of this component, because there were " << new_tets2.size() << " tets\n";
+			}
+			new_tets2.clear();
+			
 		}
 		
-		std::cout << "we will be adding " << new_tets.size() << " new tets\n";
+		// go through all tets one more time
+		std::cout << "in total, we had " << new_tets.size() << " new tets in this loop\n";
 		if (true)
 		{
 			write_tets(file_name);
+
+
 			good_final_vertices.clear();
 			final_vertices.clear();
 			good_final_edges.clear();
@@ -3991,9 +4020,9 @@ namespace DartLib
 			std::cout << "========================================we accidentally ended with: " << num_components << " components\n";
 		}
 
-		good_final_vertices.push_back(loop_vertices);
+		/*good_final_vertices.push_back(loop_vertices);
 		good_final_edges.push_back(current_loop_edges);
-		after_edges.push_back(current_loop_edges);
+		after_edges.push_back(current_loop_edges);*/
 		if (false)
 		{
 			clock_t start = clock();
@@ -4645,11 +4674,16 @@ namespace DartLib
 		std::vector<int> lv;
 		for (auto component : components)
 		{
+			bool only_interior = true;
 			lv.clear();
 			current_loop_edges.clear();
 			loop_vertices.clear();
-			for (M::CEdge* edge : single_loop)
+			for (M::CEdge* edge : component)
 			{
+				if (only_interior && m_boundary_edges.find(edge) != m_boundary_edges.end())
+				{
+					only_interior = false;
+				}
 				current_loop_edges.push_back(edge);
 				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
 				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
@@ -4664,7 +4698,11 @@ namespace DartLib
 					loop_vertices.push_back(v2);
 				}
 			}
-
+			if (only_interior)
+			{
+				std::cout << "we skipped this component because it was only in the interior\n";
+				continue;
+			}
 			good_final_vertices.push_back(loop_vertices);
 			good_final_edges.push_back(current_loop_edges);
 			after_edges.push_back(current_loop_edges);

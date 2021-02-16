@@ -181,6 +181,7 @@ class CHandleTunnelLoop
     std::set<M::CEdge*>   m_generators;
 	
 	std::vector<std::vector<CPoint>> new_tets;
+	std::vector<std::vector<int>> all_tets;
 	std::vector<std::vector<CPoint>> old_tets;
 	std::vector<std::vector<M::CVertex*>> middle_vertices;
 	std::vector<M::CVertex*> loop_vertices;
