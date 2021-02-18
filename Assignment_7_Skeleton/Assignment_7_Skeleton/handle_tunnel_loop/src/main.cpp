@@ -437,7 +437,7 @@ void keyBoard(unsigned char key, int x, int y)
 				boundary_edges = &handler.boundary_edges();
 
 				handler.exact_boundary(boundary_mesh);
-				myfile.open("../../data/shortened_tunnels.txt");
+				/*myfile.open("../../data/shortened_tunnels.txt");
 				if (myfile.is_open())
 				{
 					while (std::getline(myfile, line))
@@ -450,7 +450,7 @@ void keyBoard(unsigned char key, int x, int y)
 				else
 				{
 					std::cout << "Unable to open shortened tunnels file";
-				}
+				}*/
 				myfile.open("../../data/tunnels.txt");
 				if (myfile.is_open())
 				{

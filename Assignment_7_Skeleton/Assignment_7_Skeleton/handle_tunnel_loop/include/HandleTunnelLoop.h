@@ -180,7 +180,7 @@ class CHandleTunnelLoop
 
     std::set<M::CEdge*>   m_generators;
 	
-	std::vector<std::vector<CPoint>> new_tets;
+	std::vector<std::vector<int>> new_tets;
 	std::vector<std::vector<int>> all_tets;
 	std::vector<std::vector<CPoint>> old_tets;
 	std::vector<std::vector<M::CVertex*>> middle_vertices;
@@ -218,7 +218,7 @@ class CHandleTunnelLoop
 	std::vector<std::vector<M::CFace*>> edges_faces;
 	std::vector<M::CFace*> killer_faces_list;
 	
-
+	std::map<int, CPoint> verts_O;
 	//double graph[V][V];
 	std::vector<std::map<int, double>> graph;
 	std::vector<std::vector<std::pair<int, double>>> adj;

@@ -1241,8 +1241,9 @@ namespace DartLib
 		}
 		for (auto new_tet : new_tets)
 		{
-			for (CPoint point : new_tet)
+			for (int vert : new_tet)
 			{
+				CPoint point = verts_O[vert];
 				if (verts_I.find(point.print2()) == verts_I.end())
 				{
 					vert_index++;
@@ -1260,8 +1261,9 @@ namespace DartLib
 		for (auto new_tet : new_tets)
 		{
 			std::vector<int> numbers;
-			for (CPoint point : new_tet)
+			for (int vert : new_tet)
 			{
+				CPoint point = verts_O[vert];
 				numbers.push_back(verts_I[point.print2()]);
 			}
 			std::sort(numbers.begin(), numbers.end());
@@ -1270,8 +1272,9 @@ namespace DartLib
 				already_in.push_back(numbers);
 				tet_index += 1;
 				_os << "Tet " << tet_index;
-				for (CPoint point : new_tet)
+				for (int vert : new_tet)
 				{
+					CPoint point = verts_O[vert];
 					_os << " " << verts_I[point.print2()];
 				}
 				_os << "\n";
@@ -3681,7 +3684,7 @@ namespace DartLib
 		new_tets.clear();
 		for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
 		{
-			std::vector<std::vector<CPoint>> new_tets2;
+			std::vector<std::vector<int>> new_tets2;
 			new_tets2.clear();
 			loop_vertices = good_final_vertices[good_final_index];
 			center_of_mass[0] = 0.0;
@@ -3698,7 +3701,7 @@ namespace DartLib
 			//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
 			char buffer[MAX_LINE];
 			
-			std::map<int, CPoint> verts_O;
+			verts_O.clear();
 			std::map<int, bool> allowed;
 			std::map<int, bool> vertex_used;
 			for (M::CVertex* v1 : loop_vertices)
@@ -3787,6 +3790,14 @@ namespace DartLib
 			}
 			double minor = (f3 - f4).norm() * 1.4;
 			std::cout << "minor and major are " << minor << " " << major << " while the average distance is " << average_distance << "\n";*/
+			std::map<std::string, bool> int_used;
+			std::map<int, std::vector<std::vector<int>>> vert_tets;
+			for (M::CVertex* bV : m_boundary_vertices)
+			{
+				int_used[bV->point().print2()] = true;
+			}
+			std::vector<int> used_vertices_list;
+			int CH_number = 0;
 			while (!is.eof())
 			{
 				is.getline(buffer, MAX_LINE);
@@ -3796,7 +3807,7 @@ namespace DartLib
 
 				stokenizer.nextToken();
 				std::string token = stokenizer.getToken();
-
+				
 				if (token == "Vertex")
 				{
 					stokenizer.nextToken();
@@ -3808,75 +3819,126 @@ namespace DartLib
 					stokenizer.nextToken();
 					double p3 = std::stod(stokenizer.getToken());
 					CPoint mypoint(p1, p2, p3);
-					verts_O.insert({ vindex, mypoint });
+					vertex_used[vindex] = false;
 					bool al = false;
+					if (int_used[mypoint.print2()])
+					{
+						vertex_used[vindex] = true;
+					}
+					verts_O.insert({ vindex, mypoint });
+					std::vector<std::vector<int>> emp;
+					vert_tets[vindex] = emp;
 					// check whether the angle requirement is met
-					std::vector<double> half_distances;
-					for (M::CVertex* v : loop_vertices)
+					bool hd = false;
+					if (hd)
 					{
-						half_distances.push_back((v->point() - mypoint).norm());
-
-						/*CPoint poi1 = v->point();
-						CPoint poi2 = oppositeVertex[v]->point();
-						CPoint vec1 = poi1 - mypoint;
-						CPoint vec2 = poi2 - mypoint;
-						double ratio = 0;
-
-						if (vec1.norm() > vec2.norm())
+						std::vector<double> half_distances;
+						for (M::CVertex* v : loop_vertices)
 						{
-							ratio = vec2.norm() / vec1.norm();
+							half_distances.push_back((v->point() - mypoint).norm());
+
+							bool angles = false;
+							if (angles)
+							{
+								CPoint poi1 = v->point();
+								CPoint poi2 = oppositeVertex[v]->point();
+								CPoint vec1 = poi1 - mypoint;
+								CPoint vec2 = poi2 - mypoint;
+								double ratio = 0;
+
+								if (vec1.norm() > vec2.norm())
+								{
+									ratio = vec2.norm() / vec1.norm();
+								}
+								else
+								{
+									ratio = vec1.norm() / vec2.norm();
+								}
+								CPoint vec1n = vec1 / vec1.norm();
+								CPoint vec2n = vec2 / vec2.norm();
+								double dotProduct = vec1n * vec2n;
+								double angle = acos(dotProduct) * 180.0 / 3.14159265;
+								double score = (180 - angle) * ratio * ratio;
+
+								if (score < 5 || ratio < 0.00001)
+								{
+									//std::cout << "this one fits inside!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+									al = true;
+									break;
+								}
+							}
 						}
-						else
+						double half_total = 0;
+						std::sort(half_distances.begin(), half_distances.end());
+						int number_checked = half_distances.size() * 0.6;
+						for (int ind = 0; ind < number_checked; ind++)
 						{
-							ratio = vec1.norm() / vec2.norm();
+							half_total += half_distances[ind];
 						}
-						CPoint vec1n = vec1 / vec1.norm();
-						CPoint vec2n = vec2 / vec2.norm();
-						double dotProduct = vec1n * vec2n;
-						double angle = acos(dotProduct) * 180.0 / 3.14159265;
-						double score = (180 - angle) * ratio * ratio;
-
-						if (score < 5 || ratio < 0.00001)
+						if (half_total / number_checked < actual_average)
 						{
-							//std::cout << "this one fits inside!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+							//std::cout << mypoint.print() << "\n";
 							al = true;
-							break;
-						}*/
+						}
 					}
-					double half_total = 0;
-					std::sort(half_distances.begin(), half_distances.end());
-					int number_checked = half_distances.size() * 0.6;
-					for (int ind = 0; ind < number_checked; ind++)
-					{
-						half_total += half_distances[ind];
-					}
-					if (half_total / number_checked < actual_average)
-					{
-						//std::cout << mypoint.print() << "\n";
-						al = true;
-					}
-					/*double dist = 0;
+					// convex hull idea
+					std::vector<CPoint> vectors_list;
 					for (M::CVertex* v : loop_vertices)
 					{
-						dist += cbrt((v->point() - mypoint).norm());
+						if (v->point().print2() == mypoint.print2())
+						{
+							al = true; 
+							break;
+						}
+						vectors_list.push_back((v->point() - mypoint)/ (v->point() - mypoint).norm());
 					}
-					if (dist < worst_distance)
+					if (al == false)
 					{
 						al = true;
+						CH_number += 1;
+						bool finish = false;
+						for (int i = 0; i < vectors_list.size(); i++)
+						{
+							if (finish)
+							{
+								break;
+							}
+							for (int j = i + 1; j < vectors_list.size(); j++)
+							{
+								if (finish)
+								{
+									break;
+								}
+								for (double sign : {-1.0, 1.0})
+								{
+									CPoint CrPr = (vectors_list[i] ^ vectors_list[j]) / (vectors_list[i] ^ vectors_list[j]).norm() * sign;
+									bool same_hemi = true;
+									for (int k = 0; k < vectors_list.size(); k++)
+									{
+										if (k == i || k == j)
+										{
+											continue;
+										}
+										double theta = acos(vectors_list[k] * CrPr) * 180.0 / 3.1415926;
+										if (theta > 90.0) // lower the number to allow more points
+										{
+											same_hemi = false;
+											break;
+										}
+									}
+									if (same_hemi)
+									{
+										al = false;
+										CH_number -= 1;
+										finish = true;
+										break;
+									}
+								}
+							}
+						}
 					}
-					if ((f1 - mypoint).norm()+(f2-mypoint).norm() <= major)
-					{
-						al = true;
-					}
-					if ((f3 - mypoint).norm() + (f4 - mypoint).norm() <= minor)
-					{
-						al = true;
-					}
-					if ((mypoint - center_of_mass).norm() < average_distance)
-					{
-						al = true;
-					}*/
 					allowed.insert({ vindex, al });
+					
 				}
 				if (token == "Tet")
 				{
@@ -3890,6 +3952,10 @@ namespace DartLib
 					int v3 = std::stoi(stokenizer.getToken());
 					stokenizer.nextToken();
 					int v4 = std::stoi(stokenizer.getToken());
+					vert_tets[v1].push_back({ v1,v2,v3,v4 });
+					vert_tets[v2].push_back({ v1,v2,v3,v4 });
+					vert_tets[v3].push_back({ v1,v2,v3,v4 });
+					vert_tets[v4].push_back({ v1,v2,v3,v4 });
 					int inside = 0;
 					if (allowed[v1])
 					{
@@ -3908,18 +3974,23 @@ namespace DartLib
 						inside += 1;
 					}
 
-					if (inside >= 3)
+					if (inside >= 2)
 					{
-						std::vector<CPoint> new_tet;
-						new_tet.push_back(verts_O[v1]);
-						new_tet.push_back(verts_O[v2]);
-						new_tet.push_back(verts_O[v3]);
-						new_tet.push_back(verts_O[v4]);
+						std::vector<int> new_tet;
+						new_tet.push_back(v1);
+						new_tet.push_back(v2);
+						new_tet.push_back(v3);
+						new_tet.push_back(v4);
 						new_tets2.push_back(new_tet);
 						vertex_used[v1] = true;
 						vertex_used[v2] = true;
 						vertex_used[v3] = true;
 						vertex_used[v4] = true;
+						used_vertices_list.push_back(v1);
+						used_vertices_list.push_back(v2);
+						used_vertices_list.push_back(v3);
+						used_vertices_list.push_back(v4);
+
 					}
 					all_tets.push_back({ v1, v2, v3, v4 });
 					
@@ -3946,8 +4017,38 @@ namespace DartLib
 
 			}
 			is.close();
+			std::cout << "there were " << CH_number << " points in the convex hull of this loop\n";
+			std::cout << "filling in the tet gaps\n";
+			for (int vert : used_vertices_list) // use a map from point to tet, only check tets that touch a point that was used.
+			{
+				for (auto tet : vert_tets[vert])
+				{
+					bool all_used = true;
+					for (int i : tet)
+					{
+						if (!vertex_used[i])
+						{
+							all_used = false;
+						}
+					}
+					if (all_used)
+					{
+
+						std::vector<int> new_tet;
+						for (int vi : tet)
+						{
+							new_tet.push_back(vi);
+						}
+						if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
+						{
+							new_tets2.push_back(new_tet);
+						}
+					}
+				}
+			}
+			
 			std::cout << "there were " << new_tets2.size() << " new tets in this component\n";
-			if (new_tets2.size() < 500)
+			if (new_tets2.size() < 200000) // lower after testing is done
 			{
 				for (auto te : new_tets2)
 				{
@@ -4564,51 +4665,56 @@ namespace DartLib
 				}
 			}
 		}
-		insertFaces.clear();
-		for (M::CEdge* edge : loop)
+		bool remove_triangles = false;
+		if (remove_triangles)
 		{
-			for (M::CFace* face : edges_faces[edge->idx()])
+			insertFaces.clear();
+			for (M::CEdge* edge : loop)
 			{
-				bool all_in = true;
+				for (M::CFace* face : edges_faces[edge->idx()])
+				{
+					bool all_in = true;
+					for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+					{
+						M::CEdge* face_edge = *feiter;
+						if (loop.find(face_edge) == loop.end())
+						{
+							all_in = false;
+							break;
+						}
+					}
+					if (all_in)
+					{
+						if (insertFaces.find(face) == insertFaces.end())
+						{
+							insertFaces.insert(face);
+						}
+					}
+				}
+			}
+			for (M::CFace* face : insertFaces)
+			{
 				for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
 				{
-					M::CEdge* face_edge = *feiter;
-					if (loop.find(face_edge) == loop.end())
+					M::CEdge* edge = *feiter;
+					if (loop.find(edge) == loop.end())
 					{
-						all_in = false;
-						break;
+						loop.insert(edge);
+						M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+						M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+						//total_mass += (v1->point() + v2->point()) / 2.0;
 					}
-				}
-				if (all_in)
-				{
-					if (insertFaces.find(face) == insertFaces.end())
+					else
 					{
-						insertFaces.insert(face);
+						loop.erase(edge);
+						M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+						M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+						//total_mass -= (v1->point() + v2->point()) / 2.0;
 					}
 				}
 			}
 		}
-		for (M::CFace* face : insertFaces)
-		{
-			for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
-			{
-				M::CEdge* edge = *feiter;
-				if (loop.find(edge) == loop.end())
-				{
-					loop.insert(edge);
-					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
-					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
-					//total_mass += (v1->point() + v2->point()) / 2.0;
-				}
-				else
-				{
-					loop.erase(edge);
-					M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
-					M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
-					//total_mass -= (v1->point() + v2->point()) / 2.0;
-				}
-			}
-		}
+		// find components
 		gr.clear();
 		empty_vect.clear();
 		visited_edges.clear();
@@ -4663,7 +4769,6 @@ namespace DartLib
 
 		}
 
-		// insert each of the faces, adding and removing edges
 
 		// before finishing, choose the best that is the lowest average distance to center of mass.
 		single_loop = loop;
