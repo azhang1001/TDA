@@ -3882,56 +3882,60 @@ namespace DartLib
 						}
 					}
 					// convex hull idea
-					std::vector<CPoint> vectors_list;
-					for (M::CVertex* v : loop_vertices)
+					
+					if ((mypoint - center_of_mass).norm() < largest_distance * 1.01)
 					{
-						if (v->point().print2() == mypoint.print2())
+						std::vector<CPoint> vectors_list;
+						for (M::CVertex* v : loop_vertices)
 						{
-							al = true; 
-							break;
-						}
-						vectors_list.push_back((v->point() - mypoint)/ (v->point() - mypoint).norm());
-					}
-					if (al == false)
-					{
-						al = true;
-						CH_number += 1;
-						bool finish = false;
-						for (int i = 0; i < vectors_list.size(); i++)
-						{
-							if (finish)
+							if (v->point().print2() == mypoint.print2())
 							{
+								al = true;
 								break;
 							}
-							for (int j = i + 1; j < vectors_list.size(); j++)
+							vectors_list.push_back((v->point() - mypoint) / (v->point() - mypoint).norm());
+						}
+						if (al == false)
+						{
+							al = true;
+							CH_number += 1;
+							bool finish = false;
+							for (int i = 0; i < vectors_list.size(); i++)
 							{
 								if (finish)
 								{
 									break;
 								}
-								for (double sign : {-1.0, 1.0})
+								for (int j = i + 1; j < vectors_list.size(); j++)
 								{
-									CPoint CrPr = (vectors_list[i] ^ vectors_list[j]) / (vectors_list[i] ^ vectors_list[j]).norm() * sign;
-									bool same_hemi = true;
-									for (int k = 0; k < vectors_list.size(); k++)
+									if (finish)
 									{
-										if (k == i || k == j)
+										break;
+									}
+									for (double sign : {-1.0, 1.0})
+									{
+										CPoint CrPr = (vectors_list[i] ^ vectors_list[j]) / (vectors_list[i] ^ vectors_list[j]).norm() * sign;
+										bool same_hemi = true;
+										for (int k = 0; k < vectors_list.size(); k++)
 										{
-											continue;
+											if (k == i || k == j)
+											{
+												continue;
+											}
+											double theta = acos(vectors_list[k] * CrPr) * 180.0 / 3.1415926;
+											if (theta >= 90.0) // lower the number to allow more points
+											{
+												same_hemi = false;
+												break;
+											}
 										}
-										double theta = acos(vectors_list[k] * CrPr) * 180.0 / 3.1415926;
-										if (theta > 90.0) // lower the number to allow more points
+										if (same_hemi)
 										{
-											same_hemi = false;
+											al = false;
+											CH_number -= 1;
+											finish = true;
 											break;
 										}
-									}
-									if (same_hemi)
-									{
-										al = false;
-										CH_number -= 1;
-										finish = true;
-										break;
 									}
 								}
 							}
@@ -4041,6 +4045,7 @@ namespace DartLib
 						}
 						if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
 						{
+							//std::cout << "filled one in\n";
 							new_tets2.push_back(new_tet);
 						}
 					}
