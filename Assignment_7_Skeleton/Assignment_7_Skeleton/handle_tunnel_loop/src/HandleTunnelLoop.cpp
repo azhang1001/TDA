@@ -3696,6 +3696,12 @@ namespace DartLib
 				center_of_mass += vertex->point();
 			}
 			center_of_mass = center_of_mass / double(loop_vertices.size());
+			std::vector<CPoint> loop_vertices_scaled;
+			for (M::CVertex* vertex : loop_vertices)
+			{
+				CPoint scaled_point = center_of_mass + (vertex->point() - center_of_mass) * 2;
+				loop_vertices_scaled.push_back(scaled_point);
+			}
 			//loop through tets in _O, add to _2_I
 			std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
 			//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
@@ -3883,7 +3889,7 @@ namespace DartLib
 					}
 					// convex hull idea
 					
-					if ((mypoint - center_of_mass).norm() < largest_distance * 1.01)
+					if ((mypoint - center_of_mass).norm() < largest_distance * 2.5)
 					{
 						std::vector<CPoint> vectors_list;
 						for (M::CVertex* v : loop_vertices)
@@ -3893,7 +3899,10 @@ namespace DartLib
 								al = true;
 								break;
 							}
-							vectors_list.push_back((v->point() - mypoint) / (v->point() - mypoint).norm());
+						}
+						for (CPoint v : loop_vertices_scaled)
+						{
+							vectors_list.push_back((v - mypoint) / (v - mypoint).norm());
 						}
 						if (al == false)
 						{
@@ -3978,7 +3987,7 @@ namespace DartLib
 						inside += 1;
 					}
 
-					if (inside >= 2)
+					if (inside >= 3)
 					{
 						std::vector<int> new_tet;
 						new_tet.push_back(v1);
@@ -4023,30 +4032,34 @@ namespace DartLib
 			is.close();
 			std::cout << "there were " << CH_number << " points in the convex hull of this loop\n";
 			std::cout << "filling in the tet gaps\n";
-			for (int vert : used_vertices_list) // use a map from point to tet, only check tets that touch a point that was used.
+			bool fill_gaps = true;
+			if (fill_gaps)
 			{
-				for (auto tet : vert_tets[vert])
+				for (int vert : used_vertices_list) // use a map from point to tet, only check tets that touch a point that was used.
 				{
-					bool all_used = true;
-					for (int i : tet)
+					for (auto tet : vert_tets[vert])
 					{
-						if (!vertex_used[i])
+						bool all_used = true;
+						for (int i : tet)
 						{
-							all_used = false;
+							if (!vertex_used[i])
+							{
+								all_used = false;
+							}
 						}
-					}
-					if (all_used)
-					{
+						if (all_used)
+						{
 
-						std::vector<int> new_tet;
-						for (int vi : tet)
-						{
-							new_tet.push_back(vi);
-						}
-						if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
-						{
-							//std::cout << "filled one in\n";
-							new_tets2.push_back(new_tet);
+							std::vector<int> new_tet;
+							for (int vi : tet)
+							{
+								new_tet.push_back(vi);
+							}
+							if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
+							{
+								//std::cout << "filled one in\n";
+								new_tets2.push_back(new_tet);
+							}
 						}
 					}
 				}
