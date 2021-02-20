@@ -3699,7 +3699,7 @@ namespace DartLib
 			std::vector<CPoint> loop_vertices_scaled;
 			for (M::CVertex* vertex : loop_vertices)
 			{
-				CPoint scaled_point = center_of_mass + (vertex->point() - center_of_mass) * 2;
+				CPoint scaled_point = center_of_mass + (vertex->point() - center_of_mass) * 1.0;
 				loop_vertices_scaled.push_back(scaled_point);
 			}
 			//loop through tets in _O, add to _2_I
@@ -3889,7 +3889,7 @@ namespace DartLib
 					}
 					// convex hull idea
 					
-					if ((mypoint - center_of_mass).norm() < largest_distance * 2.5)
+					if ((mypoint - center_of_mass).norm() < largest_distance * 2)
 					{
 						std::vector<CPoint> vectors_list;
 						for (M::CVertex* v : loop_vertices)
@@ -4066,7 +4066,7 @@ namespace DartLib
 			}
 			
 			std::cout << "there were " << new_tets2.size() << " new tets in this component\n";
-			if (new_tets2.size() < 200000) // lower after testing is done
+			if (new_tets2.size() < 1000) // lower after testing is done
 			{
 				for (auto te : new_tets2)
 				{
@@ -4683,7 +4683,104 @@ namespace DartLib
 				}
 			}
 		}
-		bool remove_triangles = false;
+		
+		// find components
+		gr.clear();
+		empty_vect.clear();
+		visited_edges.clear();
+		visited_vertices.clear();
+		components.clear();
+		for (M::CEdge* edge : loop)
+		{
+			M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+			M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+			std::pair<M::CVertex*, M::CEdge*> p1(v1, edge);
+			std::pair<M::CVertex*, M::CEdge*> p2(v2, edge);
+			if (gr.find(v1->idx()) == gr.end())
+			{
+				gr[v1->idx()] = empty_vect;
+			}
+			if (gr.find(v2->idx()) == gr.end())
+			{
+				gr[v2->idx()] = empty_vect;
+			}
+			gr[v1->idx()].push_back(p2);
+			gr[v2->idx()].push_back(p1);
+		}
+		for (M::CEdge* edge : loop)
+		{
+			if (visited_edges.find(edge) != visited_edges.end())
+			{
+				continue;
+			}
+
+			std::set<M::CEdge*> component;
+			std::queue<M::CVertex*> q;
+			q.push(m_pMesh->edge_vertex(edge, 0));
+			while (!q.empty())
+			{
+				M::CVertex* vert = q.front();
+				q.pop();
+				visited_vertices.insert(vert);
+				for (std::pair<M::CVertex*, M::CEdge*> p : gr[vert->idx()])
+				{
+					if (visited_edges.find(p.second) == visited_edges.end())
+					{
+						visited_edges.insert(p.second);
+						component.insert(p.second);
+						if (visited_vertices.find(p.first) == visited_vertices.end())
+						{
+							q.push(p.first);
+						}
+					}
+				}
+			}
+			components.push_back(component);
+
+		}
+
+
+		single_loop = loop;
+		if (components.size() >= 2)
+		{
+			single_loop = components[0];
+		}
+		std::vector<int> lv;
+		for (auto component : components)
+		{
+			bool only_interior = true;
+			lv.clear();
+			current_loop_edges.clear();
+			loop_vertices.clear();
+			for (M::CEdge* edge : component)
+			{
+				if (only_interior && m_boundary_edges.find(edge) != m_boundary_edges.end())
+				{
+					only_interior = false;
+				}
+				current_loop_edges.push_back(edge);
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				if (std::find(lv.begin(), lv.end(), v1->idx()) == lv.end())
+				{
+					lv.push_back(v1->idx());
+					loop_vertices.push_back(v1);
+				}
+				if (std::find(lv.begin(), lv.end(), v2->idx()) == lv.end())
+				{
+					lv.push_back(v2->idx());
+					loop_vertices.push_back(v2);
+				}
+			}
+			if (only_interior)
+			{
+				std::cout << "we skipped this component because it was only in the interior\n";
+				continue;
+			}
+			good_final_vertices.push_back(loop_vertices);
+			good_final_edges.push_back(current_loop_edges);
+		}
+		bool remove_triangles = true;
 		if (remove_triangles)
 		{
 			insertFaces.clear();
@@ -4788,13 +4885,12 @@ namespace DartLib
 		}
 
 
-		// before finishing, choose the best that is the lowest average distance to center of mass.
 		single_loop = loop;
 		if (components.size() >= 2)
 		{
 			single_loop = components[0];
 		}
-		std::vector<int> lv;
+		lv.clear();
 		for (auto component : components)
 		{
 			bool only_interior = true;
@@ -4826,8 +4922,6 @@ namespace DartLib
 				std::cout << "we skipped this component because it was only in the interior\n";
 				continue;
 			}
-			good_final_vertices.push_back(loop_vertices);
-			good_final_edges.push_back(current_loop_edges);
 			after_edges.push_back(current_loop_edges);
 		}
 		return components.size();
