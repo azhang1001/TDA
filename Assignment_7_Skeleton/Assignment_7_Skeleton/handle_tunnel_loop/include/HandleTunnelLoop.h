@@ -68,6 +68,7 @@ class CHandleTunnelLoop
 
 	void display_all_before_prune();
 	void display_all_before();
+	void display_all_unshortened();
 	void display_all_middle();
 	void display_all_after();
 	void display_single_loop();
@@ -97,6 +98,7 @@ class CHandleTunnelLoop
 
 	void set_name(std::string name);
 	void shorten_demo(int which);
+	void find_connected_components();
 
   protected:
 	
@@ -203,6 +205,7 @@ class CHandleTunnelLoop
 	std::vector<std::vector<M::CEdge*>> final_edges;
 	std::vector<std::vector<M::CEdge*>> good_final_edges;
 	std::vector<std::vector<M::CEdge*>> before_edges;
+	std::vector<std::vector<M::CEdge*>> unshortened_edges;
 	std::vector<std::vector<M::CEdge*>> after_edges;
 	std::vector<std::vector<M::CEdge*>> tested_edges;
 	std::vector<std::vector<M::CVertex*>> tested_vertices;

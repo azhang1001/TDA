@@ -3146,6 +3146,24 @@ namespace DartLib
 			}
 		}
 	}
+	void CHandleTunnelLoop::display_all_unshortened()
+	{
+		for (auto pE : m_boundary_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto pE : m_inner_edges)
+		{
+			pE->sharp() = false;
+		}
+		for (auto f_edges : unshortened_edges)
+		{
+			for (auto pE : f_edges)
+			{
+				pE->sharp() = true;
+			}
+		}
+	}
 	void CHandleTunnelLoop::display_all_middle()
 	{
 		for (auto pE : m_boundary_edges)
@@ -3987,7 +4005,7 @@ namespace DartLib
 						inside += 1;
 					}
 
-					if (inside >= 3)
+					if (inside >= 1)
 					{
 						std::vector<int> new_tet;
 						new_tet.push_back(v1);
@@ -4115,33 +4133,12 @@ namespace DartLib
 		}
 		trip = false;
 		num_components = _shorten_single_final();
-		/*std::vector<int> lv;
-		current_loop_edges.clear();
-		loop_vertices.clear();
-		for (M::CEdge* edge : single_loop)
-		{
-			current_loop_edges.push_back(edge);
-			M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
-			M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
-			if (std::find(lv.begin(), lv.end(), v1->idx()) == lv.end())
-			{
-				lv.push_back(v1->idx());
-				loop_vertices.push_back(v1);
-			}
-			if (std::find(lv.begin(), lv.end(), v2->idx()) == lv.end())
-			{
-				lv.push_back(v2->idx());
-				loop_vertices.push_back(v2);
-			}
-		}*/
+
 		if (num_components > 1)
 		{
 			std::cout << "========================================we accidentally ended with: " << num_components << " components\n";
 		}
 
-		/*good_final_vertices.push_back(loop_vertices);
-		good_final_edges.push_back(current_loop_edges);
-		after_edges.push_back(current_loop_edges);*/
 		if (false)
 		{
 			clock_t start = clock();
@@ -4310,6 +4307,7 @@ namespace DartLib
 					}
 					else
 					{
+						unshortened_edges.push_back(edge_loop);
 						// this is correct!
 						std::cout << "_________________________________________________________----this is correct! The cleaned loop had size " << edge_loop.size() << "\n";
 						current_loop_edges = edge_loop;
@@ -4337,6 +4335,80 @@ namespace DartLib
 			//display_loop(current_loop_edges);
 			clock_t end = clock();
 			std::cout << "\nshorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
+		}
+	}
+
+	void CHandleTunnelLoop::find_connected_components()
+	{
+		for (auto loop : middle_edges)
+		{
+			std::vector<std::set<M::CEdge*>> components;
+			std::unordered_map<int, std::vector<std::pair<M::CVertex*, M::CEdge*>>> gr;
+			std::vector<std::pair<M::CVertex*, M::CEdge*>> empty_vect;
+			std::set<M::CEdge*> visited_edges;
+			std::set<M::CVertex*> visited_vertices;
+			for (M::CEdge* edge : loop)
+			{
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				std::pair<M::CVertex*, M::CEdge*> p1(v1, edge);
+				std::pair<M::CVertex*, M::CEdge*> p2(v2, edge);
+				if (gr.find(v1->idx()) == gr.end())
+				{
+					gr[v1->idx()] = empty_vect;
+				}
+				if (gr.find(v2->idx()) == gr.end())
+				{
+					gr[v2->idx()] = empty_vect;
+				}
+				gr[v1->idx()].push_back(p2);
+				gr[v2->idx()].push_back(p1);
+			}
+			for (M::CEdge* edge : loop)
+			{
+				if (visited_edges.find(edge) != visited_edges.end())
+				{
+					continue;
+				}
+
+				std::set<M::CEdge*> component;
+				std::queue<M::CVertex*> q;
+				q.push(m_pMesh->edge_vertex(edge, 0));
+				while (!q.empty())
+				{
+					M::CVertex* vert = q.front();
+					q.pop();
+					visited_vertices.insert(vert);
+					for (std::pair<M::CVertex*, M::CEdge*> p : gr[vert->idx()])
+					{
+						if (visited_edges.find(p.second) == visited_edges.end())
+						{
+							visited_edges.insert(p.second);
+							component.insert(p.second);
+							if (visited_vertices.find(p.first) == visited_vertices.end())
+							{
+								q.push(p.first);
+							}
+						}
+					}
+				}
+				components.push_back(component);
+
+			}
+			std::set<M::CEdge*> largest_component;
+			for (auto component : components)
+			{
+				if (component.size() > largest_component.size())
+				{
+					largest_component = component;
+				}
+			}
+			std::vector<M::CEdge*> unshortened_loop;
+			for (auto edge : largest_component)
+			{
+				unshortened_loop.push_back(edge);
+			}
+			unshortened_edges.push_back(unshortened_loop);
 		}
 	}
 	void CHandleTunnelLoop::shorten_demo(int which)

@@ -122,7 +122,7 @@ void draw_face(CMyTMesh::CFace* face, bool inv = false)
 
 void draw_halffaces(std::vector<CMyTMesh::CDart*>& darts, GLenum mode) 
 {
-    glColor3f(1.0, 0.5, 0.0);
+    glColor3f(0.8, 0.8, 0.8);
     glPolygonMode(GL_FRONT, mode);
 
     for (CMyTMesh::CDart* pD : darts)
@@ -159,7 +159,7 @@ void draw_halffaces(std::vector<CMyTMesh::CDart*>& darts, GLenum mode)
 void draw_sharp_edges(CMyTMesh* pMesh)
 {
     glDisable(GL_LIGHTING);
-    glLineWidth(3.0);
+    glLineWidth(5.0);
     glBegin(GL_LINES);
 
     for (CMyTMesh::EdgeIterator eiter(pMesh); !eiter.end(); eiter++)
@@ -493,6 +493,10 @@ void keyBoard(unsigned char key, int x, int y)
 		case 'D':
 			handler.display_all_after();
 			break;
+		case 'U':
+			handler.find_connected_components();
+			handler.display_all_unshortened();
+			break;
 		case 'd':
 			handler.display_all_before();
 			break;
@@ -732,7 +736,7 @@ int main(int argc, char* argv[])
 					boundary_surface = boundary.boundary_surface();
 					mesh.normalize();
 					mesh.compute_face_normal();
-					CPlane p(CPoint(0, 0, 1), 0);
+					CPlane p(CPoint(0, 0, 1), 2);
 					mesh.cut(p);
 					handler.set_mesh(&mesh);
 					boundary_edges = &handler.boundary_edges();
@@ -752,7 +756,7 @@ int main(int argc, char* argv[])
 		boundary_surface = boundary.boundary_surface();
 		mesh.normalize();
 		mesh.compute_face_normal();
-		CPlane p(CPoint(0, 0, 1), 0);
+		CPlane p(CPoint(0, 0, 1), 2);
 		mesh.cut(p);
 		handler.set_mesh(&mesh);
 		boundary_edges = &handler.boundary_edges();
@@ -761,6 +765,32 @@ int main(int argc, char* argv[])
 		printf("Putting in all the tets time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
 		handler.write_boundary();
 		
+	}
+	else if (strutil::endsWith(mesh_name, "_O.t"))
+	{
+		clock_t begin = clock();
+
+		mesh.load_t(argv[1]);
+
+		clock_t end = clock();
+		printf("Load time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
+		g_output = argc > 2 ? std::string(argv[2]) : "";
+
+		CMyTMesh::CBoundary boundary(&mesh);
+		boundary_surface = boundary.boundary_surface();
+
+		mesh.normalize();
+		mesh.compute_face_normal();
+
+		CPlane p(CPoint(0, 0, 1), 2);
+		mesh.cut(p);
+
+		handler.set_mesh(&mesh);
+		switchDirection = !switchDirection;
+		if (switchDirection)
+			glFrontFace(GL_CW);
+		else
+			glFrontFace(GL_CCW);
 	}
 	else
 	{
@@ -778,7 +808,7 @@ int main(int argc, char* argv[])
 		mesh.normalize();
 		mesh.compute_face_normal();
 
-		CPlane p(CPoint(0, 0, 1), 0);
+		CPlane p(CPoint(0, 0, 1), 2);
 		mesh.cut(p);
 
 		handler.set_mesh(&mesh);
