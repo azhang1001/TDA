@@ -746,9 +746,10 @@ int main(int argc, char* argv[])
 				std::cout << "started one shortening\n";
 				handler.add_tunnel(line);
 				handler.start_shorten();
-				handler.write_shortened_tunnels("../../data/shortened_tunnels.txt");
 				std::cout << "finished one shortening\n";
 			}
+			handler.write_tets(mesh_name);
+			handler.write_shortened_tunnels("../../data/shortened_tunnels.txt");
 			myfile.close();
 		}
 		mesh.load_t(argv[1]);

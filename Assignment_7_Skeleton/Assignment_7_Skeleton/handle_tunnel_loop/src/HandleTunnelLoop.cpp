@@ -1164,11 +1164,354 @@ namespace DartLib
 	}
 	void CHandleTunnelLoop::write_tets(const std::string& output)
 	{
+		std::cout << "starting to write the tetrahedra\n";
+		std::vector<std::set<int>> allowed_sets;
+		std::vector<CPoint> center_of_masss;
+		std::vector<std::vector<CPoint>> loop_vertices_scaleds;
+		std::map<int, std::vector<std::vector<int>>> vert_tets;
+		std::vector<std::vector<int>> new_tets2;
+		std::map<int, bool> vertex_used;
+		std::map<int, bool> bound_point;
+		std::set<int> used_vertices_list;
+		std::vector<double> average_distances;
+		std::vector<double> largest_distances;
+		for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
+		{
+
+			loop_vertices = good_final_vertices[good_final_index];
+			center_of_mass[0] = 0.0;
+			center_of_mass[1] = 0.0;
+			center_of_mass[2] = 0.0;
+			for (M::CVertex* vertex : loop_vertices)
+			{
+				center_of_mass += vertex->point();
+			}
+			center_of_mass = center_of_mass / double(loop_vertices.size());
+			center_of_masss.push_back(center_of_mass);
+			std::vector<CPoint> loop_vertices_scaled;
+			for (M::CVertex* vertex : loop_vertices)
+			{
+				CPoint scaled_point = center_of_mass + (vertex->point() - center_of_mass) * 1.0;
+				loop_vertices_scaled.push_back(scaled_point);
+			}
+			loop_vertices_scaleds.push_back(loop_vertices_scaled);
+			double distance;
+			double average_distance = 0;
+			double largest_distance = 0;
+			for (M::CVertex* v : loop_vertices)
+			{
+				distance = (v->point() - center_of_mass).norm();
+				average_distance += distance;
+				if (distance > largest_distance)
+				{
+					largest_distance = distance;
+				}
+
+			}
+			average_distance /= loop_vertices.size();
+			average_distances.push_back(average_distance);
+			largest_distances.push_back(largest_distance);
+			double actual_average = average_distance;
+		}
+		std::cout << "computed the scaled loops\n";
+		//loop through tets in _O, add to _2_I
+		std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
+		//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
+		char buffer[MAX_LINE];
+
+		verts_O.clear();
+		std::map<int, bool> allowed;
+
+
+
+		std::map<std::string, bool> int_used;
+			
+		for (M::CVertex* bV : m_boundary_vertices)
+		{
+			int_used[bV->point().print2()] = true;
+		}
+			
+		int CH_number = 0;
+		std::set<int> allowed_set;
+		while (!is.eof())
+		{
+			is.getline(buffer, MAX_LINE);
+			std::string line(buffer);
+			line = strutil::trim(line);
+			strutil::Tokenizer stokenizer(line, " \r\n");
+
+			stokenizer.nextToken();
+			std::string token = stokenizer.getToken();
+			
+			if (token == "Vertex")
+			{
+				//std::wcout << "one more vertex done\n";
+				stokenizer.nextToken();
+				int vindex = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p1 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p2 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p3 = std::stod(stokenizer.getToken());
+				CPoint mypoint(p1, p2, p3);
+				vertex_used[vindex] = false;
+				bool al = false;
+				if (int_used[mypoint.print2()])
+				{
+					bound_point[vindex] = true;
+				}
+				verts_O.insert({ vindex, mypoint });
+				std::vector<std::vector<int>> emp;
+				vert_tets[vindex] = emp;
+				// convex hull idea
+				for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
+				{
+					center_of_mass = center_of_masss[good_final_index];
+					std::vector<CPoint> loop_vertices_scaled = loop_vertices_scaleds[good_final_index];
+					loop_vertices = good_final_vertices[good_final_index];
+					double largest_distance = largest_distances[good_final_index];
+					double average_distance = average_distances[good_final_index];
+					if ((mypoint - center_of_mass).norm() < largest_distance * 2)
+					{
+						std::vector<CPoint> vectors_list;
+						for (M::CVertex* v : loop_vertices)
+						{
+							if (v->point().print2() == mypoint.print2())
+							{
+								al = true;
+								break;
+							}
+						}
+						for (CPoint v : loop_vertices_scaled)
+						{
+							vectors_list.push_back((v - mypoint) / (v - mypoint).norm());
+						}
+						if (al == false)
+						{
+							al = true;
+							CH_number += 1;
+							bool finish = false;
+							for (int i = 0; i < vectors_list.size(); i++)
+							{
+								if (finish)
+								{
+									break;
+								}
+								for (int j = i + 1; j < vectors_list.size(); j++)
+								{
+									if (finish)
+									{
+										break;
+									}
+									for (double sign : {-1.0, 1.0})
+									{
+										CPoint CrPr = (vectors_list[i] ^ vectors_list[j]) / (vectors_list[i] ^ vectors_list[j]).norm() * sign;
+										bool same_hemi = true;
+										for (int k = 0; k < vectors_list.size(); k++)
+										{
+											if (k == i || k == j)
+											{
+												continue;
+											}
+											double theta = acos(vectors_list[k] * CrPr) * 180.0 / 3.1415926;
+											if (theta >= 90.0) // lower the number to allow more points
+											{
+												same_hemi = false;
+												break;
+											}
+										}
+										if (same_hemi)
+										{
+											al = false;
+											CH_number -= 1;
+											finish = true;
+
+											break;
+										}
+									}
+								}
+							}
+						}
+					}
+					if (al == true)
+					{
+						allowed_set.insert(vindex);
+						break;
+					}
+					//allowed.insert({ vindex, al });
+				}
+			}
+			if (token == "Tet")
+			{
+				allowed_sets.push_back(allowed_set);
+				break;
+			}
+
+		}
+		is.close();
+		std::cout << "starting to find all the tets\n";
+		std::fstream is3(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
+		//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
+		char buffer3[MAX_LINE];
+		while (!is3.eof())
+		{
+			is3.getline(buffer3, MAX_LINE);
+			std::string line(buffer3);
+			line = strutil::trim(line);
+			strutil::Tokenizer stokenizer(line, " \r\n");
+
+			stokenizer.nextToken();
+			std::string token = stokenizer.getToken();
+			//std::cout << "a\n";
+			if (token == "Tet")
+			{
+				stokenizer.nextToken();
+				int tindex = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v1 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v2 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v3 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v4 = std::stoi(stokenizer.getToken());
+				vert_tets[v1].push_back({ v1,v2,v3,v4 });
+				vert_tets[v2].push_back({ v1,v2,v3,v4 });
+				vert_tets[v3].push_back({ v1,v2,v3,v4 });
+				vert_tets[v4].push_back({ v1,v2,v3,v4 });
+				for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
+				{
+					//std::cout << good_final_index;
+					//std::set<int> allowed_set = allowed_sets[good_final_index];
+					loop_vertices = good_final_vertices[good_final_index];
+
+					int inside = 0;
+
+					if (allowed_set.find(v1) != allowed_set.end())
+					{
+						inside += 1;
+					}
+					if (allowed_set.find(v2) != allowed_set.end())
+					{
+						inside += 1;
+					}
+					if (allowed_set.find(v3) != allowed_set.end())
+					{
+						inside += 1;
+					}
+					if (allowed_set.find(v4) != allowed_set.end())
+					{
+						inside += 1;
+					}
+					//std::cout << "inside is " << inside;
+					if (inside >= 4)
+					{
+						std::vector<int> new_tet;
+						new_tet.push_back(v1);
+						new_tet.push_back(v2);
+						new_tet.push_back(v3);
+						new_tet.push_back(v4);
+						new_tets2.push_back(new_tet);
+						vertex_used[v1] = true;
+						vertex_used[v2] = true;
+						vertex_used[v3] = true;
+						vertex_used[v4] = true;
+						used_vertices_list.insert(v1);
+						used_vertices_list.insert(v2);
+						used_vertices_list.insert(v3);
+						used_vertices_list.insert(v4);
+						//std::cout << "found a correct tet!\n";
+						break;
+
+					}
+					
+				}
+				all_tets.push_back({ v1, v2, v3, v4 });
+			}
+		}
+		is3.close();
+		//std::cout << "there were " << CH_number << " points in the convex hull of this loop\n";
+		std::cout << "filling in the tet gaps\n";
+		bool fill_gaps = true;
+		if (fill_gaps)
+		{
+			for (int vert : used_vertices_list) // use a map from point to tet, only check tets that touch a point that was used.
+			{
+				for (auto tet : vert_tets[vert])
+				{
+					int num_used = 0;
+					int bound_points = 0;
+					for (int i : tet)
+					{
+						if (bound_point[i])
+						{
+							bound_points += 1;
+						}
+						if (vertex_used[i])
+						{
+							num_used += 1;
+						}
+					}
+					if (num_used == 4)
+					{
+
+						std::vector<int> new_tet;
+						for (int vi : tet)
+						{
+							new_tet.push_back(vi);
+						}
+						if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
+						{
+							//std::cout << "filled one in\n";
+							new_tets2.push_back(new_tet);
+						}
+					}
+					else if (num_used >= 2 && bound_points + num_used >= 4)
+					{
+						std::vector<int> new_tet;
+						for (int vi : tet)
+						{
+							new_tet.push_back(vi);
+						}
+						if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
+						{
+							//std::cout << "fixed a gap with the boundary\n";
+							for (int vi : tet)
+							{
+								vertex_used[vi] = true;
+								//used_vertices_list.insert(vi);
+							}
+							new_tets2.push_back(new_tet);
+						}
+					}
+				}
+			}
+
+			std::cout << "there were " << new_tets2.size() << " new tets to be added\n";
+			if (new_tets2.size() < 10000000000)// automatically true now // lower after testing is done
+			{
+				for (auto te : new_tets2)
+				{
+					new_tets.push_back(te);
+				}
+			}
+			else
+			{
+				std::cout << "we didn't add the new tets of this component, because there were " << new_tets2.size() << " tets\n";
+			}
+			//new_tets2.clear();
+
+		}
+
+		// go through all tets one more time
+		std::cout << "in total, we had " << new_tets.size() << " new tets in this loop\n";
+
 		std::cout << "beginning to add the tets\n";
 		
 
-		std::fstream is(output, std::fstream::in);
-		char buffer[MAX_LINE];
+		std::fstream is2(output, std::fstream::in);
+		char buffer2[MAX_LINE];
 		old_tets.clear();
 		std::unordered_map<std::string, int> verts_I;
 		int tet_index = 0;
@@ -1176,10 +1519,10 @@ namespace DartLib
 		std::vector<std::string> vertex_lines;
 		std::vector<std::string> tet_lines;
 		std::vector<std::vector<int>> already_in;
-		while (!is.eof())
+		while (!is2.eof())
 		{
-			is.getline(buffer, MAX_LINE);
-			std::string line(buffer);
+			is2.getline(buffer2, MAX_LINE);
+			std::string line(buffer2);
 			line = strutil::trim(line);
 			strutil::Tokenizer stokenizer(line, " \r\n");
 
@@ -1226,7 +1569,7 @@ namespace DartLib
 		}
 
 
-		is.close();
+		is2.close();
 		std::fstream _os(output, std::fstream::out);
 
 		if (_os.fail())
@@ -3699,418 +4042,7 @@ namespace DartLib
 		current_loop_edges = middle_edges[0];
 		middle_edges.clear();
 		shorten();
-		new_tets.clear();
-		for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
-		{
-			std::vector<std::vector<int>> new_tets2;
-			new_tets2.clear();
-			loop_vertices = good_final_vertices[good_final_index];
-			center_of_mass[0] = 0.0;
-			center_of_mass[1] = 0.0;
-			center_of_mass[2] = 0.0;
-			for (M::CVertex* vertex : loop_vertices)
-			{
-
-				center_of_mass += vertex->point();
-			}
-			center_of_mass = center_of_mass / double(loop_vertices.size());
-			std::vector<CPoint> loop_vertices_scaled;
-			for (M::CVertex* vertex : loop_vertices)
-			{
-				CPoint scaled_point = center_of_mass + (vertex->point() - center_of_mass) * 1.0;
-				loop_vertices_scaled.push_back(scaled_point);
-			}
-			//loop through tets in _O, add to _2_I
-			std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
-			//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
-			char buffer[MAX_LINE];
-			
-			verts_O.clear();
-			std::map<int, bool> allowed;
-			std::map<int, bool> vertex_used;
-			for (M::CVertex* v1 : loop_vertices)
-			{
-				double fD = 0;
-				M::CVertex* oV = NULL;
-				for (M::CVertex* v2 : loop_vertices)
-				{
-					double D = (v1->point() - v2->point()).norm();
-					if (D > fD)
-					{
-						fD = D;
-						oV = v2;
-					}
-				}
-				oppositeVertex.insert({ v1, oV });
-			}
-			double distance;
-			double average_distance = 0;
-
-			CPoint f1;
-			CPoint f2;
-			CPoint f3;
-			CPoint f4;
-			double largest_distance = 0;
-			for (M::CVertex* v : loop_vertices)
-			{
-				distance = (v->point() - center_of_mass).norm();
-				average_distance += distance;
-				if (distance > largest_distance)
-				{
-					largest_distance = distance;
-					f1 = v->point();
-				}
-
-			}
-			average_distance /= loop_vertices.size();
-			double actual_average = average_distance;
-			average_distance = average_distance * (-0.087 * (pow(1.0 / loop_vertices.size(), -0.28) - 12.99)); // curve of best fit.
-			/*
-			double best_guess = 999.9;
-			double worst_distance = 0;
-			for (M::CVertex* v1 : loop_vertices)
-			{
-				double current_distance = 0;
-				for (M::CVertex* v2 : loop_vertices)
-				{
-					current_distance += cbrt((v2->point() - v1->point()).norm());
-				}
-				if (current_distance > worst_distance)
-				{
-					worst_distance = current_distance;
-				}
-			}
-			std::cout << "worst is " << worst_distance << "\n";
-			for (M::CVertex* v : loop_vertices)
-			{
-				distance = ((v->point() + f1) / 2.0 - center_of_mass).norm();
-				if (distance < best_guess)
-				{
-					best_guess = distance;
-					f2 = v->point();
-				}
-			}
-			double major = (f1 - f2).norm() * 1.5;
-			largest_distance = 0;
-			for (M::CVertex* v : loop_vertices)
-			{
-				distance = sqrt((v->point() - f1).norm()) + sqrt((v->point() - f2).norm());
-				if (distance > largest_distance)
-				{
-					largest_distance = distance;
-					f3 = v->point();
-				}
-			}
-
-			best_guess = 999.9;
-			for (M::CVertex* v : loop_vertices)
-			{
-				distance = ((v->point() + f3)/2.0 - center_of_mass).norm();
-				if (distance < best_guess)
-				{
-					best_guess = distance;
-					f4 = v->point();
-				}
-			}
-			double minor = (f3 - f4).norm() * 1.4;
-			std::cout << "minor and major are " << minor << " " << major << " while the average distance is " << average_distance << "\n";*/
-			std::map<std::string, bool> int_used;
-			std::map<int, std::vector<std::vector<int>>> vert_tets;
-			for (M::CVertex* bV : m_boundary_vertices)
-			{
-				int_used[bV->point().print2()] = true;
-			}
-			std::vector<int> used_vertices_list;
-			int CH_number = 0;
-			while (!is.eof())
-			{
-				is.getline(buffer, MAX_LINE);
-				std::string line(buffer);
-				line = strutil::trim(line);
-				strutil::Tokenizer stokenizer(line, " \r\n");
-
-				stokenizer.nextToken();
-				std::string token = stokenizer.getToken();
-				
-				if (token == "Vertex")
-				{
-					stokenizer.nextToken();
-					int vindex = std::stoi(stokenizer.getToken());
-					stokenizer.nextToken();
-					double p1 = std::stod(stokenizer.getToken());
-					stokenizer.nextToken();
-					double p2 = std::stod(stokenizer.getToken());
-					stokenizer.nextToken();
-					double p3 = std::stod(stokenizer.getToken());
-					CPoint mypoint(p1, p2, p3);
-					vertex_used[vindex] = false;
-					bool al = false;
-					if (int_used[mypoint.print2()])
-					{
-						vertex_used[vindex] = true;
-					}
-					verts_O.insert({ vindex, mypoint });
-					std::vector<std::vector<int>> emp;
-					vert_tets[vindex] = emp;
-					// check whether the angle requirement is met
-					bool hd = false;
-					if (hd)
-					{
-						std::vector<double> half_distances;
-						for (M::CVertex* v : loop_vertices)
-						{
-							half_distances.push_back((v->point() - mypoint).norm());
-
-							bool angles = false;
-							if (angles)
-							{
-								CPoint poi1 = v->point();
-								CPoint poi2 = oppositeVertex[v]->point();
-								CPoint vec1 = poi1 - mypoint;
-								CPoint vec2 = poi2 - mypoint;
-								double ratio = 0;
-
-								if (vec1.norm() > vec2.norm())
-								{
-									ratio = vec2.norm() / vec1.norm();
-								}
-								else
-								{
-									ratio = vec1.norm() / vec2.norm();
-								}
-								CPoint vec1n = vec1 / vec1.norm();
-								CPoint vec2n = vec2 / vec2.norm();
-								double dotProduct = vec1n * vec2n;
-								double angle = acos(dotProduct) * 180.0 / 3.14159265;
-								double score = (180 - angle) * ratio * ratio;
-
-								if (score < 5 || ratio < 0.00001)
-								{
-									//std::cout << "this one fits inside!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-									al = true;
-									break;
-								}
-							}
-						}
-						double half_total = 0;
-						std::sort(half_distances.begin(), half_distances.end());
-						int number_checked = half_distances.size() * 0.6;
-						for (int ind = 0; ind < number_checked; ind++)
-						{
-							half_total += half_distances[ind];
-						}
-						if (half_total / number_checked < actual_average)
-						{
-							//std::cout << mypoint.print() << "\n";
-							al = true;
-						}
-					}
-					// convex hull idea
-					
-					if ((mypoint - center_of_mass).norm() < largest_distance * 2)
-					{
-						std::vector<CPoint> vectors_list;
-						for (M::CVertex* v : loop_vertices)
-						{
-							if (v->point().print2() == mypoint.print2())
-							{
-								al = true;
-								break;
-							}
-						}
-						for (CPoint v : loop_vertices_scaled)
-						{
-							vectors_list.push_back((v - mypoint) / (v - mypoint).norm());
-						}
-						if (al == false)
-						{
-							al = true;
-							CH_number += 1;
-							bool finish = false;
-							for (int i = 0; i < vectors_list.size(); i++)
-							{
-								if (finish)
-								{
-									break;
-								}
-								for (int j = i + 1; j < vectors_list.size(); j++)
-								{
-									if (finish)
-									{
-										break;
-									}
-									for (double sign : {-1.0, 1.0})
-									{
-										CPoint CrPr = (vectors_list[i] ^ vectors_list[j]) / (vectors_list[i] ^ vectors_list[j]).norm() * sign;
-										bool same_hemi = true;
-										for (int k = 0; k < vectors_list.size(); k++)
-										{
-											if (k == i || k == j)
-											{
-												continue;
-											}
-											double theta = acos(vectors_list[k] * CrPr) * 180.0 / 3.1415926;
-											if (theta >= 90.0) // lower the number to allow more points
-											{
-												same_hemi = false;
-												break;
-											}
-										}
-										if (same_hemi)
-										{
-											al = false;
-											CH_number -= 1;
-											finish = true;
-											break;
-										}
-									}
-								}
-							}
-						}
-					}
-					allowed.insert({ vindex, al });
-					
-				}
-				if (token == "Tet")
-				{
-					stokenizer.nextToken();
-					int tindex = std::stoi(stokenizer.getToken());
-					stokenizer.nextToken();
-					int v1 = std::stoi(stokenizer.getToken());
-					stokenizer.nextToken();
-					int v2 = std::stoi(stokenizer.getToken());
-					stokenizer.nextToken();
-					int v3 = std::stoi(stokenizer.getToken());
-					stokenizer.nextToken();
-					int v4 = std::stoi(stokenizer.getToken());
-					vert_tets[v1].push_back({ v1,v2,v3,v4 });
-					vert_tets[v2].push_back({ v1,v2,v3,v4 });
-					vert_tets[v3].push_back({ v1,v2,v3,v4 });
-					vert_tets[v4].push_back({ v1,v2,v3,v4 });
-					int inside = 0;
-					if (allowed[v1])
-					{
-						inside += 1;
-					}
-					if (allowed[v2])
-					{
-						inside += 1;
-					}
-					if (allowed[v3])
-					{
-						inside += 1;
-					}
-					if (allowed[v4])
-					{
-						inside += 1;
-					}
-
-					if (inside >= 1)
-					{
-						std::vector<int> new_tet;
-						new_tet.push_back(v1);
-						new_tet.push_back(v2);
-						new_tet.push_back(v3);
-						new_tet.push_back(v4);
-						new_tets2.push_back(new_tet);
-						vertex_used[v1] = true;
-						vertex_used[v2] = true;
-						vertex_used[v3] = true;
-						vertex_used[v4] = true;
-						used_vertices_list.push_back(v1);
-						used_vertices_list.push_back(v2);
-						used_vertices_list.push_back(v3);
-						used_vertices_list.push_back(v4);
-
-					}
-					all_tets.push_back({ v1, v2, v3, v4 });
-					
-
-					/*for (M::CVertex* v : loop_vertices)
-					{
-						farthest_distance = (v->point() - center_of_mass).norm() * 1.01;
-						if (((verts_O[v1] - v->point()).norm()) <= farthest_distance &&
-							((verts_O[v2] - v->point()).norm()) <= farthest_distance &&
-							((verts_O[v3] - v->point()).norm()) <= farthest_distance &&
-							((verts_O[v4] - v->point()).norm()) <= farthest_distance)
-						{
-							// add the tet to the interior file;
-							std::vector<CPoint> new_tet;
-							new_tet.push_back(verts_O[v1]);
-							new_tet.push_back(verts_O[v2]);
-							new_tet.push_back(verts_O[v3]);
-							new_tet.push_back(verts_O[v4]);
-							new_tets.push_back(new_tet);
-							break;
-						}
-					}*/
-				}
-
-			}
-			is.close();
-			std::cout << "there were " << CH_number << " points in the convex hull of this loop\n";
-			std::cout << "filling in the tet gaps\n";
-			bool fill_gaps = true;
-			if (fill_gaps)
-			{
-				for (int vert : used_vertices_list) // use a map from point to tet, only check tets that touch a point that was used.
-				{
-					for (auto tet : vert_tets[vert])
-					{
-						bool all_used = true;
-						for (int i : tet)
-						{
-							if (!vertex_used[i])
-							{
-								all_used = false;
-							}
-						}
-						if (all_used)
-						{
-
-							std::vector<int> new_tet;
-							for (int vi : tet)
-							{
-								new_tet.push_back(vi);
-							}
-							if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
-							{
-								//std::cout << "filled one in\n";
-								new_tets2.push_back(new_tet);
-							}
-						}
-					}
-				}
-			}
-			
-			std::cout << "there were " << new_tets2.size() << " new tets in this component\n";
-			if (new_tets2.size() < 1000) // lower after testing is done
-			{
-				for (auto te : new_tets2)
-				{
-					new_tets.push_back(te);
-				}
-			}
-			else
-			{
-				std::cout << "we didn't add the new tets of this component, because there were " << new_tets2.size() << " tets\n";
-			}
-			new_tets2.clear();
-			
-		}
-		
-		// go through all tets one more time
-		std::cout << "in total, we had " << new_tets.size() << " new tets in this loop\n";
-		if (true)
-		{
-			write_tets(file_name);
-
-
-			good_final_vertices.clear();
-			final_vertices.clear();
-			good_final_edges.clear();
-			final_edges.clear();
-		}
+		//new_tets.clear();
 
 	}
 	void CHandleTunnelLoop::shorten()
