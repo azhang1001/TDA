@@ -4756,6 +4756,7 @@ namespace DartLib
 			lv.clear();
 			current_loop_edges.clear();
 			loop_vertices.clear();
+			double length = 0;
 			for (M::CEdge* edge : component)
 			{
 				if (only_interior && m_boundary_edges.find(edge) != m_boundary_edges.end())
@@ -4775,10 +4776,16 @@ namespace DartLib
 					lv.push_back(v2->idx());
 					loop_vertices.push_back(v2);
 				}
+				length += (v1->point() - v2->point()).norm();
 			}
 			if (only_interior)
 			{
 				std::cout << "we skipped this component because it was only in the interior\n";
+				continue;
+			}
+			if (component.size() > 20 && m_boundary_faces.size() > 400000)
+			{
+				std::cout << "~~~~~~~this component was too long, so it was skipped\n";
 				continue;
 			}
 			good_final_vertices.push_back(loop_vertices);
@@ -4838,7 +4845,7 @@ namespace DartLib
 		empty_vect.clear();
 		visited_edges.clear();
 		visited_vertices.clear();
-		components.clear();
+		std::vector<std::set<M::CEdge*>> ncomponents;
 		for (M::CEdge* edge : loop)
 		{
 			M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
@@ -4884,18 +4891,18 @@ namespace DartLib
 					}
 				}
 			}
-			components.push_back(component);
+			ncomponents.push_back(component);
 
 		}
 
 
 		single_loop = loop;
-		if (components.size() >= 2)
+		if (ncomponents.size() >= 2)
 		{
 			single_loop = components[0];
 		}
 		lv.clear();
-		for (auto component : components)
+		for (auto component : ncomponents)
 		{
 			bool only_interior = true;
 			lv.clear();
@@ -4928,7 +4935,7 @@ namespace DartLib
 			}
 			after_edges.push_back(current_loop_edges);
 		}
-		return components.size();
+		return ncomponents.size();
 
 	}
 
