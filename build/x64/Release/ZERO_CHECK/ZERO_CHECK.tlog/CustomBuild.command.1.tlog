@@ -1,0 +1,10 @@
+^C:\USERS\ALEXA\DOCUMENTS\TDA\BUILD\CMAKEFILES\FC0606022D4B3FD672955A098BBA2A01\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/alexa/Documents/TDA -BC:/Users/alexa/Documents/TDA/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/alexa/Documents/TDA/build/TDA.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

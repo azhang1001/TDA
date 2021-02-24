@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\HandleTunnelLoop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\MyMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\MyTMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\alexa\Documents\TDA\handle_tunnel_loop\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{7BF65D27-EAF5-3B88-87B5-A10E5386223F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{56CDC45E-C432-3125-9DAF-EE4286E7D7DE}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

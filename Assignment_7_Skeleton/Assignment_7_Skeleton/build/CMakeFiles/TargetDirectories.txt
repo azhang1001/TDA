@@ -1,6 +1,0 @@
-C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/build/CMakeFiles/INSTALL.dir
-C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/build/CMakeFiles/ALL_BUILD.dir
-C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/build/CMakeFiles/ZERO_CHECK.dir
-C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/build/handle_tunnel_loop/CMakeFiles/HandleTunnelLoop.dir
-C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/build/handle_tunnel_loop/CMakeFiles/INSTALL.dir
-C:/Users/alexa/Documents/TDA/Assignment_7_Skeleton/Assignment_7_Skeleton/build/handle_tunnel_loop/CMakeFiles/ALL_BUILD.dir
