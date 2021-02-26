@@ -1175,6 +1175,11 @@ namespace DartLib
 		std::set<int> used_vertices_list;
 		std::vector<double> average_distances;
 		std::vector<double> largest_distances;
+		double scale_factor = 1;
+		if (m_boundary_edges.size() < 400000)
+		{
+			scale_factor = 1.5;
+		}
 		for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
 		{
 
@@ -1191,7 +1196,7 @@ namespace DartLib
 			std::vector<CPoint> loop_vertices_scaled;
 			for (M::CVertex* vertex : loop_vertices)
 			{
-				CPoint scaled_point = center_of_mass + (vertex->point() - center_of_mass) * 1.0;
+				CPoint scaled_point = center_of_mass + (vertex->point() - center_of_mass) * scale_factor;
 				loop_vertices_scaled.push_back(scaled_point);
 			}
 			loop_vertices_scaleds.push_back(loop_vertices_scaled);
@@ -1233,6 +1238,7 @@ namespace DartLib
 			
 		int CH_number = 0;
 		std::set<int> allowed_set;
+		std::set<int> on_loop;
 		while (!is.eof())
 		{
 			is.getline(buffer, MAX_LINE);
@@ -1280,6 +1286,10 @@ namespace DartLib
 							if (v->point().print2() == mypoint.print2())
 							{
 								al = true;
+								if (loop_vertices.size() <= 5)
+								{
+									on_loop.insert(vindex);
+								}
 								break;
 							}
 						}
@@ -1387,7 +1397,7 @@ namespace DartLib
 					loop_vertices = good_final_vertices[good_final_index];
 
 					int inside = 0;
-
+					int in_loop = 0;
 					if (allowed_set.find(v1) != allowed_set.end())
 					{
 						inside += 1;
@@ -1404,8 +1414,24 @@ namespace DartLib
 					{
 						inside += 1;
 					}
+					if (on_loop.find(v1) != on_loop.end())
+					{
+						in_loop += 1;
+					}
+					if (on_loop.find(v2) != on_loop.end())
+					{
+						in_loop += 1;
+					}
+					if (on_loop.find(v3) != on_loop.end())
+					{
+						in_loop += 1;
+					}
+					if (on_loop.find(v4) != on_loop.end())
+					{
+						in_loop += 1;
+					}
 					//std::cout << "inside is " << inside;
-					if (inside >= 4)
+					if (inside >= 4 || in_loop >= 3 || (inside >= 2 && m_boundary_edges.size() < 400000))
 					{
 						std::vector<int> new_tet;
 						new_tet.push_back(v1);
@@ -1568,7 +1594,7 @@ namespace DartLib
 			}
 		}
 
-
+		//new_tets.clear(); // to generate the pre-surgery mesh.
 		is2.close();
 		std::fstream _os(output, std::fstream::out);
 
@@ -4744,53 +4770,7 @@ namespace DartLib
 		}
 
 
-		single_loop = loop;
-		if (components.size() >= 2)
-		{
-			single_loop = components[0];
-		}
-		std::vector<int> lv;
-		for (auto component : components)
-		{
-			bool only_interior = true;
-			lv.clear();
-			current_loop_edges.clear();
-			loop_vertices.clear();
-			double length = 0;
-			for (M::CEdge* edge : component)
-			{
-				if (only_interior && m_boundary_edges.find(edge) != m_boundary_edges.end())
-				{
-					only_interior = false;
-				}
-				current_loop_edges.push_back(edge);
-				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
-				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
-				if (std::find(lv.begin(), lv.end(), v1->idx()) == lv.end())
-				{
-					lv.push_back(v1->idx());
-					loop_vertices.push_back(v1);
-				}
-				if (std::find(lv.begin(), lv.end(), v2->idx()) == lv.end())
-				{
-					lv.push_back(v2->idx());
-					loop_vertices.push_back(v2);
-				}
-				length += (v1->point() - v2->point()).norm();
-			}
-			if (only_interior)
-			{
-				std::cout << "we skipped this component because it was only in the interior\n";
-				continue;
-			}
-			if (component.size() > 20 && m_boundary_faces.size() > 400000)
-			{
-				std::cout << "~~~~~~~this component was too long, so it was skipped\n";
-				continue;
-			}
-			good_final_vertices.push_back(loop_vertices);
-			good_final_edges.push_back(current_loop_edges);
-		}
+
 		bool remove_triangles = true;
 		if (remove_triangles)
 		{
@@ -4900,6 +4880,48 @@ namespace DartLib
 		if (ncomponents.size() >= 2)
 		{
 			single_loop = components[0];
+		}
+		std::vector<int> lv;
+		for (auto component : components)
+		{
+			bool only_interior = true;
+			lv.clear();
+			current_loop_edges.clear();
+			loop_vertices.clear();
+			double length = 0;
+			for (M::CEdge* edge : component)
+			{
+				if (only_interior && m_boundary_edges.find(edge) != m_boundary_edges.end())
+				{
+					only_interior = false;
+				}
+				current_loop_edges.push_back(edge);
+				M::CVertex* v1 = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* v2 = m_pMesh->edge_vertex(edge, 1);
+				if (std::find(lv.begin(), lv.end(), v1->idx()) == lv.end())
+				{
+					lv.push_back(v1->idx());
+					loop_vertices.push_back(v1);
+				}
+				if (std::find(lv.begin(), lv.end(), v2->idx()) == lv.end())
+				{
+					lv.push_back(v2->idx());
+					loop_vertices.push_back(v2);
+				}
+				length += (v1->point() - v2->point()).norm();
+			}
+			if (only_interior)
+			{
+				std::cout << "we skipped this component because it was only in the interior\n";
+				continue;
+			}
+			if (component.size() > 20 && m_boundary_faces.size() > 400000)
+			{
+				std::cout << "~~~~~~~this component was too long, so it was skipped\n";
+				continue;
+			}
+			good_final_vertices.push_back(loop_vertices);
+			good_final_edges.push_back(current_loop_edges);
 		}
 		lv.clear();
 		for (auto component : ncomponents)
