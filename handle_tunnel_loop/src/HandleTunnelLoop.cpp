@@ -80,7 +80,7 @@ namespace DartLib
 			m_boundary_vertices.insert(pV);
 			m_boundary_vertices.insert(pW);
 		}
-		std::cout << "there are  " << m_boundary_vertices.size() << " vertices and " << m_boundary_edges.size() << " edges\n";
+		std::cout << "there are  " << m_boundary_vertices.size() << " vertices, " << m_boundary_edges.size() << " edges, and " << m_boundary_faces.size() << " faces\n";
 		int euler_number = m_boundary_vertices.size() + m_boundary_faces.size() - m_boundary_edges.size();
 		m_genus = (2 - euler_number) / 2;
 		std::cout << "Genus of the Boundary Mesh is " << m_genus << std::endl;
@@ -1176,8 +1176,9 @@ namespace DartLib
 		std::vector<double> average_distances;
 		std::vector<double> largest_distances;
 		double scale_factor = 1;
-		if (m_boundary_edges.size() < 400000)
+		if (m_boundary_edges.size() < 100000)
 		{
+			std::cout << "we turned the scale factor to 1.5\n";
 			scale_factor = 1.5;
 		}
 		for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
@@ -1239,6 +1240,7 @@ namespace DartLib
 		int CH_number = 0;
 		std::set<int> allowed_set;
 		std::set<int> on_loop;
+		std::cout << "there were " << good_final_vertices.size() << " loops\n";
 		while (!is.eof())
 		{
 			is.getline(buffer, MAX_LINE);
@@ -1251,7 +1253,6 @@ namespace DartLib
 			
 			if (token == "Vertex")
 			{
-				//std::wcout << "one more vertex done\n";
 				stokenizer.nextToken();
 				int vindex = std::stoi(stokenizer.getToken());
 				stokenizer.nextToken();
@@ -1265,6 +1266,7 @@ namespace DartLib
 				bool al = false;
 				if (int_used[mypoint.print2()])
 				{
+					//std::cout << "this is true\n";
 					bound_point[vindex] = true;
 				}
 				verts_O.insert({ vindex, mypoint });
@@ -1431,7 +1433,7 @@ namespace DartLib
 						in_loop += 1;
 					}
 					//std::cout << "inside is " << inside;
-					if (inside >= 4 || in_loop >= 3 || (inside >= 2 && m_boundary_edges.size() < 400000))
+					if (inside >= 4 || in_loop >= 3 || (inside >= 2 && m_boundary_edges.size() < 100000))
 					{
 						std::vector<int> new_tet;
 						new_tet.push_back(v1);
@@ -1828,7 +1830,7 @@ namespace DartLib
 			CPoint hV(v1, v2, v3);
 			if (idx_edges[pointsEdge[hU.print() + hV.print()]] == NULL)
 			{
-				std::cout << "this one was null, before we even started!!@#$%^&*()!@#$%^&*()!@#$%^&*()\n";
+				std::cout << "this one was null\n";
 				//return;
 			}
 			else
@@ -1859,15 +1861,16 @@ namespace DartLib
 			iss >> v3;
 			CPoint hU(u1, u2, u3);
 			CPoint hV(v1, v2, v3);
-			middle_edge.push_back(idx_edges[pointsEdge[hU.print() + hV.print()]]);
+			
 			if (idx_edges[pointsEdge[hU.print() + hV.print()]] == NULL)
 			{
-				std::cout << "this one was null, before we even started!!@#$%^&*()!@#$%^&*()!@#$%^&*()\n";
+				std::cout << "this one was null\n";
 				//return;
 			}
 			else
 			{
 				count += 1;
+				middle_edge.push_back(idx_edges[pointsEdge[hU.print() + hV.print()]]);
 				//std::cout << "edge number " << count << " is " << idx_edges[pointsEdge[hV.print() + hW.print()]] << "\n";
 
 			}
@@ -3600,6 +3603,11 @@ namespace DartLib
 			pE->sharp() = true;
 		}*/
 	}
+	void CHandleTunnelLoop::display_unshortened(int which)
+	{
+		which = which % unshortened_edges.size();
+		display_loop(unshortened_edges[which]);
+	}
 	void CHandleTunnelLoop::display_middle(int which)
 	{
 		which = which % middle_edges.size();
@@ -4361,6 +4369,47 @@ namespace DartLib
 					largest_component = component;
 				}
 			}
+			//in the largest component, add faces with all 3 edges present.
+			std::set<M::CFace*> insertFaces;
+			for (M::CEdge* edge : largest_component)
+			{
+				for (M::CFace* face : edges_faces[edge->idx()])
+				{
+					bool all_in = true;
+					for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+					{
+						M::CEdge* face_edge = *feiter;
+						if (largest_component.find(face_edge) == largest_component.end())
+						{
+							all_in = false;
+							break;
+						}
+					}
+					if (all_in)
+					{
+						if (insertFaces.find(face) == insertFaces.end())
+						{
+							insertFaces.insert(face);
+						}
+					}
+				}
+			}
+			for (M::CFace* face : insertFaces)
+			{
+				for (M::FaceEdgeIterator feiter(face); !feiter.end(); ++feiter)
+				{
+					M::CEdge* edge = *feiter;
+					if (largest_component.find(edge) == largest_component.end())
+					{
+						largest_component.insert(edge);
+						std::cout << "this should be impossible\n";
+					}
+					else
+					{
+						largest_component.erase(edge);
+					}
+				}
+			}
 			std::vector<M::CEdge*> unshortened_loop;
 			for (auto edge : largest_component)
 			{
@@ -4476,46 +4525,56 @@ namespace DartLib
 				center_of_mass = total_mass / double(component.size());
 				//std::cout << component.size() << " has a center of mass of " <<  center_of_mass.print() << "\n";
 				std::set<M::CEdge*> skip_edges;
-				for (M::CEdge* edge : component)
+				if (component.size() < 3)
 				{
-					/*if (skip_edges.find(edge) != skip_edges.end())
+					for (M::CEdge* edge : component)
 					{
-						continue;
-					}*/
-					double closestDist = 9999;
-					M::CFace* bestFace = NULL;
-					for (M::CFace* face : edges_faces[edge->idx()])
+						loop.erase(edge);
+					}
+				}
+				else
+				{
+					for (M::CEdge* edge : component)
 					{
-						//std::cout << "checking if we recently used the face\n";
-						/*if (recently_used.find(face) != recently_used.end())
+						/*if (skip_edges.find(edge) != skip_edges.end())
 						{
-							std::cout << "we did recently use the face\n";
 							continue;
 						}*/
-						CPoint faceCOM(0, 0, 0);
-						for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
+						double closestDist = 9999;
+						M::CFace* bestFace = NULL;
+						for (M::CFace* face : edges_faces[edge->idx()])
 						{
-							M::CVertex* vertex = *fviter;
-							faceCOM += vertex->point();
-						}
-						faceCOM /= 3.0;
-
-						if ((faceCOM - center_of_mass).norm() < closestDist)
-						{
-							closestDist = (faceCOM - center_of_mass).norm();
-							bestFace = face;
-						}
-					}
-					if (insertFaces.find(bestFace) == insertFaces.end())
-					{
-						insertFaces.insert(bestFace);
-						for (M::FaceEdgeIterator feiter(bestFace); !feiter.end(); ++feiter)
-						{
-							M::CEdge* e = *feiter;
-							/*if (skip_edges.find(e) == skip_edges.end())
+							//std::cout << "checking if we recently used the face\n";
+							/*if (recently_used.find(face) != recently_used.end())
 							{
-								skip_edges.insert(e);
+								std::cout << "we did recently use the face\n";
+								continue;
 							}*/
+							CPoint faceCOM(0, 0, 0);
+							for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
+							{
+								M::CVertex* vertex = *fviter;
+								faceCOM += vertex->point();
+							}
+							faceCOM /= 3.0;
+
+							if ((faceCOM - center_of_mass).norm() < closestDist)
+							{
+								closestDist = (faceCOM - center_of_mass).norm();
+								bestFace = face;
+							}
+						}
+						if (insertFaces.find(bestFace) == insertFaces.end())
+						{
+							insertFaces.insert(bestFace);
+							for (M::FaceEdgeIterator feiter(bestFace); !feiter.end(); ++feiter)
+							{
+								M::CEdge* e = *feiter;
+								/*if (skip_edges.find(e) == skip_edges.end())
+								{
+									skip_edges.insert(e);
+								}*/
+							}
 						}
 					}
 				}
@@ -4664,30 +4723,40 @@ namespace DartLib
 			}
 
 			center_of_mass = total_mass / double(component.size());
-			//std::cout << component.size() << " has a center of mass of " <<  center_of_mass.print() << "\n";
-			for (M::CEdge* edge : component)
+			if (component.size() < 3)
 			{
-				double closestDist = 9999;
-				M::CFace* bestFace = NULL;
-				for (M::CFace* face : edges_faces[edge->idx()])
+				for (M::CEdge* edge : component)
 				{
-					CPoint faceCOM(0, 0, 0);
-					for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
-					{
-						M::CVertex* vertex = *fviter;
-						faceCOM += vertex->point();
-					}
-					faceCOM /= 3.0;
-
-					if ((faceCOM - center_of_mass).norm() < closestDist)
-					{
-						closestDist = (faceCOM - center_of_mass).norm();
-						bestFace = face;
-					}
+					loop.erase(edge);
 				}
-				if (insertFaces.find(bestFace) == insertFaces.end())
+			}
+			else
+			{
+				//std::cout << component.size() << " has a center of mass of " <<  center_of_mass.print() << "\n";
+				for (M::CEdge* edge : component)
 				{
-					insertFaces.insert(bestFace);
+					double closestDist = 9999;
+					M::CFace* bestFace = NULL;
+					for (M::CFace* face : edges_faces[edge->idx()])
+					{
+						CPoint faceCOM(0, 0, 0);
+						for (M::FaceVertexIterator fviter(face); !fviter.end(); ++fviter)
+						{
+							M::CVertex* vertex = *fviter;
+							faceCOM += vertex->point();
+						}
+						faceCOM /= 3.0;
+
+						if ((faceCOM - center_of_mass).norm() < closestDist)
+						{
+							closestDist = (faceCOM - center_of_mass).norm();
+							bestFace = face;
+						}
+					}
+					if (insertFaces.find(bestFace) == insertFaces.end())
+					{
+						insertFaces.insert(bestFace);
+					}
 				}
 			}
 		}
@@ -4915,7 +4984,7 @@ namespace DartLib
 				std::cout << "we skipped this component because it was only in the interior\n";
 				continue;
 			}
-			if (component.size() > 20 && m_boundary_faces.size() > 400000)
+			if (component.size() > 50 && m_boundary_faces.size() > 100000)
 			{
 				std::cout << "~~~~~~~this component was too long, so it was skipped\n";
 				continue;

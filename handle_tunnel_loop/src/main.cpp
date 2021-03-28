@@ -217,7 +217,7 @@ void draw_boundary_surface()
 void draw_boundary_sharp_edges()
 {
     glDisable(GL_LIGHTING);
-    glLineWidth(3.0);
+    glLineWidth(1.0);
     glBegin(GL_LINES);
 
     for (auto pF : boundary_surface)
@@ -236,6 +236,8 @@ void draw_boundary_sharp_edges()
 
 				CPoint p1 = pv1->point();
 				CPoint p2 = pv2->point();
+				//CPoint n1 = pv1->normal();
+				//CPoint n2 = pv2->point()->norm();
 
 				glVertex3d(p1[0], p1[1], p1[2]);
 				glVertex3d(p2[0], p2[1], p2[2]);
@@ -314,14 +316,14 @@ void reshape(int w, int h)
 
     win_width = w;
     win_height = h;
-
+	
     ar = (float) (w) / h;
     glViewport(0, 0, w, h); /* Set Viewport */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
     // magic imageing commands
-    gluPerspective(40.0, /* field of view in degrees */
+    gluPerspective(30.0, /* field of view in degrees */
                    ar,   /* aspect ratio */
                    0.01,  /* Z near */
                    100.0 /* Z far */);
@@ -452,6 +454,7 @@ void keyBoard(unsigned char key, int x, int y)
 					std::cout << "Unable to open shortened tunnels file";
 				}
 				myfile.open("../../data/tunnels.txt");
+				std::cout << "adding the tunnel loops\n";
 				if (myfile.is_open())
 				{
 					while (std::getline(myfile, line))
@@ -567,6 +570,10 @@ void keyBoard(unsigned char key, int x, int y)
 		case '.':
 			handler.display_pair(pIndex);
 			pIndex += 1;
+			break;
+		case '}':
+			which += 1;
+			handler.display_unshortened(which);
 			break;
 		case '/':
 			handler.display_generated_loop(pIndex2);
@@ -817,9 +824,9 @@ int main(int argc, char* argv[])
     /* glut stuff */
     glutInit(&argc, argv); /* Initialize GLUT */
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-    glutInitWindowSize(1000, 1000);
+    glutInitWindowSize(1280, 720);
     glutCreateWindow("Mesh Viewer"); /* Create window with given title */
-    glViewport(0, 0, 10000, 10000);
+    glViewport(0, 0, 1280, 720);
 
     glutDisplayFunc(display); /* Set-up callback functions */
     glutReshapeFunc(reshape);

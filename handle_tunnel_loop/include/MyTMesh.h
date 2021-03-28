@@ -162,7 +162,7 @@ void TMyTMesh<V, E, F, T, Dart>::normalize()
     double d = 0;
     for (int i = 0; i < this->m_vertices.size(); i++)
     {
-        CPoint & p = this->m_vertices[i]->point();
+        CPoint & p = this->m_vertices[i]->point();	
         p = p - center;
 
         for (int k = 0; k < 3; k++)
@@ -176,7 +176,7 @@ void TMyTMesh<V, E, F, T, Dart>::normalize()
     {
         CPoint & p = this->m_vertices[i]->point();
         p /= d;
-		std::cout << "the point is now " << p.print() << "\n";
+		//std::cout << "the point is now " << p.print() << "\n";
     }
 }
 

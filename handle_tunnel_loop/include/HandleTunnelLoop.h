@@ -74,6 +74,7 @@ class CHandleTunnelLoop
 	void display_single_loop();
 
 	void display_before(int which);
+	void display_unshortened(int which);
 	void display_middle(int which);
 	void display_tested(int which);
 	void display_after(int which);
