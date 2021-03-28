@@ -1280,7 +1280,7 @@ namespace DartLib
 					loop_vertices = good_final_vertices[good_final_index];
 					double largest_distance = largest_distances[good_final_index];
 					double average_distance = average_distances[good_final_index];
-					if ((mypoint - center_of_mass).norm() < largest_distance * 2)
+					if ((mypoint - center_of_mass).norm() < largest_distance * 1.5)
 					{
 						std::vector<CPoint> vectors_list;
 						for (M::CVertex* v : loop_vertices)
