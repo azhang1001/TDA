@@ -729,7 +729,7 @@ int main(int argc, char* argv[])
 
 
 		int reload_mesh = 0;
-		int period = 100;
+		int period = 1000;
 		myfile.open("../../data/tunnels.txt");
 		
 		if (myfile.is_open())

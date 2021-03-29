@@ -1,48 +1,48 @@
 ﻿  HandleTunnelLoop.cpp
 C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(84,100): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1605,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1668,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1888,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1940,21): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1989,21): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2042,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2084,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2113,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2155,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2185,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2213,36): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2243,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2496,45): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2500,44): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2504,44): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2508,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2512,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2516,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2520,47): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2524,47): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2584,111): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2717,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2887,77): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2892,8): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3418,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(4007,23): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(4211,24): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(4636,27): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5029,28): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5066,55): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5360,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5388,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5531,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5579,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5598,72): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5621,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5640,72): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5663,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5912,43): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(6334,39): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(6443,39): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(6485,79): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(6607,41): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1607,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1670,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1890,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(1953,21): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2002,21): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2055,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2097,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2126,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2168,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2198,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2226,36): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2256,20): warning C4477: 'fprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'const std::string'
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2509,45): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2513,44): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2517,44): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2521,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2525,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2529,43): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2533,47): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2537,47): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2597,111): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2730,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2900,77): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2905,8): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(3431,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(4020,23): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(4224,24): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(4649,27): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5042,28): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5079,55): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5373,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5401,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5544,40): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5592,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5611,72): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5634,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5653,72): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5676,42): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(5925,43): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(6347,39): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(6456,39): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(6498,79): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(6620,41): warning C4244: 'argument': conversion from 'unsigned __int64' to 'const double', possible loss of data
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(372,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message : while compiling class template member function 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)'
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :         with
@@ -53,15 +53,15 @@ C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): messa
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             Dart=DartLib::CMyDart_2,
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             _Ty=DartLib::CPoint
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :         ]
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :         with
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :         [
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             V=DartLib::CMyVertex_2,
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             E=DartLib::CMyEdge_2,
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             F=DartLib::CMyFace_2,
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             Dart=DartLib::CMyDart_2,
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             _Ty=DartLib::CPoint
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :         ]
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :         with
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :         [
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             V=DartLib::CMyVertex_2,
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             E=DartLib::CMyEdge_2,
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             F=DartLib::CMyFace_2,
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             Dart=DartLib::CMyDart_2,
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             _Ty=DartLib::CPoint
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :         ]
 C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\MyMesh.h(70): message : see reference to class template instantiation 'DartLib::TBaseMesh_2<V,E,F,Dart>' being compiled
 C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\MyMesh.h(70): message :         with
 C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\MyMesh.h(70): message :         [
@@ -70,7 +70,7 @@ C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\MyMesh.h(70): message : 
 C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\MyMesh.h(70): message :             F=DartLib::CMyFace_2,
 C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\MyMesh.h(70): message :             Dart=DartLib::CMyDart_2
 C:\Users\alexa\Documents\TDA\handle_tunnel_loop\include\MyMesh.h(70): message :         ]
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message : see reference to class template instantiation 'DartLib::TMyMesh<DartLib::CMyVertex_2,DartLib::CMyEdge_2,DartLib::CMyFace_2,DartLib::CMyDart_2>' being compiled
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message : see reference to class template instantiation 'DartLib::TMyMesh<DartLib::CMyVertex_2,DartLib::CMyEdge_2,DartLib::CMyFace_2,DartLib::CMyDart_2>' being compiled
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\include\utility(165,1): warning C4267: 'initializing': conversion from 'size_t' to '_Ty2', possible loss of data
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\include\utility(165,1): warning C4267:         with
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.23.28105\include\utility(165,1): warning C4267:         [
@@ -193,14 +193,14 @@ C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): messa
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             Dart=DartLib::CMyDart_2,
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :             _Ty=DartLib::CPoint
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh/BaseMesh_2.h(358): message :         ]
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :         with
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :         [
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             V=DartLib::CMyVertex_2,
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             E=DartLib::CMyEdge_2,
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             F=DartLib::CMyFace_2,
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             Dart=DartLib::CMyDart_2,
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :             _Ty=DartLib::CPoint
-C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2314): message :         ]
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message : see reference to function template instantiation 'void DartLib::TBaseMesh_2<V,E,F,Dart>::load(const std::vector<DartLib::CPoint,std::allocator<_Ty>> &,const std::vector<int,std::allocator<int>> &)' being compiled
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :         with
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :         [
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             V=DartLib::CMyVertex_2,
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             E=DartLib::CMyEdge_2,
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             F=DartLib::CMyFace_2,
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             Dart=DartLib::CMyDart_2,
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :             _Ty=DartLib::CPoint
+C:\Users\alexa\Documents\TDA\handle_tunnel_loop\src\HandleTunnelLoop.cpp(2327): message :         ]
 C:\Users\alexa\Documents\TDA\3rdparty\DartLib\core\Mesh\BaseMesh_3.h(629): warning C4715: 'DartLib::TBaseMesh_3<DartLib::CMyVertex,DartLib::CMyEdge,DartLib::CMyFace,DartLib::CMyTet,DartLib::CMyDart>::edge_vertex': not all control paths return a value
   HandleTunnelLoop.vcxproj -> C:\Users\alexa\Documents\TDA\build\handle_tunnel_loop\Release\HandleTunnelLoop.exe

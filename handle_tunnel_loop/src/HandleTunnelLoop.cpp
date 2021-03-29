@@ -231,6 +231,7 @@ namespace DartLib
 	*/
 	void CHandleTunnelLoop::interior_volume_pair()
 	{
+		return;
 		if (!exterior_volume)
 		{
 			return;
@@ -346,6 +347,7 @@ namespace DartLib
 						break;
 					}
 				}
+				_mark_loop(pE);
 			}
 		}
 		/*for (auto eiter = m_boundary_edges.begin(); eiter != m_boundary_edges.end(); eiter++)
@@ -1151,7 +1153,7 @@ namespace DartLib
 
 		}
 		before_edges.push_back(old_cycle);
-		shorten();
+		//shorten();
 	};
 
 
@@ -1910,6 +1912,17 @@ namespace DartLib
 		{
 			std::vector<M::CEdge*> before_edge = before_edges[i];
 			std::cout << "writing unshortened tunnel loop, size is " << before_edge.size() << "\n";
+			for (int j = 0; j < before_edge.size(); j++)
+			{
+				M::CEdge* edge = before_edge[j];
+				M::CVertex* pV = m_pMesh->edge_vertex(edge, 0);
+				M::CVertex* pW = m_pMesh->edge_vertex(edge, 1);
+				_os << pV->point().print2() << " " << pW->point().print2() << " ";
+
+			}
+			_os << "\n";
+			/*std::vector<M::CEdge*> before_edge = before_edges[i];
+			std::cout << "writing unshortened tunnel loop, size is " << before_edge.size() << "\n";
 			M::CVertex* pV = m_pMesh->edge_vertex(m_handle_gens[i], 0);
 			M::CVertex* pW = m_pMesh->edge_vertex(m_handle_gens[i], 1);
 			_os << pV->point().print2() << " " << pW->point().print2() << " ";
@@ -1925,7 +1938,7 @@ namespace DartLib
 				_os << pV->point().print2() << " " << pW->point().print2() << " ";
 				
 			}
-			_os << "\n";
+			_os << "\n";*/
 		}
 	}
 	void CHandleTunnelLoop::write_shortened_tunnels(const std::string& output)
