@@ -1290,7 +1290,7 @@ namespace DartLib
 							if (v->point().print2() == mypoint.print2())
 							{
 								al = true;
-								if (loop_vertices.size() <= 5)
+								if (loop_vertices.size() <= 6)
 								{
 									on_loop.insert(vindex);
 								}
@@ -1368,6 +1368,8 @@ namespace DartLib
 		std::fstream is3(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
 		//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
 		char buffer3[MAX_LINE];
+		int in_worked = 0;
+		int loop_worked = 0;
 		while (!is3.eof())
 		{
 			is3.getline(buffer3, MAX_LINE);
@@ -1434,6 +1436,14 @@ namespace DartLib
 					{
 						in_loop += 1;
 					}
+					if (inside >= 4)
+					{
+						in_worked += 1;
+					}
+					if (in_loop >= 3)
+					{
+						loop_worked += 1;
+					}
 					//std::cout << "inside is " << inside;
 					if (inside >= 4 || in_loop >= 3 || (inside >= 2 && m_boundary_edges.size() < 100000))
 					{
@@ -1461,6 +1471,7 @@ namespace DartLib
 			}
 		}
 		is3.close();
+		std::cout << "Being inside the CH worked " << in_worked << " while being in the loop worked " << loop_worked << "\n";
 		//std::cout << "there were " << CH_number << " points in the convex hull of this loop\n";
 		std::cout << "filling in the tet gaps\n";
 		bool fill_gaps = true;
