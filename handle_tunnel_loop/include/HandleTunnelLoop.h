@@ -46,7 +46,7 @@ class CHandleTunnelLoop
 	void write_m(const std::string& output);
 	void write_boundary();
 	void write_tunnels(const std::string& output);
-	void write_shortened_tunnels(const std::string& output);
+	void write_tightened_tunnels(const std::string& output);
 	void write_after_obj(const std::string& output);
 	void write_good_after_obj(const std::string& output);
 	void write_before_obj(const std::string& output);
@@ -57,10 +57,10 @@ class CHandleTunnelLoop
     void prune();
 
 	void remove_unconnected();
-	void start_shorten();
-	void start_shorten2();
-	void shorten();
-	void next_shorten_step();
+	void start_tighten();
+	void start_tighten2();
+	void tighten();
+	void next_tighten_step();
 	void go_back();
 	void go_forward();
 
@@ -68,13 +68,13 @@ class CHandleTunnelLoop
 
 	void display_all_before_prune();
 	void display_all_before();
-	void display_all_unshortened();
+	void display_all_untightened();
 	void display_all_middle();
 	void display_all_after();
 	void display_single_loop();
 
 	void display_before(int which);
-	void display_unshortened(int which);
+	void display_untightened(int which);
 	void display_middle(int which);
 	void display_tested(int which);
 	void display_after(int which);
@@ -91,14 +91,14 @@ class CHandleTunnelLoop
 	void display_loop(std::vector<M::CVertex*> l);
 	void display_loop(std::vector<M::CEdge*> l);
 	void add_tunnel(std::string line);
-	void add_shortened_tunnel(std::string line);
+	void add_tightened_tunnel(std::string line);
 	void add_tunnel_old(std::string line);
 
 	int gcd(int a, int b);
 	int lcm(int a, int b);
 
 	void set_name(std::string name);
-	void shorten_demo(int which);
+	void tighten_demo(int which);
 	void find_connected_components();
 
   protected:
@@ -117,15 +117,15 @@ class CHandleTunnelLoop
 	void _mark_loop(std::set<int> hLoop);
 
     bool _shrink_triangles();
-	int _shorten_single();
-	int _shorten_single_final();
-	void _shorten3();
-	void _shorten2();
-	bool _shorten(std::vector<M::CEdge*> ed_loop);
-	bool _shorten();
+	int _tighten_single();
+	int _tighten_single_final();
+	void _tighten3();
+	void _tighten2();
+	bool _tighten(std::vector<M::CEdge*> ed_loop);
+	bool _tighten();
 	bool _delete_triple();
 	double _check_double();
-	bool _shorten_double();
+	bool _tighten_double();
 	double _check_single();
 	bool _fill_gaps(int index);
 	bool _repeats(int index);
@@ -161,10 +161,10 @@ class CHandleTunnelLoop
 
     int m_genus;
 	bool exterior_volume = false;
-	bool trickShorten = false;
+	bool tricktighten = false;
 
 	bool exterior_tunnel = false;
-	bool boundary_shorten = false; // testing
+	bool boundary_tighten = false; // testing
 	bool fastFacePairing = true;
     /* boundary surface */
     std::set<M::CVertex*> m_boundary_vertices;
@@ -206,7 +206,7 @@ class CHandleTunnelLoop
 	std::vector<std::vector<M::CEdge*>> final_edges;
 	std::vector<std::vector<M::CEdge*>> good_final_edges;
 	std::vector<std::vector<M::CEdge*>> before_edges;
-	std::vector<std::vector<M::CEdge*>> unshortened_edges;
+	std::vector<std::vector<M::CEdge*>> untightened_edges;
 	std::vector<std::vector<M::CEdge*>> after_edges;
 	std::vector<std::vector<M::CEdge*>> tested_edges;
 	std::vector<std::vector<M::CVertex*>> tested_vertices;
@@ -245,7 +245,7 @@ class CHandleTunnelLoop
 	bool skip_singles = false;
 
 
-	//variables for shortening in double and single
+	//variables for tightening in double and single
 	
 	double best_improve_o = 0.0;
 	double equal_dist_imp = 0.0;
@@ -289,13 +289,14 @@ class CHandleTunnelLoop
 	std::vector<std::pair<M::CEdge*, std::vector<M::CEdge*>>> unkilled_generated_edge_loops;
 	std::map<M::CEdge*, std::set<int>> edgesPair;
 	std::map<M::CFace*, std::set<int>> facesPair;
+	std::map<M::CEdge*, std::vector<int>> edgesGroup;
 
 	std::unordered_map<std::string, int> pointVertex;
 	std::unordered_map<std::string, int> pointsEdge;
 	bool first_time = true;
 
 	std::unordered_map<M::CVertex*, M::CVertex*> oppositeVertex;
-	int shortening_index = -1;
+	int tightening_index = -1;
 };
 
 template <typename T>

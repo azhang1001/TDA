@@ -80,10 +80,10 @@ namespace DartLib
 			m_boundary_vertices.insert(pV);
 			m_boundary_vertices.insert(pW);
 		}
-		std::cout << "there are  " << m_boundary_vertices.size() << " vertices, " << m_boundary_edges.size() << " edges, and " << m_boundary_faces.size() << " faces\n";
+		std::cout << "there are  " << m_boundary_vertices.size() << " vertices, " << m_boundary_edges.size() << " edges, and " << m_boundary_faces.size() << " faces in the boundary surface.\n";
 		int euler_number = m_boundary_vertices.size() + m_boundary_faces.size() - m_boundary_edges.size();
 		m_genus = (2 - euler_number) / 2;
-		std::cout << "Genus of the Boundary Mesh is " << m_genus << std::endl;
+		std::cout << "Genus of the Boundary Mesh is " << std::max(0, m_genus) << std::endl;
 	}
 
 	/*!
@@ -213,7 +213,7 @@ namespace DartLib
 				}
 				continue;
 			}
-			if (boundary_shorten == false)
+			if (boundary_tighten == false)
 			{
 				for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
 				{
@@ -302,108 +302,35 @@ namespace DartLib
 	*/
 	void CHandleTunnelLoop::boundary_surface_pair()
 	{
-		if (!exterior_volume)
-		{
-			return;
-		}
 		_pair(m_boundary_vertices);
 		_pair(m_boundary_edges);
 		_pair(m_boundary_faces);
-		
-		std::cout << "After Pairing the boundary surface: " << std::endl;
 		for (auto eiter = m_boundary_edges.begin(); eiter != m_boundary_edges.end(); eiter++)
 		{
 			M::CEdge* pE = *eiter;
+			// these are generator edges that have not been killed by a face
 			if (pE->generator() && pE->pair() == NULL)
 			{
-				//std::cout << "Generator Edge that has not been killed " << pE->idx() << std::endl;
 				m_generators.insert(pE);
-				for (auto generator_loop : generated_edge_loops)
-				{
-					if (generator_loop.first == pE)
-					{
-						for (auto pE2 : m_boundary_edges)
-						{
-							pE2->sharp() = false;
-							pE2->green() = false;
-						}
-						for (auto pE2 : m_inner_edges)
-						{
-							pE2->sharp() = false;
-							pE2->green() = false;
-						}
-						loop_edges.clear();
-						for (M::CEdge* edg : generator_loop.second)
-						{
-							if (std::find(loop_edges.begin(), loop_edges.end(), edg) == loop_edges.end())
-							{
-								loop_edges.push_back(edg);
-								edg->sharp() = true;
-							}
-						}
-						//std::cout << "pruning\n";
-						//prune();
-						unkilled_generated_edge_loops.push_back({ pE, loop_edges});
-						break;
-					}
-				}
+				// find the loops that the edge generated
 				_mark_loop(pE);
 			}
 		}
-		/*for (auto eiter = m_boundary_edges.begin(); eiter != m_boundary_edges.end(); eiter++)
-		{
-			M::CEdge* pE = *eiter;
-			if (pE->generator() && pE->pair() == NULL)
-			{
-				std::cout << "Generator Edge " << pE->idx() << std::endl;
-				//_mark_loop(pE);
-			}
-			else if (pE->generator() && pE->pair() != NULL)
-			{
-				// generator that has been killed
-				std::cout << "Handle Loop Edge " << pE->idx() << std::endl;
-				//_mark_loop(pE);
-				//pE->sharp() = true;
-			}
-			else
-			{
-				std::cout << "this is not a generator\n";
-			}
-		}*/
 
 	}
 
-	/*!
-	 * pair vertices
-	 */
 	void CHandleTunnelLoop::_pair(std::set<M::CVertex*>& vertices)
 	{
-		//insert your code here
 		for (auto viter = vertices.begin(); viter != vertices.end(); viter++)
 		{
 			M::CVertex* pV = *viter;
-			//label the generators (all vertices are generators)
 			pV->generator() = true;
-
 		}
 	};
-	// =========================================== SMALL IMPROVEMENT: MOVE PAIR VERTEX TO BEGINNING ===============================================
-	/*!
-	 *	pair edges;
-	 */
+
+
 	void CHandleTunnelLoop::_pair(std::set<M::CEdge*>& edges)
 	{
-		std::cout << "we started with " << edges.size() << " edges\n";
-		int generator_edges = 0;
-		int killer_edges = 0;
-		std::cout << "starting edge pairing";
-		double assign = 0;
-		double add_pairing = 0;
-		double head_pairing = 0;
-		int largest_number = 0;
-		int largest_edges_used = 0;
-		int edges_used = 0;
-		int counting = 0;
 		std::vector<int> edges_indices_list;
 		for (auto eiter = edges.begin(); eiter != edges.end(); eiter++)
 		{
@@ -414,19 +341,6 @@ namespace DartLib
 		for (int edge_index : edges_indices_list)
 		{
 			M::CEdge* pE = idx_edges[edge_index];
-			//std::cout << edge_index << " ";
-			std::set<M::CEdge*> generated_loop;
-			counting += 1;
-			if (counting % 1000 == 0)
-			{
-				std::cout << ".";
-			}
-			generated_loop.insert(pE);
-			if (edges_used > largest_edges_used)
-			{
-				largest_edges_used = edges_used;
-			}
-			edges_used = 0;
 			int number = 0;
 			inSet.clear();
 			M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
@@ -438,11 +352,6 @@ namespace DartLib
 			pV = idx_verts[*inSet.rbegin()];
 			while (number > 0 && pV->pair() != NULL)
 			{
-				edges_used += 1;
-				if (number > largest_number)
-				{
-					largest_number = number;
-				}
 				M::CEdge* pE2 = pV->pair();
 				for (int vert : edgesPair[pE2])
 				{
@@ -457,38 +366,6 @@ namespace DartLib
 						number += 1;
 					}
 				}
-				if (generated_loop.find(pE2) != generated_loop.end())
-				{
-					generated_loop.erase(pE2);
-				}
-				else
-				{
-					generated_loop.insert(pE2);
-				}
-				/*
-				M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
-				M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
-
-				if (inSet.find(pV2->idx()) != inSet.end())
-				{
-					inSet.erase(pV2->idx());
-					number -= 1;
-				}
-				else
-				{
-					inSet.insert(pV2->idx());
-					number += 1;
-				}
-				if (inSet.find(pW2->idx()) != inSet.end())
-				{
-					inSet.erase(pW2->idx());
-					number -= 1;
-				}
-				else
-				{
-					inSet.insert(pW2->idx());
-					number += 1;
-				}*/
 				if (*inSet.rbegin())
 				{
 					pV = idx_verts[*inSet.rbegin()];
@@ -496,66 +373,37 @@ namespace DartLib
 			}
 			if (number > 0)
 			{
-				killer_edges += 1;
 				pV->pair() = pE;
-				// insert what pE kills;
 				edgesPair.insert({ pE, inSet });
 				pE->generator() = false;
 			}
 			else
 			{
-				if (number < 0)
-				{
-					std::cout << "number is less than zero???\n";
-				}
-				if (number != inSet.size())
-				{
-					std::cout << "they are a different size, for whatever reason.\n";
-				}
-				generator_edges += 1;
 				pE->generator() = true;
-				generated_edge_loops.push_back({ pE, generated_loop });
 			}
+			
 
 		}
-		std::cout << "\nfinished with edges, there are " << killer_edges << " killers and " << generator_edges << " generator edges.\n";
-
 	};
 
-	/*!
-	 *	pair faces
-	 */
 	void CHandleTunnelLoop::_pair(std::set<M::CFace*>& faces)
 	{
-		std::cout << "we started with " << faces.size() << " faces\n";
-		int killer_faces = 0;
-		int generator_faces = 0;
-		double assign = 0;
-		double add_time = 0;
-		double head_time = 0;
-		int counting = 0;
 		std::vector<int> faces_indices_list;
 		for (auto fiter = faces.begin(); fiter != faces.end(); fiter++)
 		{
 			M::CFace* pF = *fiter;
 			faces_indices_list.push_back(pF->idx());
 		}
-		
 		std::sort(faces_indices_list.begin(), faces_indices_list.end());
+		// pair each face in order of their index, to simulate adding one face into the simplicial complex at a time
 		for (int face_index : faces_indices_list)
 		{
 			M::CFace* pF = idx_faces[face_index];
-			counting += 1;
-			if (counting % 10000 == 0)
-			{
-				std::cout << "-";
-			}
 			
 			int number = 0;
 			int gnumber = 0;
 			inSet.clear();
 			inSetGens.clear();
-			//Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
 			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
 			{
 				M::CEdge* pEd = *feiter;
@@ -567,97 +415,38 @@ namespace DartLib
 					gnumber += 1;
 				}
 			}
-
-			//std::cout << "We started with " <<  number << " " << gnumber << "\n";
-			if (gnumber == 0)
-			{
-				std::cout << "oh no! gnumber is 0!\n";
-			}
-		
 			M::CEdge* pE = idx_edges[*inSetGens.rbegin()];
 			std::set<int> first_boundary_only;
 			bool found = false;
 			while(number > 0 && pE != NULL && pE->pair() != NULL)
 			{
 				M::CFace* pF2 = pE->pair();
-				if (false/*std::find(killer_faces_list.begin(), killer_faces_list.end(), pF2) != killer_faces_list.end()*/)
+				for (int edge1 : facesPair[pF2])
 				{
-					inSet.erase(pE->idx());
-				}
-				else
-				{
-					for (int edge1 : facesPair[pF2])
+					if (inSet.find(edge1) != inSet.end())
 					{
-						if (inSet.find(edge1) != inSet.end())
-						{
-							inSet.erase(edge1);
-							number -= 1;
-						}
-						else
-						{
-							inSet.insert(edge1);
-							number += 1;
-						}
-						if (idx_edges[edge1]->generator())
-						{
-							if (inSetGens.find(edge1) != inSetGens.end())
-							{
-								inSetGens.erase(edge1);
-								gnumber -= 1;
-							}
-							else
-							{
-								inSetGens.insert(edge1);
-								gnumber += 1;
-							}
-						}
-					}
-				}
-				/*for (M::FaceEdgeIterator feiter2(pF2); !feiter2.end(); ++feiter2)
-				{
-					M::CEdge* pE2 = *feiter2;
-
-					if (inSet.find(pE2->idx()) != inSet.end())
-					{
-						inSet.erase(pE2->idx());
+						inSet.erase(edge1);
 						number -= 1;
 					}
 					else
 					{
-						inSet.insert(pE2->idx());
+						inSet.insert(edge1);
 						number += 1;
 					}
-					if (pE2->generator())
+					if (idx_edges[edge1]->generator())
 					{
-						if (inSetGens.find(pE2->idx()) != inSetGens.end())
+						if (inSetGens.find(edge1) != inSetGens.end())
 						{
-							inSetGens.erase(pE2->idx());
+							inSetGens.erase(edge1);
 							gnumber -= 1;
 						}
 						else
 						{
-							inSetGens.insert(pE2->idx());
+							inSetGens.insert(edge1);
 							gnumber += 1;
 						}
 					}
-				}*/
-				/*bool boundary_only = true;
-				if (found == false)
-				{
-					for (int edgeIn : inSet)
-					{
-						if (edgeIn > m_boundary_edges.size())
-						{
-							boundary_only = false;
-							break;
-						}
-					}
 				}
-				if (boundary_only)
-				{
-					first_boundary_only = inSet;
-					found = true;
-				}*/
 
 				if (gnumber > 0)
 				{
@@ -672,117 +461,15 @@ namespace DartLib
 			}
 			if (number > 0)
 			{
-				killer_faces += 1;
 				pE->pair() = pF;
-				pairing_information.push_back({ pE, pF });
-				pairing_loop.push_back(inSet);
 				pF->generator() = false;
 				facesPair.insert({ pF, inSet });
-				if (fastFacePairing)
-				{
-					if (m_generators.size() != 0)
-					{
-						if (std::find(m_generators.begin(), m_generators.end(), pE) != m_generators.end())
-						{
-							paired_generators += 1;
-							m_handle_gens.push_back(pE);
-							std::cout << "|";
-							handle_loop_edges.push_back(/*first_boundary_only*/inSet);
-							killer_faces_list.push_back(pF);
-							if (paired_generators == m_genus)
-							{
-								std::cout << "ended quicker!\n";
-								return;
-							}
-						}
-
-					}
-				}
-				
 			}
 			else
 			{
-				generator_faces += 1;
 				pF->generator() = true;
-				if (!fastFacePairing)
-				{
-					if (m_generators.size() != 0)
-					{
-						if (std::find(m_generators.begin(), m_generators.end(), pE) != m_generators.end())
-						{
-							paired_generators += 1;
-
-							if (paired_generators == m_genus)
-							{
-								std::cout << "ended quicker2!\n";
-								return;
-							}
-						}
-
-					}
-				}
 			}
 		}
-		std::cout << "finished, there are " << killer_faces << " killers and " << generator_faces << " generator faces.\n";
-		std::cout << "time taken to add edges was " << add_time << " seconds while head time was " << head_time << " seconds."
-			<< "time taken to assign boolean to false was " << assign <<  " seconds \n";
-		/*
-		int numb = 0;
-		for (auto fiter = faces.begin(); fiter != faces.end(); fiter++)
-		{
-			M::CFace* pF = *fiter;
-			numb += 1;
-			if (numb % 1000 == 0)
-			{
-				std::cout << "-";
-			}
-
-			Cycle<M::CEdge, Compare<M::CEdge>> ecycle;
-
-			for (M::FaceEdgeIterator feiter(pF); !feiter.end(); ++feiter)
-			{
-				M::CEdge* pE = *feiter;
-				ecycle.add(pE);
-			}
-
-			M::CEdge* phead = ecycle.head();
-			while (!ecycle.empty() && phead->pair() != NULL)
-			{
-				M::CFace* _pF = phead->pair();
-				// ecycle.print();
-				for (M::FaceEdgeIterator feiter(_pF); !feiter.end(); ++feiter)
-				{
-					M::CEdge* pE = *feiter;
-					ecycle.add(pE);
-				}
-				phead = ecycle.head();
-			}
-
-			if (!ecycle.empty())
-			{
-				// pe is a killer
-				pF->generator() = false;
-				phead->pair() = pF;
-
-				if (m_generators.size() != m_genus * 2)
-					continue;
-				if (m_generators.find(phead) == m_generators.end())
-					continue;
-				int paired_generators = 0;
-				for (auto eiter = m_generators.begin(); eiter != m_generators.end(); eiter++)
-				{
-					M::CEdge* pE = *eiter;
-					if (pE->pair() != NULL)
-						paired_generators++;
-				}
-				if (paired_generators == m_genus)
-					return;
-			}
-			else
-			{
-				pF->generator() = true;
-			}
-		}*/
 	};
 
 	/*!
@@ -946,17 +633,6 @@ namespace DartLib
 			}
 		}*/
 
-
-
-
-
-
-
-
-
-
-
-		std::cout << "There are " << section.size() << " faces" << std::endl;
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
@@ -1013,8 +689,8 @@ namespace DartLib
 		}
 		before_edges.push_back(loop_edges);
 		
-		std::cout << "begining shortening.\n";
-		shorten();
+		std::cout << "begining tightening.\n";
+		tighten();
 	};
 
 	void CHandleTunnelLoop::_mark_loop(std::set<int> hLoop)
@@ -1033,15 +709,15 @@ namespace DartLib
 		}
 		prune();
 		before_edges.push_back(loop_edges);
-		//return; //comment this out to get the shortened.
+		//return; //comment this out to get the tightened.
 		for (auto pE : m_boundary_edges)
 		{
 			pE->sharp() = false;
 		}
 		
 
-		std::cout << "begining shortening.\n";
-		//shorten();
+		std::cout << "begining tightening.\n";
+		//tighten();
 	}
 	void CHandleTunnelLoop::_mark_loop(M::CEdge* pE)
 	{
@@ -1054,6 +730,11 @@ namespace DartLib
 			pE->sharp() = false;
 		}
 		std::vector<M::CEdge*> one_loop;
+		std::vector<int> group = edgesGroup[pE];
+		for (int i : group)
+		{
+			pE = idx_edges[i];
+		}
 		one_loop.push_back(pE);
 		loop_edges.clear();
 		loop_vertices.clear();
@@ -1061,21 +742,19 @@ namespace DartLib
 		pE->sharp() = true;
 		inSet.clear();
 		int number = 0;
-		//Cycle<M::CVertex, Compare<M::CVertex>> vcycle;
-		//start from youngest positive vertex (all vertices are positive)
 		M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
 		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
 		number += 2;
 		inSet.insert(pV->idx());
 		inSet.insert(pW->idx());
 		pV = idx_verts[*inSet.rbegin()];
+		int count = 0;
 		while (number > 0 && pV->pair())
 		{
 			M::CEdge* pE2 = pV->pair();
 			one_loop.push_back(pE2);
 			loop_edges.push_back(pE2);
 			pE2->sharp() = true;
-
 			M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
 			M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
 			if (inSet.find(pV2->idx()) != inSet.end())
@@ -1103,47 +782,7 @@ namespace DartLib
 				pV = idx_verts[*inSet.rbegin()];
 			}
 		}
-		if (number > 0)
-		{
-			std::cout << "this is wrong, the edge should be a generator.\n";
-		}
-		/*pE->sharp() = true;
-		loop_edges.clear();
-		loop_vertices.clear();
-		loop_edges.push_back(pE);
-		Cycle<M::CVertex, Compare<M::CVertex>> vcycle;
-		//start from youngest positive vertex (all vertices are positive)
-		M::CVertex* pV = m_pMesh->edge_vertex(pE, 0);
-		M::CVertex* pW = m_pMesh->edge_vertex(pE, 1);
-		vcycle.add(pV); //vcycle.add(pV, in);
-		vcycle.add(pW); //vcycle.add(pW, in);
-		pV = vcycle.head();
-		while (!vcycle.empty() && pV->pair())
-		{
-			M::CEdge* pE2 = pV->pair();
-			pE2->sharp() = true;
-			one_loop.push_back(pE2);
-			loop_edges.push_back(pE2);
-			M::CVertex* pV2 = m_pMesh->edge_vertex(pE2, 0);
-			vcycle.add(pV2);
-			M::CVertex* pW2 = m_pMesh->edge_vertex(pE2, 1);
-			vcycle.add(pW2);
-			pV = vcycle.head();
-		
-		}
-		if (!vcycle.empty())
-		{
-			std::cout << "this shouldn't be happening\n";
-			vcycle.print();
-			pV->pair() = pE;
-		}
-		else
-		{
-			std::cout << "this is right\n";
-			pE->generator() = true;
-		}*/
 		before_prune_edges.push_back(one_loop);
-		std::cout << "====================== started with " << loop_edges.size() << " edges =================\n";
 		prune();
 		std::vector<M::CEdge*> old_cycle;
 		for (auto pE : loop_edges)
@@ -1152,8 +791,8 @@ namespace DartLib
 			pE->sharp() = false;
 
 		}
+		// add the loop to the list of handle and tunnel loops that have not been tightened
 		before_edges.push_back(old_cycle);
-		//shorten();
 	};
 
 
@@ -1162,516 +801,9 @@ namespace DartLib
 		exterior_volume = true;
 
 		exterior_tunnel = true;
-		boundary_shorten = true;
+		boundary_tighten = true;
 	}
-	void CHandleTunnelLoop::write_tets(const std::string& output)
-	{
-		std::cout << "starting to write the tetrahedra\n";
-		std::vector<std::set<int>> allowed_sets;
-		std::vector<CPoint> center_of_masss;
-		std::vector<std::vector<CPoint>> loop_vertices_scaleds;
-		std::map<int, std::vector<std::vector<int>>> vert_tets;
-		std::vector<std::vector<int>> new_tets2;
-		std::map<int, bool> vertex_used;
-		std::map<int, bool> bound_point;
-		std::set<int> used_vertices_list;
-		std::vector<double> average_distances;
-		std::vector<double> largest_distances;
-		double scale_factor = 1;
-		if (m_boundary_edges.size() < 100000)
-		{
-			std::cout << "we turned the scale factor to 1.5\n";
-			scale_factor = 1.5;
-		}
-		for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
-		{
-
-			loop_vertices = good_final_vertices[good_final_index];
-			center_of_mass[0] = 0.0;
-			center_of_mass[1] = 0.0;
-			center_of_mass[2] = 0.0;
-			for (M::CVertex* vertex : loop_vertices)
-			{
-				center_of_mass += vertex->point();
-			}
-			center_of_mass = center_of_mass / double(loop_vertices.size());
-			center_of_masss.push_back(center_of_mass);
-			std::vector<CPoint> loop_vertices_scaled;
-			for (M::CVertex* vertex : loop_vertices)
-			{
-				CPoint scaled_point = center_of_mass + (vertex->point() - center_of_mass) * scale_factor;
-				loop_vertices_scaled.push_back(scaled_point);
-			}
-			loop_vertices_scaleds.push_back(loop_vertices_scaled);
-			double distance;
-			double average_distance = 0;
-			double largest_distance = 0;
-			for (M::CVertex* v : loop_vertices)
-			{
-				distance = (v->point() - center_of_mass).norm();
-				average_distance += distance;
-				if (distance > largest_distance)
-				{
-					largest_distance = distance;
-				}
-
-			}
-			average_distance /= loop_vertices.size();
-			average_distances.push_back(average_distance);
-			largest_distances.push_back(largest_distance);
-			double actual_average = average_distance;
-		}
-		std::cout << "computed the scaled loops\n";
-		//loop through tets in _O, add to _2_I
-		std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
-		//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
-		char buffer[MAX_LINE];
-
-		verts_O.clear();
-		std::map<int, bool> allowed;
-
-
-
-		std::map<std::string, bool> int_used;
-			
-		for (M::CVertex* bV : m_boundary_vertices)
-		{
-			int_used[bV->point().print2()] = true;
-		}
-			
-		int CH_number = 0;
-		std::set<int> allowed_set;
-		std::set<int> on_loop;
-		std::cout << "there were " << good_final_vertices.size() << " loops\n";
-		while (!is.eof())
-		{
-			is.getline(buffer, MAX_LINE);
-			std::string line(buffer);
-			line = strutil::trim(line);
-			strutil::Tokenizer stokenizer(line, " \r\n");
-
-			stokenizer.nextToken();
-			std::string token = stokenizer.getToken();
-			
-			if (token == "Vertex")
-			{
-				stokenizer.nextToken();
-				int vindex = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				double p1 = std::stod(stokenizer.getToken());
-				stokenizer.nextToken();
-				double p2 = std::stod(stokenizer.getToken());
-				stokenizer.nextToken();
-				double p3 = std::stod(stokenizer.getToken());
-				CPoint mypoint(p1, p2, p3);
-				vertex_used[vindex] = false;
-				bool al = false;
-				if (int_used[mypoint.print2()])
-				{
-					//std::cout << "this is true\n";
-					bound_point[vindex] = true;
-				}
-				verts_O.insert({ vindex, mypoint });
-				std::vector<std::vector<int>> emp;
-				vert_tets[vindex] = emp;
-				// convex hull idea
-				for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
-				{
-					center_of_mass = center_of_masss[good_final_index];
-					std::vector<CPoint> loop_vertices_scaled = loop_vertices_scaleds[good_final_index];
-					loop_vertices = good_final_vertices[good_final_index];
-					double largest_distance = largest_distances[good_final_index];
-					double average_distance = average_distances[good_final_index];
-					if ((mypoint - center_of_mass).norm() < largest_distance * 1.5)
-					{
-						std::vector<CPoint> vectors_list;
-						for (M::CVertex* v : loop_vertices)
-						{
-							if (v->point().print2() == mypoint.print2())
-							{
-								al = true;
-								if (loop_vertices.size() <= 6)
-								{
-									on_loop.insert(vindex);
-								}
-								break;
-							}
-						}
-						for (CPoint v : loop_vertices_scaled)
-						{
-							vectors_list.push_back((v - mypoint) / (v - mypoint).norm());
-						}
-						if (al == false)
-						{
-							al = true;
-							CH_number += 1;
-							bool finish = false;
-							for (int i = 0; i < vectors_list.size(); i++)
-							{
-								if (finish)
-								{
-									break;
-								}
-								for (int j = i + 1; j < vectors_list.size(); j++)
-								{
-									if (finish)
-									{
-										break;
-									}
-									for (double sign : {-1.0, 1.0})
-									{
-										CPoint CrPr = (vectors_list[i] ^ vectors_list[j]) / (vectors_list[i] ^ vectors_list[j]).norm() * sign;
-										bool same_hemi = true;
-										for (int k = 0; k < vectors_list.size(); k++)
-										{
-											if (k == i || k == j)
-											{
-												continue;
-											}
-											double theta = acos(vectors_list[k] * CrPr) * 180.0 / 3.1415926;
-											if (theta >= 90.0) // lower the number to allow more points
-											{
-												same_hemi = false;
-												break;
-											}
-										}
-										if (same_hemi)
-										{
-											al = false;
-											CH_number -= 1;
-											finish = true;
-
-											break;
-										}
-									}
-								}
-							}
-						}
-					}
-					if (al == true)
-					{
-						allowed_set.insert(vindex);
-						break;
-					}
-					//allowed.insert({ vindex, al });
-				}
-			}
-			if (token == "Tet")
-			{
-				allowed_sets.push_back(allowed_set);
-				break;
-			}
-
-		}
-		is.close();
-		std::cout << "starting to find all the tets\n";
-		std::fstream is3(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
-		//std::cout << "the exterior file is named " << file_name.substr(0, file_name.size() - 6) + "_O.t\n";
-		char buffer3[MAX_LINE];
-		int in_worked = 0;
-		int loop_worked = 0;
-		while (!is3.eof())
-		{
-			is3.getline(buffer3, MAX_LINE);
-			std::string line(buffer3);
-			line = strutil::trim(line);
-			strutil::Tokenizer stokenizer(line, " \r\n");
-
-			stokenizer.nextToken();
-			std::string token = stokenizer.getToken();
-			//std::cout << "a\n";
-			if (token == "Tet")
-			{
-				stokenizer.nextToken();
-				int tindex = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v1 = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v2 = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v3 = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v4 = std::stoi(stokenizer.getToken());
-				vert_tets[v1].push_back({ v1,v2,v3,v4 });
-				vert_tets[v2].push_back({ v1,v2,v3,v4 });
-				vert_tets[v3].push_back({ v1,v2,v3,v4 });
-				vert_tets[v4].push_back({ v1,v2,v3,v4 });
-				for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
-				{
-					//std::cout << good_final_index;
-					//std::set<int> allowed_set = allowed_sets[good_final_index];
-					loop_vertices = good_final_vertices[good_final_index];
-
-					int inside = 0;
-					int in_loop = 0;
-					if (allowed_set.find(v1) != allowed_set.end())
-					{
-						inside += 1;
-					}
-					if (allowed_set.find(v2) != allowed_set.end())
-					{
-						inside += 1;
-					}
-					if (allowed_set.find(v3) != allowed_set.end())
-					{
-						inside += 1;
-					}
-					if (allowed_set.find(v4) != allowed_set.end())
-					{
-						inside += 1;
-					}
-					if (on_loop.find(v1) != on_loop.end())
-					{
-						in_loop += 1;
-					}
-					if (on_loop.find(v2) != on_loop.end())
-					{
-						in_loop += 1;
-					}
-					if (on_loop.find(v3) != on_loop.end())
-					{
-						in_loop += 1;
-					}
-					if (on_loop.find(v4) != on_loop.end())
-					{
-						in_loop += 1;
-					}
-					if (inside >= 4)
-					{
-						in_worked += 1;
-					}
-					if (in_loop >= 3)
-					{
-						loop_worked += 1;
-					}
-					//std::cout << "inside is " << inside;
-					if (inside >= 4 || in_loop >= 3 || (inside >= 2 && m_boundary_edges.size() < 100000))
-					{
-						std::vector<int> new_tet;
-						new_tet.push_back(v1);
-						new_tet.push_back(v2);
-						new_tet.push_back(v3);
-						new_tet.push_back(v4);
-						new_tets2.push_back(new_tet);
-						vertex_used[v1] = true;
-						vertex_used[v2] = true;
-						vertex_used[v3] = true;
-						vertex_used[v4] = true;
-						used_vertices_list.insert(v1);
-						used_vertices_list.insert(v2);
-						used_vertices_list.insert(v3);
-						used_vertices_list.insert(v4);
-						//std::cout << "found a correct tet!\n";
-						break;
-
-					}
-					
-				}
-				all_tets.push_back({ v1, v2, v3, v4 });
-			}
-		}
-		is3.close();
-		std::cout << "Being inside the CH worked " << in_worked << " while being in the loop worked " << loop_worked << "\n";
-		//std::cout << "there were " << CH_number << " points in the convex hull of this loop\n";
-		std::cout << "filling in the tet gaps\n";
-		bool fill_gaps = true;
-		if (fill_gaps)
-		{
-			for (int vert : used_vertices_list) // use a map from point to tet, only check tets that touch a point that was used.
-			{
-				for (auto tet : vert_tets[vert])
-				{
-					int num_used = 0;
-					int bound_points = 0;
-					for (int i : tet)
-					{
-						if (bound_point[i])
-						{
-							bound_points += 1;
-						}
-						if (vertex_used[i])
-						{
-							num_used += 1;
-						}
-					}
-					if (num_used == 4)
-					{
-
-						std::vector<int> new_tet;
-						for (int vi : tet)
-						{
-							new_tet.push_back(vi);
-						}
-						if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
-						{
-							//std::cout << "filled one in\n";
-							new_tets2.push_back(new_tet);
-						}
-					}
-					else if (num_used >= 2 && bound_points + num_used >= 4)
-					{
-						std::vector<int> new_tet;
-						for (int vi : tet)
-						{
-							new_tet.push_back(vi);
-						}
-						if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
-						{
-							//std::cout << "fixed a gap with the boundary\n";
-							for (int vi : tet)
-							{
-								vertex_used[vi] = true;
-								//used_vertices_list.insert(vi);
-							}
-							new_tets2.push_back(new_tet);
-						}
-					}
-				}
-			}
-
-			std::cout << "there were " << new_tets2.size() << " new tets to be added\n";
-			if (new_tets2.size() < 10000000000)// automatically true now // lower after testing is done
-			{
-				for (auto te : new_tets2)
-				{
-					new_tets.push_back(te);
-				}
-			}
-			else
-			{
-				std::cout << "we didn't add the new tets of this component, because there were " << new_tets2.size() << " tets\n";
-			}
-			//new_tets2.clear();
-
-		}
-
-		// go through all tets one more time
-		std::cout << "in total, we had " << new_tets.size() << " new tets in this loop\n";
-
-		std::cout << "beginning to add the tets\n";
-		
-
-		std::fstream is2(output, std::fstream::in);
-		char buffer2[MAX_LINE];
-		old_tets.clear();
-		std::unordered_map<std::string, int> verts_I;
-		int tet_index = 0;
-		int vert_index = 0;
-		std::vector<std::string> vertex_lines;
-		std::vector<std::string> tet_lines;
-		std::vector<std::vector<int>> already_in;
-		while (!is2.eof())
-		{
-			is2.getline(buffer2, MAX_LINE);
-			std::string line(buffer2);
-			line = strutil::trim(line);
-			strutil::Tokenizer stokenizer(line, " \r\n");
-
-			stokenizer.nextToken();
-			std::string token = stokenizer.getToken();
-
-			if (token == "Vertex")
-			{
-				stokenizer.nextToken();
-				int vindex = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				double p1 = std::stod(stokenizer.getToken());
-				stokenizer.nextToken();
-				double p2 = std::stod(stokenizer.getToken());
-				stokenizer.nextToken();
-				double p3 = std::stod(stokenizer.getToken());
-				CPoint mypoint(p1, p2, p3);
-				verts_I.insert({ mypoint.print2(), vindex });
-				vert_index += 1;
-				vertex_lines.push_back(line);
-			}
-			else if (token == "Tet")
-			{
-				stokenizer.nextToken();
-				int tindex = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v1 = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v2 = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v3 = std::stoi(stokenizer.getToken());
-				stokenizer.nextToken();
-				int v4 = std::stoi(stokenizer.getToken());
-				std::vector<int> numbers;
-				numbers.push_back(v1);
-				numbers.push_back(v2);
-				numbers.push_back(v3);
-				numbers.push_back(v4);
-				std::sort(numbers.begin(), numbers.end());
-				already_in.push_back(numbers);
-				tet_index += 1;
-				tet_lines.push_back(line);
-			}
-		}
-
-		//new_tets.clear(); // to generate the pre-surgery mesh.
-		is2.close();
-		std::fstream _os(output, std::fstream::out);
-
-		if (_os.fail())
-		{
-			fprintf(stderr, "Error is opening file %s\n", output);
-			return;
-		}
-		std::cout << "beginning to write the new verts and tets\n";
-		for (std::string line : vertex_lines)
-		{
-			_os << line << "\n";
-		}
-		for (auto new_tet : new_tets)
-		{
-			for (int vert : new_tet)
-			{
-				CPoint point = verts_O[vert];
-				if (verts_I.find(point.print2()) == verts_I.end())
-				{
-					vert_index++;
-					verts_I.insert({ point.print2(), vert_index });
-					_os << "Vertex " << vert_index << " " << point[0] << " " << point[1] << " " << point[2] << "\n";
-				}
-			}
-
-		}
-		for (std::string line : tet_lines)
-		{
-			_os << line << "\n";
-		}
-
-		for (auto new_tet : new_tets)
-		{
-			std::vector<int> numbers;
-			for (int vert : new_tet)
-			{
-				CPoint point = verts_O[vert];
-				numbers.push_back(verts_I[point.print2()]);
-			}
-			std::sort(numbers.begin(), numbers.end());
-			if (std::find(already_in.begin(), already_in.end(), numbers) == already_in.end())
-			{
-				already_in.push_back(numbers);
-				tet_index += 1;
-				_os << "Tet " << tet_index;
-				for (int vert : new_tet)
-				{
-					CPoint point = verts_O[vert];
-					_os << " " << verts_I[point.print2()];
-				}
-				_os << "\n";
-			}
-			else
-			{
-				//std::cout << "we tried to add a tet that was already in there!--------------------~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~======================\n";
-			}
-
-		}
-
-		_os.close();
-	}
+	
 	void CHandleTunnelLoop::write_m(const std::string& output)
 	{
 		std::fstream _os(output, std::fstream::out);
@@ -1825,7 +957,7 @@ namespace DartLib
 		middle_edges.push_back(middle_edge);
 		return;
 	}
-	void CHandleTunnelLoop::add_shortened_tunnel(std::string line)
+	void CHandleTunnelLoop::add_tightened_tunnel(std::string line)
 	{
 		int count = 0;
 		std::istringstream iss(line);
@@ -1841,21 +973,13 @@ namespace DartLib
 			iss >> v3;
 			CPoint hU(u1, u2, u3);
 			CPoint hV(v1, v2, v3);
-			if (idx_edges[pointsEdge[hU.print() + hV.print()]] == NULL)
-			{
-				std::cout << "this one was null\n";
-				//return;
-			}
-			else
+			if (idx_edges[pointsEdge[hU.print() + hV.print()]] != NULL)
 			{
 				middle_edge.push_back(idx_edges[pointsEdge[hU.print() + hV.print()]]);
 				count += 1;
-				//std::cout << "edge number " << count << " is " << idx_edges[pointsEdge[hV.print() + hW.print()]] << "\n";
-
 			}
 		}
 		after_edges.push_back(middle_edge);
-		std::cout << "we added the edge_loop\n";
 		return;
 	}
 	void CHandleTunnelLoop::add_tunnel(std::string line)
@@ -1889,7 +1013,6 @@ namespace DartLib
 			}
 		}
 		middle_edges.push_back(middle_edge);
-		std::cout << "we added the edge_loop\n";
 		return;
 	}
 	void CHandleTunnelLoop::write_tunnels(const std::string& output)
@@ -1922,7 +1045,6 @@ namespace DartLib
 		for (int i : traversal_order)
 		{
 			std::vector<M::CEdge*> before_edge = before_edges[i];
-			std::cout << "writing unshortened tunnel loop, size is " << before_edge.size() << "\n";
 			for (int j = 0; j < before_edge.size(); j++)
 			{
 				M::CEdge* edge = before_edge[j];
@@ -1933,7 +1055,7 @@ namespace DartLib
 			}
 			_os << "\n";
 			/*std::vector<M::CEdge*> before_edge = before_edges[i];
-			std::cout << "writing unshortened tunnel loop, size is " << before_edge.size() << "\n";
+			std::cout << "writing untightened tunnel loop, size is " << before_edge.size() << "\n";
 			M::CVertex* pV = m_pMesh->edge_vertex(m_handle_gens[i], 0);
 			M::CVertex* pW = m_pMesh->edge_vertex(m_handle_gens[i], 1);
 			_os << pV->point().print2() << " " << pW->point().print2() << " ";
@@ -1952,7 +1074,7 @@ namespace DartLib
 			_os << "\n";*/
 		}
 	}
-	void CHandleTunnelLoop::write_shortened_tunnels(const std::string& output)
+	void CHandleTunnelLoop::write_tightened_tunnels(const std::string& output)
 	{
 	
 		if (first_time == true)
@@ -2351,7 +1473,7 @@ namespace DartLib
 
 
 
-	void CHandleTunnelLoop::_shorten3()
+	void CHandleTunnelLoop::_tighten3()
 	{
 		/*std::vector<M::CVertex*> old_loop_vertices = loop_vertices;
 		int start_vertices = 3 * loop_vertices.size() / 4 + 1;
@@ -2858,7 +1980,7 @@ namespace DartLib
 
 
 	}
-	void CHandleTunnelLoop::_shorten2()
+	void CHandleTunnelLoop::_tighten2()
 	{
 		bool printS = false;
 		single_to_double.clear();
@@ -3083,19 +2205,19 @@ namespace DartLib
 				std::cout << "done right";
 				break;
 				std::cout << "we were here--------------------------------------------------------------------------------------------------------------------\n";
-				// TRY SHORTENING ALL THE DOUBLES, AND TRY AGAIN.
+				// TRY tightenING ALL THE DOUBLES, AND TRY AGAIN.
 				// FAIL TWICE = EXIT!
-				// first try to use a double to shorten the loop, if that doesn't work, then break;
+				// first try to use a double to tighten the loop, if that doesn't work, then break;
 				std::cout << "gave it some help! THIS SERVES AS A JUMP START\n";
 				single_to_double.clear();
 				double_to_single.clear();
 				failed_previously = true;
-				bool go_on = _shorten_double();
-				// shorten all the doubles
+				bool go_on = _tighten_double();
+				// tighten all the doubles
 				/*while (go_on)
 				{
-					go_on = _shorten_double();
-					std::cout << "shortened the loop as needed.||";
+					go_on = _tighten_double();
+					std::cout << "tightened the loop as needed.||";
 				}*/
 				/*
 				continue;
@@ -3542,7 +2664,7 @@ namespace DartLib
 			}
 		}
 	}
-	void CHandleTunnelLoop::display_all_unshortened()
+	void CHandleTunnelLoop::display_all_untightened()
 	{
 		for (auto pE : m_boundary_edges)
 		{
@@ -3552,7 +2674,7 @@ namespace DartLib
 		{
 			pE->sharp() = false;
 		}
-		for (auto f_edges : unshortened_edges)
+		for (auto f_edges : untightened_edges)
 		{
 			for (auto pE : f_edges)
 			{
@@ -3570,10 +2692,8 @@ namespace DartLib
 		{
 			pE->sharp() = false;
 		}
-		std::cout << "there are " << middle_edges.size() << " middle loops\n";
 		for (auto f_edges : middle_edges)
 		{
-			std::cout << "this middle_loop has size " << f_edges.size() << "\n";
 			for (auto pE : f_edges)
 			{
 				pE->sharp() = true;
@@ -3602,7 +2722,7 @@ namespace DartLib
 	{
 		which = which % before_edges.size();
 		std::cout << "displaying " << which << " of " << before_edges.size() << " before loops. It has size " << before_edges[which].size() << "\n";
-		//std::cout << "This loop was shortened starting with " << before_edges_search_size[which] << "\n";
+		//std::cout << "This loop was tightened starting with " << before_edges_search_size[which] << "\n";
 		//std::cout << before_edges[which].size() << " started with this many edges\n";
 		//green_edges.clear();
 		//for (M::CEdge* ed : m_handle_gens)
@@ -3627,10 +2747,10 @@ namespace DartLib
 			pE->sharp() = true;
 		}*/
 	}
-	void CHandleTunnelLoop::display_unshortened(int which)
+	void CHandleTunnelLoop::display_untightened(int which)
 	{
-		which = which % unshortened_edges.size();
-		display_loop(unshortened_edges[which]);
+		which = which % untightened_edges.size();
+		display_loop(untightened_edges[which]);
 	}
 	void CHandleTunnelLoop::display_middle(int which)
 	{
@@ -3950,9 +3070,9 @@ namespace DartLib
 			ed->sharp() = true;
 		}
 	}
-	void CHandleTunnelLoop::next_shorten_step()
+	void CHandleTunnelLoop::next_tighten_step()
 	{
-		_shorten();
+		_tighten();
 	}
 	void CHandleTunnelLoop::go_back()
 	{
@@ -4082,28 +3202,25 @@ namespace DartLib
 			}
 		}
 	}
-	void CHandleTunnelLoop::start_shorten2()
+	void CHandleTunnelLoop::start_tighten2()
 	{
 		for (int i = 0; i < middle_edges.size(); i++)
 		{
 			loop_vertices = middle_vertices[i];
 			current_loop_edges = middle_edges[i];
-			_shorten();
+			_tighten();
 		}
 	}
-	void CHandleTunnelLoop::start_shorten()
+	void CHandleTunnelLoop::start_tighten()
 	{
 
 		
 		loop_edges = middle_edges[0];
-		std::cout << "the middle loop has size " << loop_edges.size() << "\n";
 		current_loop_edges = middle_edges[0];
 		middle_edges.clear();
-		shorten();
-		//new_tets.clear();
-
+		tighten();
 	}
-	void CHandleTunnelLoop::shorten()
+	void CHandleTunnelLoop::tighten()
 	{
 		single_loop.clear();
 		for (M::CEdge* edge : loop_edges)
@@ -4119,15 +3236,11 @@ namespace DartLib
 		}
 		for (int iterations = 0; iterations < num_iterations; iterations++)
 		{
-			 _shorten_single();
+			 _tighten_single();
 		}
 		trip = false;
-		num_components = _shorten_single_final();
+		num_components = _tighten_single_final();
 
-		if (num_components > 1)
-		{
-			std::cout << "========================================we accidentally ended with: " << num_components << " components\n";
-		}
 
 		if (false)
 		{
@@ -4237,7 +3350,7 @@ namespace DartLib
 					//tested_edges.push_back(edge_loop);
 					std::vector<M::CVertex*> vertices_loop(loop_vertices.begin() + firstOccIndex, loop_vertices.end());
 					//tested_vertices.push_back(vertices_loop);
-					if (_shorten(edge_loop))//_null_homologous(edge_loop)
+					if (_tighten(edge_loop))//_null_homologous(edge_loop)
 					{
 						// delete the edges up to the last triple that still has unvisited edges;
 						M::CEdge* e;
@@ -4297,7 +3410,7 @@ namespace DartLib
 					}
 					else
 					{
-						unshortened_edges.push_back(edge_loop);
+						untightened_edges.push_back(edge_loop);
 						// this is correct!
 						std::cout << "_________________________________________________________----this is correct! The cleaned loop had size " << edge_loop.size() << "\n";
 						current_loop_edges = edge_loop;
@@ -4321,10 +3434,10 @@ namespace DartLib
 			}
 			before_vertices.push_back(before_v);
 			return;
-			_shorten();
+			_tighten();
 			//display_loop(current_loop_edges);
 			clock_t end = clock();
-			std::cout << "\nshorten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
+			std::cout << "\ntighten time took " << double(end - start) / CLOCKS_PER_SEC << "==============\n";
 		}
 	}
 
@@ -4434,30 +3547,34 @@ namespace DartLib
 					}
 				}
 			}
-			std::vector<M::CEdge*> unshortened_loop;
+			std::vector<M::CEdge*> untightened_loop;
 			for (auto edge : largest_component)
 			{
-				unshortened_loop.push_back(edge);
+				untightened_loop.push_back(edge);
 			}
-			unshortened_edges.push_back(unshortened_loop);
+			untightened_edges.push_back(untightened_loop);
 		}
 	}
-	void CHandleTunnelLoop::shorten_demo(int which)
+	void CHandleTunnelLoop::tighten_demo(int which)
 	{
 		which = which % middle_edges.size();
-		if (which != shortening_index)
+		if (which != tightening_index)
 		{
-			shortening_index = which;
+			tightening_index = which;
 			single_loop.clear();
 			for (auto edge : middle_edges[which])
 			{
 				single_loop.insert(edge);
 			}
 		}
-		_shorten_single();
+		_tighten_single();
 		display_single_loop();
 	}
-	int CHandleTunnelLoop::_shorten_single()
+
+
+
+
+	int CHandleTunnelLoop::_tighten_single()
 	{
 		std::set<M::CEdge*> loop;
 		for (M::CEdge* edge : single_loop)
@@ -4474,9 +3591,7 @@ namespace DartLib
 		// pick the best face for each edge
 		if (trip == false)
 		{
-			// find individual connected components, and have each  component shorten towards it's own center of mass.
-			
-			
+			// find individual connected components, and have each  component tighten towards it's own center of mass.
 			std::unordered_map<int, std::vector<std::pair<M::CVertex*, M::CEdge*>>> gr;
 			std::vector<std::pair<M::CVertex*, M::CEdge*>> empty_vect;
 			std::set<M::CEdge*> visited_edges;
@@ -4660,7 +3775,7 @@ namespace DartLib
 		return components.size();
 		
 	}
-	int CHandleTunnelLoop::_shorten_single_final()
+	int CHandleTunnelLoop::_tighten_single_final()
 	{
 		std::set<M::CEdge*> loop;
 		for (M::CEdge* edge : single_loop)
@@ -5010,7 +4125,6 @@ namespace DartLib
 			}
 			if (component.size() > 50 && m_boundary_faces.size() > 100000)
 			{
-				std::cout << "~~~~~~~this component was too long, so it was skipped\n";
 				continue;
 			}
 			good_final_vertices.push_back(loop_vertices);
@@ -5055,7 +4169,7 @@ namespace DartLib
 	}
 
 
-	bool CHandleTunnelLoop::_shorten(std::vector<M::CEdge*> ed_loop)
+	bool CHandleTunnelLoop::_tighten(std::vector<M::CEdge*> ed_loop)
 	{
 		CPoint total_mass(0, 0, 0);
 		center_of_mass[0] = 0.0;
@@ -5226,7 +4340,7 @@ namespace DartLib
 			}
 		}
 		std::cout << "we tried with " << init_iters << " iterations\n";
-		std::cout << "the loop shortened from " << ed_loop.size() << " edges to " << current_loop_edges.size() << " edges\n";
+		std::cout << "the loop tightened from " << ed_loop.size() << " edges to " << current_loop_edges.size() << " edges\n";
 		std::cout << "final center of mass is " << center_of_mass.print() << "\n";
 		good_final_vertices.push_back(loop_vertices);
 		good_final_edges.push_back(current_loop_edges);
@@ -5234,7 +4348,7 @@ namespace DartLib
 	
 		return false;
 	}
-	bool CHandleTunnelLoop::_shorten()
+	bool CHandleTunnelLoop::_tighten()
 	{
 		CPoint total_mass(0, 0, 0);
 		center_of_mass[0] = 0.0;
@@ -5758,7 +4872,7 @@ namespace DartLib
 			double improvement = (p5 - COM).norm() - (p4 - COM).norm();
 			//if (improvement > 0)
 			//std::cout << "double\n";
-			if (boundary_shorten == false)
+			if (boundary_tighten == false)
 			{
 				if (_different_side(pV, pW, center_of_mass, shared_v))
 				{
@@ -5770,7 +4884,7 @@ namespace DartLib
 					return true;
 				}
 			}
-			else if (boundary_shorten == true)
+			else if (boundary_tighten == true)
 			{
 				if (improvement > 0)
 				{
@@ -5862,7 +4976,7 @@ namespace DartLib
 			//compare to new vertex
 			mid_closer = pV3->point();
 			//std::cout << "single\n";
-			if (boundary_shorten == false)
+			if (boundary_tighten == false)
 			{
 				if (_different_side(pV1, pV2, center_of_mass, pV3))
 				{
@@ -5871,7 +4985,7 @@ namespace DartLib
 			}
 			//if ((mid_closer - center_of_mass).norm() < distance)
 			//if ((mid_closer - center_of_mass).norm() < orig_mid_distance && (mid_further - center_of_mass).norm() < further_point_dist)
-			if (boundary_shorten == false)
+			if (boundary_tighten == false)
 			{
 				if ((pV3->point() - center_of_mass).norm() < further_point_dist)
 				{
@@ -5885,7 +4999,7 @@ namespace DartLib
 					ret_true = true;
 				}
 			}
-			else if (boundary_shorten == true)
+			else if (boundary_tighten == true)
 			{
 				if ((pV3->point() - center_of_mass).norm() < further_point_dist)
 				{
@@ -6539,7 +5653,7 @@ namespace DartLib
 		//last_step_s = shared_v;
 		*/
 	}
-	bool CHandleTunnelLoop::_shorten_double()
+	bool CHandleTunnelLoop::_tighten_double()
 	{
 		for (int i = 0; i < current_loop_edges.size(); i++)
 		{
@@ -6787,7 +5901,7 @@ namespace DartLib
 	bool CHandleTunnelLoop::_null_homologous(std::vector<M::CEdge*> myEdges)
 	{
 		return true; // just pick the largest one at the end
-		if (trickShorten)
+		if (tricktighten)
 		{
 			if (myEdges.size() < 4)
 			{
@@ -6961,5 +6075,475 @@ namespace DartLib
 		std::cout << "number is " << number << " while gnumber is " << gnumber << "\n";
 		return number <= 0;
 
+	}
+	void CHandleTunnelLoop::write_tets(const std::string& output)
+	{
+		std::vector<std::set<int>> allowed_sets;
+		std::vector<CPoint> center_of_masss;
+		std::vector<std::vector<CPoint>> loop_vertices_scaleds;
+		std::map<int, std::vector<std::vector<int>>> vert_tets;
+		std::vector<std::vector<int>> new_tets2;
+		std::map<int, bool> vertex_used;
+		std::map<int, bool> bound_point;
+		std::set<int> used_vertices_list;
+		std::vector<double> average_distances;
+		std::vector<double> largest_distances;
+		double scale_factor = 1;
+		if (m_boundary_edges.size() < 100000)
+		{
+			scale_factor = 1.5;
+		}
+		for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
+		{
+
+			loop_vertices = good_final_vertices[good_final_index];
+			center_of_mass[0] = 0.0;
+			center_of_mass[1] = 0.0;
+			center_of_mass[2] = 0.0;
+			for (M::CVertex* vertex : loop_vertices)
+			{
+				center_of_mass += vertex->point();
+			}
+			center_of_mass = center_of_mass / double(loop_vertices.size());
+			center_of_masss.push_back(center_of_mass);
+			std::vector<CPoint> loop_vertices_scaled;
+			for (M::CVertex* vertex : loop_vertices)
+			{
+				CPoint scaled_point = center_of_mass + (vertex->point() - center_of_mass) * scale_factor;
+				loop_vertices_scaled.push_back(scaled_point);
+			}
+			loop_vertices_scaleds.push_back(loop_vertices_scaled);
+			double distance;
+			double average_distance = 0;
+			double largest_distance = 0;
+			for (M::CVertex* v : loop_vertices)
+			{
+				distance = (v->point() - center_of_mass).norm();
+				average_distance += distance;
+				if (distance > largest_distance)
+				{
+					largest_distance = distance;
+				}
+
+			}
+			average_distance /= loop_vertices.size();
+			average_distances.push_back(average_distance);
+			largest_distances.push_back(largest_distance);
+			double actual_average = average_distance;
+		}
+		std::fstream is(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
+		char buffer[MAX_LINE];
+
+		verts_O.clear();
+		std::map<int, bool> allowed;
+
+
+
+		std::map<std::string, bool> int_used;
+
+		for (M::CVertex* bV : m_boundary_vertices)
+		{
+			int_used[bV->point().print2()] = true;
+		}
+
+		int CH_number = 0;
+		std::set<int> allowed_set;
+		std::set<int> on_loop;
+		while (!is.eof())
+		{
+			is.getline(buffer, MAX_LINE);
+			std::string line(buffer);
+			line = strutil::trim(line);
+			strutil::Tokenizer stokenizer(line, " \r\n");
+
+			stokenizer.nextToken();
+			std::string token = stokenizer.getToken();
+
+			if (token == "Vertex")
+			{
+				stokenizer.nextToken();
+				int vindex = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p1 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p2 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p3 = std::stod(stokenizer.getToken());
+				CPoint mypoint(p1, p2, p3);
+				vertex_used[vindex] = false;
+				bool al = false;
+				if (int_used[mypoint.print2()])
+				{
+					bound_point[vindex] = true;
+				}
+				verts_O.insert({ vindex, mypoint });
+				std::vector<std::vector<int>> emp;
+				vert_tets[vindex] = emp;
+				// Check if the point is inside the convex hull of any of the loops.
+				for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
+				{
+					center_of_mass = center_of_masss[good_final_index];
+					std::vector<CPoint> loop_vertices_scaled = loop_vertices_scaleds[good_final_index];
+					loop_vertices = good_final_vertices[good_final_index];
+					double largest_distance = largest_distances[good_final_index];
+					double average_distance = average_distances[good_final_index];
+					if ((mypoint - center_of_mass).norm() < largest_distance * 1.5)
+					{
+						std::vector<CPoint> vectors_list;
+						for (M::CVertex* v : loop_vertices)
+						{
+							if (v->point().print2() == mypoint.print2())
+							{
+								al = true;
+								if (loop_vertices.size() <= 6)
+								{
+									on_loop.insert(vindex);
+								}
+								break;
+							}
+						}
+						for (CPoint v : loop_vertices_scaled)
+						{
+							vectors_list.push_back((v - mypoint) / (v - mypoint).norm());
+						}
+						if (al == false)
+						{
+							al = true;
+							CH_number += 1;
+							bool finish = false;
+							for (int i = 0; i < vectors_list.size(); i++)
+							{
+								if (finish)
+								{
+									break;
+								}
+								for (int j = i + 1; j < vectors_list.size(); j++)
+								{
+									if (finish)
+									{
+										break;
+									}
+									for (double sign : {-1.0, 1.0})
+									{
+										CPoint CrPr = (vectors_list[i] ^ vectors_list[j]) / (vectors_list[i] ^ vectors_list[j]).norm() * sign;
+										bool same_hemi = true;
+										for (int k = 0; k < vectors_list.size(); k++)
+										{
+											if (k == i || k == j)
+											{
+												continue;
+											}
+											// Trick to test whether a point is in the interior of a convex hull
+											double theta = acos(vectors_list[k] * CrPr) * 180.0 / 3.1415926;
+											if (theta >= 90.0)
+											{
+												same_hemi = false;
+												break;
+											}
+										}
+										if (same_hemi)
+										{
+											al = false;
+											CH_number -= 1;
+											finish = true;
+
+											break;
+										}
+									}
+								}
+							}
+						}
+					}
+					if (al == true)
+					{
+						allowed_set.insert(vindex);
+						break;
+					}
+				}
+			}
+			if (token == "Tet")
+			{
+				allowed_sets.push_back(allowed_set);
+				break;
+			}
+
+		}
+		is.close();
+		std::fstream is3(file_name.substr(0, file_name.size() - 6) + "_O.t", std::fstream::in);
+		char buffer3[MAX_LINE];
+		int in_worked = 0;
+		int loop_worked = 0;
+		while (!is3.eof())
+		{
+			is3.getline(buffer3, MAX_LINE);
+			std::string line(buffer3);
+			line = strutil::trim(line);
+			strutil::Tokenizer stokenizer(line, " \r\n");
+
+			stokenizer.nextToken();
+			std::string token = stokenizer.getToken();
+			if (token == "Tet")
+			{
+				stokenizer.nextToken();
+				int tindex = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v1 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v2 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v3 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v4 = std::stoi(stokenizer.getToken());
+				vert_tets[v1].push_back({ v1,v2,v3,v4 });
+				vert_tets[v2].push_back({ v1,v2,v3,v4 });
+				vert_tets[v3].push_back({ v1,v2,v3,v4 });
+				vert_tets[v4].push_back({ v1,v2,v3,v4 });
+				for (int good_final_index = 0; good_final_index < good_final_vertices.size(); good_final_index++)
+				{
+					loop_vertices = good_final_vertices[good_final_index];
+
+					int inside = 0;
+					int in_loop = 0;
+					if (allowed_set.find(v1) != allowed_set.end())
+					{
+						inside += 1;
+					}
+					if (allowed_set.find(v2) != allowed_set.end())
+					{
+						inside += 1;
+					}
+					if (allowed_set.find(v3) != allowed_set.end())
+					{
+						inside += 1;
+					}
+					if (allowed_set.find(v4) != allowed_set.end())
+					{
+						inside += 1;
+					}
+					if (on_loop.find(v1) != on_loop.end())
+					{
+						in_loop += 1;
+					}
+					if (on_loop.find(v2) != on_loop.end())
+					{
+						in_loop += 1;
+					}
+					if (on_loop.find(v3) != on_loop.end())
+					{
+						in_loop += 1;
+					}
+					if (on_loop.find(v4) != on_loop.end())
+					{
+						in_loop += 1;
+					}
+					if (inside >= 4)
+					{
+						in_worked += 1;
+					}
+					if (in_loop >= 3)
+					{
+						loop_worked += 1;
+					}
+					if (inside >= 4 || in_loop >= 3 || (inside >= 2 && m_boundary_edges.size() < 100000))
+					{
+						std::vector<int> new_tet;
+						new_tet.push_back(v1);
+						new_tet.push_back(v2);
+						new_tet.push_back(v3);
+						new_tet.push_back(v4);
+						new_tets2.push_back(new_tet);
+						vertex_used[v1] = true;
+						vertex_used[v2] = true;
+						vertex_used[v3] = true;
+						vertex_used[v4] = true;
+						used_vertices_list.insert(v1);
+						used_vertices_list.insert(v2);
+						used_vertices_list.insert(v3);
+						used_vertices_list.insert(v4);
+						break;
+
+					}
+
+				}
+				all_tets.push_back({ v1, v2, v3, v4 });
+			}
+		}
+		is3.close();
+		bool fill_gaps = true;
+		if (fill_gaps)
+		{
+			for (int vert : used_vertices_list)
+			{
+				for (auto tet : vert_tets[vert])
+				{
+					int num_used = 0;
+					int bound_points = 0;
+					for (int i : tet)
+					{
+						if (bound_point[i])
+						{
+							bound_points += 1;
+						}
+						if (vertex_used[i])
+						{
+							num_used += 1;
+						}
+					}
+					if (num_used == 4)
+					{
+
+						std::vector<int> new_tet;
+						for (int vi : tet)
+						{
+							new_tet.push_back(vi);
+						}
+						if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
+						{
+							new_tets2.push_back(new_tet);
+						}
+					}
+					else if (num_used >= 2 && bound_points + num_used >= 4)
+					{
+						std::vector<int> new_tet;
+						for (int vi : tet)
+						{
+							new_tet.push_back(vi);
+						}
+						if (std::find(new_tets2.begin(), new_tets2.end(), new_tet) == new_tets2.end())
+						{
+							for (int vi : tet)
+							{
+								vertex_used[vi] = true;
+							}
+							new_tets2.push_back(new_tet);
+						}
+					}
+				}
+			}
+
+			for (auto te : new_tets2)
+			{
+				new_tets.push_back(te);
+			}
+
+
+		}
+
+
+		std::fstream is2(output, std::fstream::in);
+		char buffer2[MAX_LINE];
+		old_tets.clear();
+		std::unordered_map<std::string, int> verts_I;
+		int tet_index = 0;
+		int vert_index = 0;
+		std::vector<std::string> vertex_lines;
+		std::vector<std::string> tet_lines;
+		std::vector<std::vector<int>> already_in;
+		while (!is2.eof())
+		{
+			is2.getline(buffer2, MAX_LINE);
+			std::string line(buffer2);
+			line = strutil::trim(line);
+			strutil::Tokenizer stokenizer(line, " \r\n");
+
+			stokenizer.nextToken();
+			std::string token = stokenizer.getToken();
+
+			if (token == "Vertex")
+			{
+				stokenizer.nextToken();
+				int vindex = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p1 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p2 = std::stod(stokenizer.getToken());
+				stokenizer.nextToken();
+				double p3 = std::stod(stokenizer.getToken());
+				CPoint mypoint(p1, p2, p3);
+				verts_I.insert({ mypoint.print2(), vindex });
+				vert_index += 1;
+				vertex_lines.push_back(line);
+			}
+			else if (token == "Tet")
+			{
+				stokenizer.nextToken();
+				int tindex = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v1 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v2 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v3 = std::stoi(stokenizer.getToken());
+				stokenizer.nextToken();
+				int v4 = std::stoi(stokenizer.getToken());
+				std::vector<int> numbers;
+				numbers.push_back(v1);
+				numbers.push_back(v2);
+				numbers.push_back(v3);
+				numbers.push_back(v4);
+				std::sort(numbers.begin(), numbers.end());
+				already_in.push_back(numbers);
+				tet_index += 1;
+				tet_lines.push_back(line);
+			}
+		}
+
+		//new_tets.clear(); // to generate the pre-surgery mesh.
+		is2.close();
+		std::fstream _os(output, std::fstream::out);
+
+		if (_os.fail())
+		{
+			fprintf(stderr, "Error is opening file %s\n", output);
+			return;
+		}
+		for (std::string line : vertex_lines)
+		{
+			_os << line << "\n";
+		}
+		for (auto new_tet : new_tets)
+		{
+			for (int vert : new_tet)
+			{
+				CPoint point = verts_O[vert];
+				if (verts_I.find(point.print2()) == verts_I.end())
+				{
+					vert_index++;
+					verts_I.insert({ point.print2(), vert_index });
+					_os << "Vertex " << vert_index << " " << point[0] << " " << point[1] << " " << point[2] << "\n";
+				}
+			}
+
+		}
+		for (std::string line : tet_lines)
+		{
+			_os << line << "\n";
+		}
+
+		for (auto new_tet : new_tets)
+		{
+			std::vector<int> numbers;
+			for (int vert : new_tet)
+			{
+				CPoint point = verts_O[vert];
+				numbers.push_back(verts_I[point.print2()]);
+			}
+			std::sort(numbers.begin(), numbers.end());
+			if (std::find(already_in.begin(), already_in.end(), numbers) == already_in.end())
+			{
+				already_in.push_back(numbers);
+				tet_index += 1;
+				_os << "Tet " << tet_index;
+				for (int vert : new_tet)
+				{
+					CPoint point = verts_O[vert];
+					_os << " " << verts_I[point.print2()];
+				}
+				_os << "\n";
+			}
+
+		}
+
+		_os.close();
 	}
 }

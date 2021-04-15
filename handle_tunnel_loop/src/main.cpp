@@ -217,7 +217,7 @@ void draw_boundary_surface()
 void draw_boundary_sharp_edges()
 {
     glDisable(GL_LIGHTING);
-    glLineWidth(1.0);
+    glLineWidth(5.0);
     glBegin(GL_LINES);
 
     for (auto pF : boundary_surface)
@@ -244,7 +244,7 @@ void draw_boundary_sharp_edges()
 				continue;
 			}
 			if (!pE->sharp()) continue;
-            glColor3f(0.0, 1.0, 0.0);
+            glColor3f(1.0, 0.0, 0.0);
 
             CMyTMesh::CVertex* pv1 = mesh.edge_vertex(pE, 0);
             CMyTMesh::CVertex* pv2 = mesh.edge_vertex(pE, 1);
@@ -439,22 +439,23 @@ void keyBoard(unsigned char key, int x, int y)
 				boundary_edges = &handler.boundary_edges();
 
 				handler.exact_boundary(boundary_mesh);
-				myfile.open("../../data/shortened_tunnels.txt");
+				myfile.open("../../data/tightened_tunnels.txt");
+				std::cout << "Reading in tightened tunnel loops\n";
 				if (myfile.is_open())
 				{
 					while (std::getline(myfile, line))
 					{
-						handler.add_shortened_tunnel(line);
+						handler.add_tightened_tunnel(line);
 					}
 					myfile.close();
 					
 				}
 				else
 				{
-					std::cout << "Unable to open shortened tunnels file";
+					std::cout << "Unable to open tightened tunnels file";
 				}
 				myfile.open("../../data/tunnels.txt");
-				std::cout << "adding the tunnel loops\n";
+				std::cout << "Reading in original hand and tunnel loops.\n";
 				if (myfile.is_open())
 				{
 					while (std::getline(myfile, line))
@@ -469,14 +470,14 @@ void keyBoard(unsigned char key, int x, int y)
 					std::cout << "Unable to open tunnels file";
 				}
 				end = clock();
-				printf("Shortening tunnel loops time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
+				printf("tightening tunnel loops time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
 			}
 			break;
 		case 'P':
 			handler.prune();
 			break;
 		case 'S':
-			handler.shorten_demo(which);
+			handler.tighten_demo(which);
 			times_called += 1;
 			if (times_called % 10 == 0)
 			{
@@ -493,14 +494,14 @@ void keyBoard(unsigned char key, int x, int y)
 		case ':':
 			handler.go_forward();
 			break;
-		case 'D':
+		case 'd':
 			handler.display_all_after();
 			break;
 		case 'U':
 			handler.find_connected_components();
-			handler.display_all_unshortened();
+			handler.display_all_untightened();
 			break;
-		case 'd':
+		case 'D':
 			handler.display_all_before();
 			break;
 		case 'm':
@@ -573,7 +574,7 @@ void keyBoard(unsigned char key, int x, int y)
 			break;
 		case '}':
 			which += 1;
-			handler.display_unshortened(which);
+			handler.display_untightened(which);
 			break;
 		case '/':
 			handler.display_generated_loop(pIndex2);
@@ -621,14 +622,20 @@ void setupGLstate()
 
     glLightfv(GL_LIGHT1, GL_POSITION, lightOnePosition);
 
-    GLfloat diffuseMaterial[4] = {0.5, 0.5, 0.5, 1.0};
-    GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
+    //GLfloat diffuseMaterial[4] = {0.5, 0.5, 0.5, 1.0};
+    //GLfloat mat_specular[] = {1.0, 1.0, 1.0, 1.0};
+	GLfloat diffuseMaterial[4] = { 0.8, 0.8, 0.8, 0.2 };
+	GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 0.2 };
 
     glEnable(GL_DEPTH_TEST);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseMaterial);
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     glMaterialf(GL_FRONT, GL_SHININESS, 25.0);
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+	//glDisable(GL_CULL_FACE);
+	setupLight();
+	/* transform from the eye coordinate system to the world system */
+	setupEye();
 }
 
 /*! mouse click call back function */
@@ -723,59 +730,65 @@ int main(int argc, char* argv[])
     }
 	
 	handler.set_name(mesh_name);
+	exterior_volume = false;
 	if (strutil::endsWith(mesh_name, "_2_I.t"))
 	{
-		clock_t begin = clock();
 
 
-		int reload_mesh = 0;
-		int period = 1000;
-		myfile.open("../../data/tunnels.txt");
-		
-		if (myfile.is_open())
-		{
-			while (std::getline(myfile, line))
-			{
-				if (reload_mesh % period == 0)
-				{
-					mesh.load_t(argv[1]);
-					CMyTMesh::CBoundary boundary(&mesh);
-					boundary_surface = boundary.boundary_surface();
-					mesh.normalize();
-					mesh.compute_face_normal();
-					CPlane p(CPoint(0, 0, 1), 2);
-					mesh.cut(p);
-					handler.set_mesh(&mesh);
-					boundary_edges = &handler.boundary_edges();
-					handler.exact_boundary(boundary_mesh);
-				}
-				reload_mesh += 1;
-				std::cout << "started one shortening\n";
-				handler.add_tunnel(line);
-				handler.start_shorten();
-				std::cout << "finished one shortening\n";
-			}
-			handler.write_tets(mesh_name);
-			handler.write_shortened_tunnels("../../data/shortened_tunnels.txt");
-			myfile.close();
-		}
 		mesh.load_t(argv[1]);
+
+
 		CMyTMesh::CBoundary boundary(&mesh);
 		boundary_surface = boundary.boundary_surface();
 		mesh.normalize();
 		mesh.compute_face_normal();
+		handler.set_mesh(&mesh);
+		clock_t beginA = clock();
+		std::cout << "Beginning to compute the handle and tunnel loops.\n";
+		clock_t beginC = clock();
+		handler.boundary_surface_pair();
+		std::cout << "Handle and tunnel loops have been computed in " << double(clock() - beginC) / CLOCKS_PER_SEC << " seconds.\n";
+		handler.write_tunnels("../../data/tunnels.txt");
+		myfile.open("../../data/tunnels.txt");
+		if (!myfile.is_open())
+		{
+			std::cout << "Error in opening the tunnels file.\n";
+			return -1;
+		}
+		
+		std::cout << "Beginning to tighten the computed handle and tunnel loops.\n";
+		clock_t beginT = clock();
+		while (std::getline(myfile, line))
+		{
+			handler.add_tunnel(line);
+			handler.start_tighten();
+		}
+		std::cout << "Handle and tunnel loops have been tightened in " << double(clock() - beginT) / CLOCKS_PER_SEC << " seconds.\n";
+		
+		std::cout << "Beginning to perform topological surgery at locations of tightened loops.\n";
+		clock_t beginS = clock();
+		handler.write_tets(mesh_name);
+		std::cout << "Topological surgery finished in " << double(clock() - beginS) / CLOCKS_PER_SEC << " seconds.\n";
+		std::cout << "The entire process took " << double(clock() - beginA) / CLOCKS_PER_SEC << " seconds.\n";
+		handler.write_tightened_tunnels("../../data/tightened_tunnels.txt");
+		myfile.close();
+		mesh.load_t(argv[1]);
+		CMyTMesh::CBoundary boundary3(&mesh);
+		boundary_surface = boundary3.boundary_surface();
+		mesh.normalize();
+		mesh.compute_face_normal();
+		handler.set_mesh(&mesh);
 		CPlane p(CPoint(0, 0, 1), 2);
 		mesh.cut(p);
-		handler.set_mesh(&mesh);
 		boundary_edges = &handler.boundary_edges();
 		handler.exact_boundary(boundary_mesh);
-		clock_t end = clock();
-		printf("Putting in all the tets time: %g s\n", double(end - begin) / CLOCKS_PER_SEC);
+		
 		handler.write_boundary();
 		
 	}
 	else if (strutil::endsWith(mesh_name, "_O.t"))
 	{
+		exterior_volume = true;
 		clock_t begin = clock();
 
 		mesh.load_t(argv[1]);
